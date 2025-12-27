@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, Plus, Search } from "lucide-react";
+import { Filter, Search } from "lucide-react";
 import { LeadsTable } from "@/components/crm/LeadsTable";
 import { LeadDetailsSheet } from "@/components/crm/LeadDetailsSheet";
 import { Lead } from "@/types";
@@ -163,12 +163,6 @@ export default function CRM() {
             </Button>
           </div>
 
-          <div className="flex gap-2">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Lead
-            </Button>
-          </div>
         </div>
 
         {/* Content */}
