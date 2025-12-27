@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,12 @@ import {
 } from "@/components/ui/select";
 import {
   Search,
-  Filter,
   Building2,
   MapPin,
   Bed,
   Maximize2,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { ImovelUnico } from "@/types";
 import { supabase } from "@/lib/supabase";
@@ -34,6 +34,10 @@ function formatCurrency(value: number): string {
 export default function Imoveis() {
   const [imoveis, setImoveis] = useState<ImovelUnico[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [bairroFilter, setBairroFilter] = useState("all");
+  const [precoFilter, setPrecoFilter] = useState("all");
+  const [origemFilter, setOrigemFilter] = useState("all");
 
   useEffect(() => {
     async function fetchImoveis() {
@@ -53,6 +57,73 @@ export default function Imoveis() {
     fetchImoveis();
   }, []);
 
+  // Extract unique values for filters
+  const bairros = useMemo(() => {
+    const unique = [...new Set(imoveis.map(i => i.bairro).filter(Boolean))];
+    return unique.sort();
+  }, [imoveis]);
+
+  const origens = useMemo(() => {
+    const unique = [...new Set(imoveis.map(i => i.origem).filter(Boolean))];
+    return unique.sort();
+  }, [imoveis]);
+
+  // Filter logic
+  const filteredImoveis = useMemo(() => {
+    return imoveis.filter(imovel => {
+      // Search filter
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const matchesSearch = 
+          imovel.titulo?.toLowerCase().includes(search) ||
+          imovel.bairro?.toLowerCase().includes(search) ||
+          imovel.cidade?.toLowerCase().includes(search) ||
+          imovel.descricao?.toLowerCase().includes(search);
+        if (!matchesSearch) return false;
+      }
+
+      // Bairro filter
+      if (bairroFilter !== "all" && imovel.bairro !== bairroFilter) {
+        return false;
+      }
+
+      // Origem filter
+      if (origemFilter !== "all" && imovel.origem !== origemFilter) {
+        return false;
+      }
+
+      // Preço filter
+      if (precoFilter !== "all") {
+        const preco = imovel.preco;
+        switch (precoFilter) {
+          case "500":
+            if (preco > 500000) return false;
+            break;
+          case "1000":
+            if (preco < 500000 || preco > 1000000) return false;
+            break;
+          case "2000":
+            if (preco < 1000000 || preco > 2000000) return false;
+            break;
+          case "3000":
+            if (preco < 2000000) return false;
+            break;
+        }
+      }
+
+      return true;
+    });
+  }, [imoveis, searchTerm, bairroFilter, precoFilter, origemFilter]);
+
+  const hasActiveFilters = searchTerm || bairroFilter !== "all" || precoFilter !== "all" || origemFilter !== "all";
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setBairroFilter("all");
+    setPrecoFilter("all");
+    setOrigemFilter("all");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader
@@ -69,49 +140,56 @@ export default function Imoveis() {
               <Input
                 placeholder="Buscar imóveis..."
                 className="pl-9 bg-card border-border"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Select>
-              <SelectTrigger className="w-[160px] bg-card border-border">
+            <Select value={bairroFilter} onValueChange={setBairroFilter}>
+              <SelectTrigger className="w-[180px] bg-card border-border">
                 <SelectValue placeholder="Bairro" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="copacabana">Copacabana</SelectItem>
-                <SelectItem value="ipanema">Ipanema</SelectItem>
-                <SelectItem value="leblon">Leblon</SelectItem>
-                <SelectItem value="botafogo">Botafogo</SelectItem>
-                <SelectItem value="barra">Barra da Tijuca</SelectItem>
+                <SelectItem value="all">Todos os bairros</SelectItem>
+                {bairros.map(bairro => (
+                  <SelectItem key={bairro} value={bairro}>{bairro}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select>
-              <SelectTrigger className="w-[160px] bg-card border-border">
+            <Select value={precoFilter} onValueChange={setPrecoFilter}>
+              <SelectTrigger className="w-[180px] bg-card border-border">
                 <SelectValue placeholder="Preço" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="all">Todos os preços</SelectItem>
                 <SelectItem value="500">Até R$ 500 mil</SelectItem>
                 <SelectItem value="1000">R$ 500 mil - 1M</SelectItem>
                 <SelectItem value="2000">R$ 1M - 2M</SelectItem>
                 <SelectItem value="3000">Acima de R$ 2M</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
-              <SelectTrigger className="w-[140px] bg-card border-border">
+            <Select value={origemFilter} onValueChange={setOrigemFilter}>
+              <SelectTrigger className="w-[160px] bg-card border-border">
                 <SelectValue placeholder="Fonte" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="lopes">Lopes</SelectItem>
-                <SelectItem value="prime">Prime</SelectItem>
-                <SelectItem value="r3">R3</SelectItem>
-                <SelectItem value="century">Century 21</SelectItem>
+                <SelectItem value="all">Todas as fontes</SelectItem>
+                {origens.map(origem => (
+                  <SelectItem key={origem} value={origem}>{origem}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+                <X className="h-4 w-4" />
+                Limpar
+              </Button>
+            )}
           </div>
+        </div>
+
+        {/* Results count */}
+        <div className="text-sm text-muted-foreground">
+          {loading ? "Carregando..." : `${filteredImoveis.length} imóveis encontrados`}
         </div>
 
         {/* Properties Grid */}
@@ -119,13 +197,13 @@ export default function Imoveis() {
           <div className="text-center py-12 text-muted-foreground">
             Carregando imóveis...
           </div>
-        ) : imoveis.length === 0 ? (
+        ) : filteredImoveis.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            Nenhum imóvel encontrado.
+            Nenhum imóvel encontrado com os filtros selecionados.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {imoveis.map((imovel) => (
+            {filteredImoveis.map((imovel) => (
               <Card key={imovel.id} className="overflow-hidden card-hover">
                 <div className="relative h-48 bg-secondary flex items-center justify-center">
                   <Building2 className="h-12 w-12 text-muted-foreground" />
@@ -151,7 +229,7 @@ export default function Imoveis() {
                       <MapPin className="h-4 w-4" />
                       {imovel.bairro}, {imovel.cidade}
                     </span>
-                    {imovel.quartos && (
+                    {imovel.quartos && imovel.quartos > 0 && (
                       <span className="flex items-center gap-1">
                         <Bed className="h-4 w-4" />
                         {imovel.quartos} quartos
