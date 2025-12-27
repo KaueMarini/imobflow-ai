@@ -32,13 +32,17 @@ export interface ImovelUnico {
   titulo: string;
   preco: number;
   bairro: string;
-  origem: string;
-  quartos?: number;
+  cidade: string;
   area_m2?: number;
-  imagem_url?: string;
-  descricao?: string;
+  quartos?: number;
+  banheiros?: number;
+  vagas?: number;
   link?: string;
+  origem: string;
+  itens_lazer?: string[];
+  descricao?: string;
   created_at?: string;
+  tipo?: string;
 }
 
 // Chat Message
