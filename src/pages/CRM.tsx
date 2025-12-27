@@ -9,10 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LayoutGrid, List, Filter, Plus, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Filter, Plus, Search } from "lucide-react";
 import { LeadsTable } from "@/components/crm/LeadsTable";
-import { LeadsKanban } from "@/components/crm/LeadsKanban";
 import { LeadDetailsSheet } from "@/components/crm/LeadDetailsSheet";
 import { Lead } from "@/types";
 
@@ -107,10 +105,7 @@ export const mockLeadsData: Lead[] = [
   },
 ];
 
-type ViewMode = "table" | "kanban";
-
 export default function CRM() {
-  const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -169,34 +164,6 @@ export default function CRM() {
           </div>
 
           <div className="flex gap-2">
-            {/* View Toggle */}
-            <div className="flex rounded-lg border border-border bg-card p-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "gap-2",
-                  viewMode === "table" && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                )}
-                onClick={() => setViewMode("table")}
-              >
-                <List className="h-4 w-4" />
-                Lista
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "gap-2",
-                  viewMode === "kanban" && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                )}
-                onClick={() => setViewMode("kanban")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-                Kanban
-              </Button>
-            </div>
-
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
               Novo Lead
@@ -205,11 +172,7 @@ export default function CRM() {
         </div>
 
         {/* Content */}
-        {viewMode === "table" ? (
-          <LeadsTable leads={mockLeadsData} onLeadClick={handleLeadClick} />
-        ) : (
-          <LeadsKanban leads={mockLeadsData} onLeadClick={handleLeadClick} />
-        )}
+        <LeadsTable leads={mockLeadsData} onLeadClick={handleLeadClick} />
       </div>
 
       {/* Lead Details Sheet */}

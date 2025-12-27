@@ -37,6 +37,7 @@ export interface ImovelUnico {
   area_m2?: number;
   imagem_url?: string;
   descricao?: string;
+  link?: string;
   created_at?: string;
 }
 
