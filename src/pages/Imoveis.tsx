@@ -18,7 +18,6 @@ import {
   Bed,
   Maximize2,
   ExternalLink,
-  Plus,
 } from "lucide-react";
 import { ImovelUnico } from "@/types";
 
@@ -160,10 +159,6 @@ export default function Imoveis() {
             </Button>
           </div>
 
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Adicionar Imóvel
-          </Button>
         </div>
 
         {/* Properties Grid */}
