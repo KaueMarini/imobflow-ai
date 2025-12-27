@@ -18,7 +18,6 @@ import {
   Bed,
   Maximize2,
   ExternalLink,
-  Send,
   Plus,
 } from "lucide-react";
 import { ImovelUnico } from "@/types";
@@ -33,6 +32,7 @@ const mockImoveis: ImovelUnico[] = [
     quartos: 2,
     area_m2: 75,
     imagem_url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop",
+    link: "https://www.lopes.com.br/imovel/1",
   },
   {
     id: "2",
@@ -43,6 +43,7 @@ const mockImoveis: ImovelUnico[] = [
     quartos: 4,
     area_m2: 220,
     imagem_url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop",
+    link: "https://www.primeimoveis.com.br/imovel/2",
   },
   {
     id: "3",
@@ -53,6 +54,7 @@ const mockImoveis: ImovelUnico[] = [
     quartos: 1,
     area_m2: 45,
     imagem_url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop",
+    link: "https://www.r3imoveis.com.br/imovel/3",
   },
   {
     id: "4",
@@ -63,6 +65,7 @@ const mockImoveis: ImovelUnico[] = [
     quartos: 3,
     area_m2: 95,
     imagem_url: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400&h=300&fit=crop",
+    link: "https://www.century21.com.br/imovel/4",
   },
   {
     id: "5",
@@ -73,6 +76,7 @@ const mockImoveis: ImovelUnico[] = [
     quartos: 5,
     area_m2: 350,
     imagem_url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop",
+    link: "https://www.lopes.com.br/imovel/5",
   },
   {
     id: "6",
@@ -83,6 +87,7 @@ const mockImoveis: ImovelUnico[] = [
     quartos: 2,
     area_m2: 65,
     imagem_url: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400&h=300&fit=crop",
+    link: "https://www.remax.com.br/imovel/6",
   },
 ];
 
@@ -197,15 +202,17 @@ export default function Imoveis() {
                     {imovel.area_m2}m²
                   </span>
                 </div>
-                <div className="flex gap-2">
-                  <Button className="flex-1 gap-2 bg-success hover:bg-success/90">
-                    <Send className="h-4 w-4" />
-                    Enviar para Lead
-                  </Button>
-                  <Button variant="outline" size="icon">
+                <a
+                  href={imovel.link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full"
+                >
+                  <Button className="w-full gap-2">
                     <ExternalLink className="h-4 w-4" />
+                    Ver no Site
                   </Button>
-                </div>
+                </a>
               </CardContent>
             </Card>
           ))}
