@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Lock, Mail, UserPlus, LogIn, Loader2 } from "lucide-react";
+import { Building2, Lock, Mail, Loader2 } from "lucide-react";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -24,6 +24,9 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
+    // Banco externo usa "clientes_saas" (com S no final)
+    const sb = supabase as any;
+
     try {
       if (isSignUp) {
         // === CADASTRO ===
@@ -31,7 +34,6 @@ export default function Auth() {
           email,
           password,
           options: {
-            // Tenta enviar via metadata (ideal se tiver trigger)
             data: {
               nome_empresa: nomeEmpresa,
               whatsapp: whatsapp,
@@ -41,38 +43,34 @@ export default function Auth() {
 
         if (authError) throw authError;
 
-        // === PLANO B: Inserção Manual ===
-        // Se o cadastro auth funcionou, garantimos que a tabela 'cliente_saas' existe
+        // === Inserção Manual na tabela clientes_saas ===
         if (authData.user) {
-          // Verifica se já criou via trigger para não duplicar erro
-          const { data: existingClient } = await supabase
-            .from("cliente_saas") // Esta tabela o TS conhece pelo types.ts
+          const { data: existingClient } = await sb
+            .from("clientes_saas")
             .select("id")
             .eq("user_id", authData.user.id)
             .maybeSingle();
 
           if (!existingClient) {
-            console.log("Inserindo cliente_saas manualmente...");
-            const { error: dbError } = await supabase
-              .from("cliente_saas")
+            console.log("Inserindo clientes_saas manualmente...");
+            const { error: dbError } = await sb
+              .from("clientes_saas")
               .insert({
                 user_id: authData.user.id,
                 nome_empresa: nomeEmpresa,
-                // Assumindo que você usa o campo telefone_admin ou similar que está no seu types.ts
                 telefone_admin: whatsapp, 
                 plano: 'starter'
               });
             
             if (dbError) {
               console.error("Erro ao criar perfil da empresa:", dbError);
-              // Não bloqueamos o fluxo, mas avisamos no console
             }
           }
         }
 
         toast({
           title: "Conta criada!",
-          description: "Confirme seu e-mail para ativar a conta.",
+          description: "Você já pode fazer login.",
         });
         setIsSignUp(false);
 

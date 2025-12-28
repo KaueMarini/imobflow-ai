@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   title: string;
@@ -36,6 +37,8 @@ const configNavItems: NavItem[] = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, clienteSaas, signOut } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -43,6 +46,23 @@ export function AppSidebar() {
     }
     return location.pathname.startsWith(href);
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  // Dados reais do usuário
+  const nomeEmpresa = clienteSaas?.nome_empresa || user?.user_metadata?.nome_empresa || "Minha Empresa";
+  const plano = clienteSaas?.plano || "starter";
+  const iniciais = nomeEmpresa.substring(0, 2).toUpperCase();
+
+  const planoLabel = {
+    starter: "Plano Starter",
+    professional: "Plano Professional",
+    enterprise: "Plano Enterprise",
+    free: "Plano Free",
+  }[plano] || `Plano ${plano}`;
 
   return (
     <aside
@@ -120,19 +140,19 @@ export function AppSidebar() {
         </div>
       </nav>
 
-      {/* User section */}
+      {/* User section - Dados Reais */}
       <div className="border-t border-sidebar-border p-3">
         {!collapsed && (
           <div className="flex items-center gap-3 rounded-lg px-3 py-2 mb-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground font-semibold text-sm">
-              JD
+              {iniciais}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                João da Imob
+                {nomeEmpresa}
               </p>
               <p className="text-xs text-sidebar-muted truncate">
-                Plano Professional
+                {planoLabel}
               </p>
             </div>
           </div>
@@ -140,6 +160,7 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           size={collapsed ? "icon" : "default"}
+          onClick={handleSignOut}
           className={cn(
             "w-full text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent",
             collapsed && "justify-center"
