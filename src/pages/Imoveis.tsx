@@ -16,9 +16,13 @@ import {
   Building2,
   MapPin,
   Bed,
+  Bath,
+  Car,
   Maximize2,
   ExternalLink,
   X,
+  DollarSign,
+  Sparkles,
 } from "lucide-react";
 import { ImovelUnico } from "@/types";
 import { supabase } from "@/lib/supabase";
@@ -131,7 +135,7 @@ export default function Imoveis() {
         subtitle="Catálogo de imóveis disponíveis das suas fontes"
       />
 
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-6">
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
           <div className="flex flex-1 gap-3 flex-wrap">
@@ -194,63 +198,146 @@ export default function Imoveis() {
 
         {/* Properties Grid */}
         {loading ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Carregando imóveis...
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <p className="text-muted-foreground">Carregando imóveis...</p>
+            </div>
           </div>
         ) : filteredImoveis.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Nenhum imóvel encontrado com os filtros selecionados.
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Building2 className="h-16 w-16 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum imóvel encontrado</h3>
+            <p className="text-muted-foreground max-w-md">
+              Não encontramos imóveis com os filtros selecionados. Tente ajustar seus critérios de busca.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredImoveis.map((imovel) => (
-              <Card key={imovel.id} className="overflow-hidden card-hover">
-                <div className="relative h-48 bg-secondary flex items-center justify-center">
-                  <Building2 className="h-12 w-12 text-muted-foreground" />
-                  <Badge className="absolute top-3 left-3 bg-card/90 text-card-foreground backdrop-blur-sm">
-                    <Building2 className="h-3 w-3 mr-1" />
-                    {imovel.origem}
-                  </Badge>
+              <Card key={imovel.id} className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 border-border/50">
+                {/* Image Section */}
+                <div className="relative h-52 bg-gradient-to-br from-secondary to-secondary/50 overflow-hidden">
+                  {imovel.imagem_url ? (
+                    <img 
+                      src={imovel.imagem_url} 
+                      alt={imovel.titulo}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Building2 className="h-16 w-16 text-muted-foreground/30" />
+                    </div>
+                  )}
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  
+                  {/* Badges */}
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <Badge className="bg-primary text-primary-foreground shadow-lg">
+                      {imovel.origem}
+                    </Badge>
+                  </div>
                   {imovel.tipo && (
-                    <Badge variant="secondary" className="absolute top-3 right-3">
+                    <Badge variant="secondary" className="absolute top-3 right-3 bg-card/90 backdrop-blur-sm shadow-lg">
                       {imovel.tipo}
                     </Badge>
                   )}
+                  
+                  {/* Price on image */}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <p className="text-2xl font-bold text-white drop-shadow-lg">
+                      {formatCurrency(imovel.preco)}
+                    </p>
+                  </div>
                 </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-foreground line-clamp-2 mb-2">
+
+                <CardContent className="p-5">
+                  {/* Title */}
+                  <h3 className="font-semibold text-foreground line-clamp-2 mb-3 min-h-[3rem]">
                     {imovel.titulo}
                   </h3>
-                  <p className="text-2xl font-bold text-primary mb-3">
-                    {formatCurrency(imovel.preco)}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {imovel.bairro}, {imovel.cidade}
-                    </span>
-                    {imovel.quartos && imovel.quartos > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Bed className="h-4 w-4" />
-                        {imovel.quartos} quartos
-                      </span>
+
+                  {/* Location */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <span>{imovel.bairro}, {imovel.cidade}</span>
+                  </div>
+
+                  {/* Features Grid */}
+                  <div className="grid grid-cols-4 gap-2 mb-4">
+                    {imovel.quartos !== undefined && imovel.quartos > 0 && (
+                      <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-secondary/50 text-center">
+                        <Bed className="h-4 w-4 text-primary mb-1" />
+                        <span className="text-xs font-medium">{imovel.quartos}</span>
+                        <span className="text-[10px] text-muted-foreground">Quartos</span>
+                      </div>
+                    )}
+                    {imovel.banheiros !== undefined && imovel.banheiros > 0 && (
+                      <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-secondary/50 text-center">
+                        <Bath className="h-4 w-4 text-primary mb-1" />
+                        <span className="text-xs font-medium">{imovel.banheiros}</span>
+                        <span className="text-[10px] text-muted-foreground">Banheiros</span>
+                      </div>
+                    )}
+                    {imovel.vagas !== undefined && imovel.vagas > 0 && (
+                      <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-secondary/50 text-center">
+                        <Car className="h-4 w-4 text-primary mb-1" />
+                        <span className="text-xs font-medium">{imovel.vagas}</span>
+                        <span className="text-[10px] text-muted-foreground">Vagas</span>
+                      </div>
                     )}
                     {imovel.area_m2 && (
-                      <span className="flex items-center gap-1">
-                        <Maximize2 className="h-4 w-4" />
-                        {imovel.area_m2}m²
-                      </span>
+                      <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-secondary/50 text-center">
+                        <Maximize2 className="h-4 w-4 text-primary mb-1" />
+                        <span className="text-xs font-medium">{imovel.area_m2}</span>
+                        <span className="text-[10px] text-muted-foreground">m²</span>
+                      </div>
                     )}
                   </div>
+
+                  {/* Monthly costs */}
+                  {(imovel.condominio || imovel.iptu) && (
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4 p-3 rounded-lg bg-secondary/30 border border-border/50">
+                      <DollarSign className="h-4 w-4 text-primary" />
+                      <div className="flex gap-3">
+                        {imovel.condominio && (
+                          <span>Cond: {formatCurrency(imovel.condominio)}</span>
+                        )}
+                        {imovel.iptu && (
+                          <span>IPTU: {formatCurrency(imovel.iptu)}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Leisure items */}
+                  {imovel.itens_lazer && imovel.itens_lazer.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {imovel.itens_lazer.slice(0, 4).map((item, index) => (
+                        <Badge key={index} variant="outline" className="text-[10px] py-0.5 px-2">
+                          <Sparkles className="h-2.5 w-2.5 mr-1" />
+                          {item}
+                        </Badge>
+                      ))}
+                      {imovel.itens_lazer.length > 4 && (
+                        <Badge variant="outline" className="text-[10px] py-0.5 px-2">
+                          +{imovel.itens_lazer.length - 4}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  {/* CTA Button */}
                   <a
                     href={imovel.link || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full"
                   >
-                    <Button className="w-full gap-2">
+                    <Button className="w-full gap-2 transition-all duration-300 hover:gap-3">
                       <ExternalLink className="h-4 w-4" />
-                      Ver no Site
+                      Ver Detalhes
                     </Button>
                   </a>
                 </CardContent>

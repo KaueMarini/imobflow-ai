@@ -45,7 +45,7 @@ export function LeadDetailsSheet({ lead, open, onOpenChange }: LeadDetailsSheetP
       setLoading(true);
       // Buscar imóveis compatíveis baseado no bairro e orçamento do lead
       const { data, error } = await supabase
-        .from('imoveis_unique')
+        .from('imoveis_santos')
         .select('*')
         .ilike('bairro', `%${lead.interesse_bairro}%`)
         .lte('preco', lead.orcamento_max)
