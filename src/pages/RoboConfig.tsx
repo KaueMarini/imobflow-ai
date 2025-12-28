@@ -8,70 +8,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Bot,
   Smartphone,
   QrCode,
   CheckCircle,
   XCircle,
   RefreshCw,
-  ShoppingCart,
-  Briefcase,
-  Heart,
-  GraduationCap,
-  MapPin,
-  MoreHorizontal,
   Sparkles,
   MessageSquare,
-  Lightbulb,
   Building2,
   Clock,
   AlertCircle,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type BusinessType = "ecommerce" | "services" | "health" | "education" | "local" | "other" | null;
 type Personality = "friendly" | "professional" | "relaxed" | "direct";
-type Objective = "sales" | "support" | "scheduling" | "leads";
-
-const businessTypes = [
-  { id: "ecommerce", label: "E-commerce", icon: ShoppingCart },
-  { id: "services", label: "Serviços", icon: Briefcase },
-  { id: "health", label: "Saúde & Beleza", icon: Heart },
-  { id: "education", label: "Educação", icon: GraduationCap },
-  { id: "local", label: "Negócio Local", icon: MapPin },
-  { id: "other", label: "Outro", icon: MoreHorizontal },
-] as const;
 
 const personalities = [
-  { id: "friendly", label: "Amigável" },
-  { id: "professional", label: "Profissional" },
-  { id: "relaxed", label: "Descontraído" },
-  { id: "direct", label: "Direto" },
+  { id: "friendly", label: "Amigável", description: "Acolhedor e usa emojis ocasionalmente" },
+  { id: "professional", label: "Profissional", description: "Tom corporativo e respeitoso" },
+  { id: "relaxed", label: "Descontraído", description: "Informal mas educado" },
+  { id: "direct", label: "Direto", description: "Objetivo e vai direto ao ponto" },
 ] as const;
-
-const objectives = [
-  { id: "sales", label: "Aumentar Vendas / Recuperar Carrinho" },
-  { id: "support", label: "Suporte Técnico / Tirar Dúvidas" },
-  { id: "scheduling", label: "Agendamentos / Reservas" },
-  { id: "leads", label: "Qualificação de Leads (Filtro)" },
-] as const;
-
-const nicheTips: Record<string, string[]> = {
-  ecommerce: ["Status de pedidos", "Rastreamento de entregas", "Trocas e devoluções", "Disponibilidade de produtos"],
-  services: ["Horários disponíveis", "Orçamentos automáticos", "Agendamento online", "Dúvidas sobre serviços"],
-  health: ["Agendamento de consultas", "Preparos para exames", "Horários de atendimento", "Convênios aceitos"],
-  education: ["Grade de cursos", "Matrículas online", "Dúvidas sobre mensalidade", "Material didático"],
-  local: ["Horário de funcionamento", "Localização e como chegar", "Reservas de mesa", "Cardápio/Produtos"],
-  other: ["Apresentação geral", "Contatos úteis", "Missão da empresa", "Fluxo de ajuda"],
-};
 
 export default function RoboConfig() {
   const [isConnected, setIsConnected] = useState(false);
@@ -113,40 +73,24 @@ export default function RoboConfig() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // Form state
-  const [businessType, setBusinessType] = useState<BusinessType>(null);
+  // Form state - Simplified for real estate
   const [companyName, setCompanyName] = useState("");
+  const [agentName, setAgentName] = useState("");
+  const [greetingMessage, setGreetingMessage] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [businessDescription, setBusinessDescription] = useState("");
-  const [productsServices, setProductsServices] = useState("");
-  const [objective, setObjective] = useState<Objective | "">("");
-  const [faq, setFaq] = useState("");
   const [personality, setPersonality] = useState<Personality>("professional");
-  const [forbiddenTopics, setForbiddenTopics] = useState("");
-
-  const currentTips = useMemo(() => {
-    return nicheTips[businessType || "other"] || nicheTips.other;
-  }, [businessType]);
 
   const personalityLabel = useMemo(() => {
     return personalities.find(p => p.id === personality)?.label || "Profissional";
   }, [personality]);
 
   const generatePrompt = () => {
-    const objectiveText = objectives.find(o => o.id === objective)?.label || "";
-    
-    let prompt = `Você é o assistente virtual da ${companyName || "empresa"}, uma empresa do segmento de ${
-      businessTypes.find(b => b.id === businessType)?.label || "negócios"
-    }.
+    const prompt = `Você é ${agentName || "o assistente virtual"} da imobiliária ${companyName || "nossa imobiliária"}.
 
-SOBRE A EMPRESA:
-${businessDescription || "Descrição não fornecida."}
+SEGMENTO: Imobiliário (Compra, Venda e Aluguel de Imóveis)
 
-PRODUTOS/SERVIÇOS PRINCIPAIS:
-${productsServices || "Não especificados."}
-
-OBJETIVO PRINCIPAL:
-${objectiveText || "Atendimento geral ao cliente."}
+MENSAGEM DE SAUDAÇÃO:
+${greetingMessage || `Olá! Sou ${agentName || "o assistente"} da ${companyName || "imobiliária"}. Como posso ajudá-lo hoje?`}
 
 PERSONALIDADE:
 Você deve ser ${personalityLabel.toLowerCase()} em todas as interações. ${
@@ -156,38 +100,50 @@ Você deve ser ${personalityLabel.toLowerCase()} em todas as interações. ${
       "Seja objetivo e vá direto ao ponto sem rodeios."
     }
 
-FAQ - DÚVIDAS FREQUENTES:
-${faq || "Responda com base no contexto fornecido."}
-
-${forbiddenTopics ? `ASSUNTOS PROIBIDOS (NUNCA DISCUTA):
-${forbiddenTopics}
-
-Se o cliente perguntar sobre esses assuntos, educadamente diga que não pode ajudar nesse tema específico e redirecione a conversa.` : ""}
+ESPECIALIDADES:
+- Atendimento para compra de imóveis
+- Atendimento para venda de imóveis
+- Atendimento para aluguel de imóveis
+- Agendamento de visitas
+- Informações sobre imóveis disponíveis
+- Qualificação de leads interessados
 
 INSTRUÇÕES GERAIS:
-1. Sempre cumprimente o cliente de forma ${personalityLabel.toLowerCase()}.
-2. Identifique rapidamente a necessidade do cliente.
-3. Forneça respostas claras e úteis.
-4. Se não souber algo, diga que vai encaminhar para um atendente humano.
-5. Colete informações de contato quando apropriado.
-6. Finalize as conversas de forma educada.`;
+1. Sempre cumprimente o cliente usando a mensagem de saudação configurada.
+2. Identifique rapidamente a necessidade do cliente (comprar, vender ou alugar).
+3. Colete informações importantes: tipo de imóvel, região de interesse, faixa de preço, número de quartos.
+4. Ofereça agendar uma visita quando apropriado.
+5. Se não souber algo específico, diga que vai encaminhar para um corretor especializado.
+6. Colete informações de contato (nome, telefone, e-mail) para follow-up.
+7. Finalize as conversas de forma educada e profissional.
+
+PERGUNTAS FREQUENTES DO RAMO IMOBILIÁRIO:
+- Quais documentos preciso para comprar/alugar?
+- Vocês trabalham com financiamento?
+- Qual a comissão de vocês?
+- Posso agendar uma visita?
+- Vocês têm imóveis na região X?`;
 
     return prompt;
   };
 
   const previewMessage = useMemo(() => {
+    if (greetingMessage) {
+      return greetingMessage;
+    }
+    
     const greetings: Record<Personality, string> = {
-      friendly: `Olá! 😊 Que bom ter você aqui! Sou o assistente da ${companyName || "nossa empresa"}. Como posso ajudar você hoje?`,
-      professional: `Olá, agradecemos o contato. Sou assistente da ${companyName || "nossa empresa"}. Em que posso ajudá-lo?`,
-      relaxed: `E aí! Tudo bem? Sou o assistente da ${companyName || "nossa empresa"}. Bora resolver sua dúvida?`,
-      direct: `Olá. Assistente da ${companyName || "empresa"}. Como posso ajudar?`,
+      friendly: `Olá! 😊 Que bom ter você aqui! Sou ${agentName || "o assistente"} da ${companyName || "nossa imobiliária"}. Está procurando um imóvel? Posso ajudar!`,
+      professional: `Olá, seja bem-vindo. Sou ${agentName || "o assistente"} da ${companyName || "nossa imobiliária"}. Em que posso ajudá-lo?`,
+      relaxed: `E aí! Tudo bem? Sou ${agentName || "o assistente"} da ${companyName || "imobiliária"}. Bora encontrar o imóvel ideal pra você?`,
+      direct: `Olá. ${agentName || "Assistente"} da ${companyName || "imobiliária"}. Compra, venda ou aluguel?`,
     };
     return greetings[personality];
-  }, [personality, companyName]);
+  }, [personality, companyName, agentName, greetingMessage]);
 
   const handleCreateAgent = async () => {
-    if (!companyName || !whatsappNumber || !businessType) {
-      toast.error("Preencha os campos obrigatórios: Nome da Empresa, WhatsApp e Tipo de Empresa");
+    if (!companyName || !whatsappNumber) {
+      toast.error("Preencha os campos obrigatórios: Nome da Imobiliária e WhatsApp");
       return;
     }
 
@@ -288,7 +244,7 @@ INSTRUÇÕES GERAIS:
                 <div>
                   <p className="font-semibold text-success">Agente de IA Criado!</p>
                   <p className="text-sm text-muted-foreground">
-                    Seu agente para {companyName} está pronto. Agora conecte seu WhatsApp.
+                    Seu agente "{agentName || "Assistente"}" para {companyName} está pronto. Agora conecte seu WhatsApp.
                   </p>
                 </div>
               </div>
@@ -449,13 +405,16 @@ INSTRUÇÕES GERAIS:
                           </li>
                           <li className="flex items-start gap-2">
                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">4</span>
-                            Escaneie o QR Code acima
+                            Escaneie este QR Code
                           </li>
                         </ol>
-                        <Separator />
-                        <Button
-                          onClick={handleConfirmConnection}
+                        
+                        <Separator className="my-3" />
+                        
+                        <Button 
+                          onClick={handleConfirmConnection} 
                           className="w-full gap-2"
+                          variant="default"
                         >
                           <CheckCircle className="h-4 w-4" />
                           Já Conectei
@@ -468,14 +427,24 @@ INSTRUÇÕES GERAIS:
             </CardContent>
           </Card>
 
-          {/* Back Button */}
-          <Button
-            variant="outline"
-            onClick={() => setAgentCreated(false)}
-            className="gap-2"
-          >
-            Voltar para Configuração
-          </Button>
+          {/* Connected Success */}
+          {isConnected && (
+            <Card className="border-success/20 bg-success/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+                    <Bot className="h-6 w-6 text-success" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-success">Robô Ativo!</p>
+                    <p className="text-sm text-muted-foreground">
+                      Seu assistente imobiliário está pronto para atender seus clientes 24/7.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     );
@@ -484,77 +453,57 @@ INSTRUÇÕES GERAIS:
   return (
     <div className="min-h-screen bg-background">
       <AppHeader
-        title="Configuração de Inteligência"
-        subtitle="Crie o cérebro do seu atendimento"
+        title="Configuração do Agente"
+        subtitle="Configure seu assistente imobiliário de IA"
       />
 
-      <div className="p-6 max-w-7xl mx-auto">
-        <p className="text-muted-foreground mb-8">
-          Escolha seu nicho e preencha as informações para uma IA sob medida.
-        </p>
-
+      <div className="p-6 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Step 1 - Business Type */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
-                    1
-                  </span>
-                  Qual o tipo da sua empresa?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {businessTypes.map((type) => {
-                    const Icon = type.icon;
-                    return (
-                      <button
-                        key={type.id}
-                        onClick={() => setBusinessType(type.id as BusinessType)}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
-                          businessType === type.id
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border hover:border-primary/50 hover:bg-muted/50"
-                        )}
-                      >
-                        <Icon className="h-6 w-6" />
-                        <span className="text-sm font-medium">{type.label}</span>
-                      </button>
-                    );
-                  })}
+            {/* Header Card */}
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                    <Home className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Configuração de Inteligência</h2>
+                    <p className="text-muted-foreground">
+                      Configure o assistente de IA para sua imobiliária
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Step 2 - Business Details */}
+            {/* Form Fields */}
             <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
-                    2
-                  </span>
-                  Detalhes do Negócio
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Dados da Imobiliária
                 </CardTitle>
+                <CardDescription>
+                  Informações básicas sobre sua imobiliária
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Nome da Empresa *</Label>
+                    <Label htmlFor="companyName">Nome da Imobiliária *</Label>
                     <Input
                       id="companyName"
-                      placeholder="Ex: Loja Virtual ABC"
+                      placeholder="Ex: Imobiliária Central"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="whatsapp">WhatsApp de Atendimento *</Label>
+                    <Label htmlFor="whatsappNumber">WhatsApp de Atendimento *</Label>
                     <Input
-                      id="whatsapp"
+                      id="whatsappNumber"
                       placeholder="Ex: 11999999999"
                       value={whatsappNumber}
                       onChange={(e) => setWhatsappNumber(e.target.value)}
@@ -563,199 +512,144 @@ INSTRUÇÕES GERAIS:
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Descrição do Negócio</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Descreva brevemente o que sua empresa faz..."
-                    value={businessDescription}
-                    onChange={(e) => setBusinessDescription(e.target.value)}
-                    className="min-h-[80px]"
+                  <Label htmlFor="agentName">Nome do Agente de IA</Label>
+                  <Input
+                    id="agentName"
+                    placeholder="Ex: Sofia, Carlos, Assistente..."
+                    value={agentName}
+                    onChange={(e) => setAgentName(e.target.value)}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="products">Principais Produtos/Serviços</Label>
-                  <Textarea
-                    id="products"
-                    placeholder="Liste os principais produtos ou serviços oferecidos..."
-                    value={productsServices}
-                    onChange={(e) => setProductsServices(e.target.value)}
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="objective">Qual o objetivo da automação?</Label>
-                  <Select value={objective} onValueChange={(val) => setObjective(val as Objective)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um objetivo principal" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {objectives.map((obj) => (
-                        <SelectItem key={obj.id} value={obj.id}>
-                          {obj.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Este será o nome que a IA usará para se apresentar aos clientes
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Step 3 - Knowledge & Tone */}
+            {/* Greeting & Personality */}
             <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">
-                    3
-                  </span>
-                  Conhecimento & Tom de Voz
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Comunicação
                 </CardTitle>
+                <CardDescription>
+                  Defina como o agente irá se comunicar
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="faq">Dúvidas Frequentes (FAQ)</Label>
+                  <Label htmlFor="greetingMessage">Mensagem de Saudação</Label>
                   <Textarea
-                    id="faq"
-                    placeholder="Liste as perguntas mais comuns e suas respostas..."
-                    value={faq}
-                    onChange={(e) => setFaq(e.target.value)}
-                    className="min-h-[120px]"
+                    id="greetingMessage"
+                    placeholder="Ex: Olá! Bem-vindo à Imobiliária Central. Sou a Sofia, sua assistente virtual. Como posso ajudá-lo hoje?"
+                    value={greetingMessage}
+                    onChange={(e) => setGreetingMessage(e.target.value)}
+                    className="min-h-[100px]"
                   />
-                  <p className="text-sm text-muted-foreground">
-                    Dica: Tente abordar Apresentação geral, Contatos úteis, Missão da empresa, Fluxo de ajuda.
+                  <p className="text-xs text-muted-foreground">
+                    Esta será a primeira mensagem que os clientes receberão
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Personalidade do Atendimento</Label>
-                  <div className="flex flex-wrap gap-2">
+                <div className="space-y-3">
+                  <Label>Tonalidade da IA</Label>
+                  <div className="grid grid-cols-2 gap-3">
                     {personalities.map((p) => (
-                      <button
+                      <div
                         key={p.id}
                         onClick={() => setPersonality(p.id)}
                         className={cn(
-                          "px-4 py-2 rounded-full border text-sm font-medium transition-all",
+                          "p-4 rounded-xl border-2 cursor-pointer transition-all",
                           personality === p.id
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border hover:border-primary/50 hover:bg-muted/50"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
                         )}
                       >
-                        {p.label}
-                      </button>
+                        <p className="font-medium">{p.label}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{p.description}</p>
+                      </div>
                     ))}
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="forbidden">Assuntos Proibidos</Label>
-                  <Textarea
-                    id="forbidden"
-                    placeholder="Liste assuntos que o robô NÃO deve discutir..."
-                    value={forbiddenTopics}
-                    onChange={(e) => setForbiddenTopics(e.target.value)}
-                    className="min-h-[80px]"
-                  />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Generate Button */}
+            {/* Create Agent Button */}
             <Button
               size="lg"
-              className="w-full gap-2"
+              className="w-full gap-2 h-14 text-lg"
               onClick={handleCreateAgent}
-              disabled={isCreatingAgent}
+              disabled={isCreatingAgent || !companyName || !whatsappNumber}
             >
               {isCreatingAgent ? (
                 <RefreshCw className="h-5 w-5 animate-spin" />
               ) : (
                 <Sparkles className="h-5 w-5" />
               )}
-              {isCreatingAgent ? "Gerando Agente..." : "Gerar Agente e Ir para Conexão"}
+              {isCreatingAgent ? "Criando Agente..." : "Criar Agente e Conectar WhatsApp"}
             </Button>
           </div>
 
-          {/* Right Sidebar */}
+          {/* Preview Sidebar */}
           <div className="space-y-6">
-            {/* Tips Card */}
-            <Card className="bg-accent/30 border-accent">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Lightbulb className="h-5 w-5 text-warning" />
-                  Dicas para {businessTypes.find(b => b.id === businessType)?.label || "seu nicho"}
-                </CardTitle>
-                <CardDescription>
-                  Empresas do seu nicho costumam automatizar estas dores para ganhar tempo:
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {currentTips.map((tip, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-success flex-shrink-0" />
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
             {/* Live Preview */}
-            <Card>
-              <CardHeader className="pb-3">
+            <Card className="sticky top-6">
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <MessageSquare className="h-5 w-5 text-success" />
-                  Live Preview
+                  <MessageSquare className="h-4 w-4" />
+                  Preview ao Vivo
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                <div className="bg-muted/30 rounded-xl p-4 space-y-4">
                   {/* User Message */}
                   <div className="flex justify-end">
-                    <div className="bg-success text-success-foreground px-4 py-2 rounded-2xl rounded-br-md max-w-[85%] text-sm">
-                      "Oi! Gostaria de saber mais sobre os produtos."
+                    <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2 max-w-[85%]">
+                      <p className="text-sm">Oi! Gostaria de saber mais sobre imóveis disponíveis.</p>
                     </div>
                   </div>
-                  
-                  {/* AI Response */}
+
+                  {/* Bot Response */}
                   <div className="flex justify-start">
-                    <div className="bg-card border px-4 py-2 rounded-2xl rounded-bl-md max-w-[85%]">
-                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                        <Bot className="h-3 w-3" />
-                        IA ({personalityLabel}):
+                    <div className="bg-card border rounded-2xl rounded-bl-md px-4 py-2 max-w-[85%]">
+                      <p className="text-xs text-muted-foreground mb-1 font-medium">
+                        {agentName || "IA"} ({personalityLabel}):
                       </p>
                       <p className="text-sm">{previewMessage}</p>
                     </div>
                   </div>
                 </div>
+
+                <Separator className="my-4" />
+
+                {/* Tips */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <Home className="h-4 w-4 text-primary" />
+                    O agente poderá ajudar com:
+                  </p>
+                  <ul className="text-xs text-muted-foreground space-y-2">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      Atendimento para compra de imóveis
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      Atendimento para aluguel
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      Agendamento de visitas
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      Qualificação de leads
+                    </li>
+                  </ul>
+                </div>
               </CardContent>
             </Card>
-
-            {/* Company Summary */}
-            {companyName && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Building2 className="h-5 w-5" />
-                    Resumo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <p><span className="text-muted-foreground">Empresa:</span> {companyName}</p>
-                  {whatsappNumber && (
-                    <p><span className="text-muted-foreground">WhatsApp:</span> {whatsappNumber}</p>
-                  )}
-                  {businessType && (
-                    <p><span className="text-muted-foreground">Nicho:</span> {businessTypes.find(b => b.id === businessType)?.label}</p>
-                  )}
-                  {objective && (
-                    <p><span className="text-muted-foreground">Objetivo:</span> {objectives.find(o => o.id === objective)?.label}</p>
-                  )}
-                  <p><span className="text-muted-foreground">Tom:</span> {personalityLabel}</p>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>
