@@ -1,50 +1,80 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Lock, Mail, UserPlus, LogIn } from "lucide-react";
+import { Building2, Lock, Mail, UserPlus, LogIn, Loader2 } from "lucide-react";
 
 export default function Auth() {
-  const [isSignUp, setIsSignUp] = useState(false); // Começa na tela de Login
+  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
-  
-  // Campos do formulário
+
+  // Estados do formulário
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [nomeEmpresa, setNomeEmpresa] = useState(""); // Essencial para sua tabela clientes_saas
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       if (isSignUp) {
         // === CADASTRO ===
-        const { error } = await supabase.auth.signUp({
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            // Aqui enviamos os dados extras para o Gatilho (Trigger) pegar
+            // Tenta enviar via metadata (ideal se tiver trigger)
             data: {
               nome_empresa: nomeEmpresa,
-              whatsapp: whatsapp
+              whatsapp: whatsapp,
+            },
+          },
+        });
+
+        if (authError) throw authError;
+
+        // === PLANO B: Inserção Manual ===
+        // Se o cadastro auth funcionou, garantimos que a tabela 'cliente_saas' existe
+        if (authData.user) {
+          // Verifica se já criou via trigger para não duplicar erro
+          const { data: existingClient } = await supabase
+            .from("cliente_saas") // Esta tabela o TS conhece pelo types.ts
+            .select("id")
+            .eq("user_id", authData.user.id)
+            .maybeSingle();
+
+          if (!existingClient) {
+            console.log("Inserindo cliente_saas manualmente...");
+            const { error: dbError } = await supabase
+              .from("cliente_saas")
+              .insert({
+                user_id: authData.user.id,
+                nome_empresa: nomeEmpresa,
+                // Assumindo que você usa o campo telefone_admin ou similar que está no seu types.ts
+                telefone_admin: whatsapp, 
+                plano: 'starter'
+              });
+            
+            if (dbError) {
+              console.error("Erro ao criar perfil da empresa:", dbError);
+              // Não bloqueamos o fluxo, mas avisamos no console
             }
           }
+        }
+
+        toast({
+          title: "Conta criada!",
+          description: "Confirme seu e-mail para ativar a conta.",
         });
-        
-        if (error) throw error;
-        toast({ 
-          title: "Cadastro realizado!", 
-          description: "Verifique seu e-mail para confirmar a conta antes de entrar." 
-        });
-        setIsSignUp(false); // Volta pro login
+        setIsSignUp(false);
 
       } else {
         // === LOGIN ===
@@ -54,14 +84,14 @@ export default function Auth() {
         });
 
         if (error) throw error;
-        navigate("/"); // Manda pro Dashboard
+        navigate("/");
       }
     } catch (error: any) {
       console.error(error);
-      toast({ 
-        title: "Erro", 
-        description: error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message, 
-        variant: "destructive" 
+      toast({
+        title: "Erro",
+        description: error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -79,15 +109,12 @@ export default function Auth() {
             {isSignUp ? "Criar Conta ImobFlow" : "Acessar Painel"}
           </CardTitle>
           <CardDescription>
-            {isSignUp 
-              ? "Cadastre sua imobiliária para gerenciar leads e imóveis." 
-              : "Entre com suas credenciais para continuar."}
+            {isSignUp ? "Cadastre sua imobiliária e centralize seus leads." : "Entre com suas credenciais."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAuth} className="space-y-4">
             
-            {/* Campos extras só aparecem no Cadastro */}
             {isSignUp && (
               <>
                 <div className="space-y-1">
@@ -96,65 +123,38 @@ export default function Auth() {
                     value={nomeEmpresa} 
                     onChange={(e) => setNomeEmpresa(e.target.value)} 
                     required 
-                    className="pl-4"
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-1">
                   <Input 
-                    placeholder="WhatsApp (com DDD)" 
+                    placeholder="WhatsApp (ex: 11999999999)" 
                     value={whatsapp} 
                     onChange={(e) => setWhatsapp(e.target.value)} 
-                    className="pl-4"
+                    className="h-11"
                   />
                 </div>
               </>
             )}
 
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input 
-                className="pl-10" 
-                type="email" 
-                placeholder="seu@email.com" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                required 
-              />
+              <Mail className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+              <Input className="pl-10 h-11" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
 
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input 
-                className="pl-10" 
-                type="password" 
-                placeholder="Sua senha" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
-              />
+              <Lock className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+              <Input className="pl-10 h-11" type="password" placeholder="Sua senha" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11" disabled={loading}>
-              {loading ? (
-                <span className="flex items-center gap-2">Carregando...</span>
-              ) : isSignUp ? (
-                <span className="flex items-center gap-2"><UserPlus size={18} /> Criar Conta Grátis</span>
-              ) : (
-                <span className="flex items-center gap-2"><LogIn size={18} /> Entrar no Sistema</span>
-              )}
+            <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-semibold" disabled={loading}>
+              {loading ? <Loader2 className="animate-spin" /> : (isSignUp ? "Criar Conta" : "Entrar")}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              {isSignUp ? "Já tem uma conta?" : "Ainda não tem conta?"}
-            </p>
-            <Button 
-              variant="link" 
-              className="text-blue-600 font-semibold p-0 h-auto mt-1"
-              onClick={() => setIsSignUp(!isSignUp)}
-            >
-              {isSignUp ? "Fazer Login" : "Criar uma conta agora"}
+            <Button variant="link" className="text-blue-600 font-semibold" onClick={() => setIsSignUp(!isSignUp)}>
+              {isSignUp ? "Já tenho conta" : "Criar conta agora"}
             </Button>
           </div>
         </CardContent>
