@@ -5,7 +5,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Bed, Bath, Car, Maximize2, ExternalLink, Building2, Loader2 } from "lucide-react";
+import { MapPin, Bed, Car, Maximize2, ExternalLink, Building2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Interface alinhada com o banco
@@ -33,17 +33,22 @@ export default function Imoveis() {
     async function fetchImoveis() {
       try {
         setLoading(true);
+
+        // NOTE: seu banco externo tem tabelas que não estão no types.ts deste projeto.
+        // Para não quebrar o TypeScript, usamos o client sem tipagem aqui.
+        const sb = supabase as any;
+
         // Busca simples e direta
-        const { data, error } = await supabase
-          .from('imoveis_santos')
-          .select('*')
+        const { data, error } = await sb
+          .from("imoveis_santos")
+          .select("*")
           .limit(100) // Limite de segurança
-          .order('id', { ascending: false });
+          .order("id", { ascending: false });
 
         if (error) throw error;
-        setImoveis(data || []);
+        setImoveis(((data ?? []) as unknown) as Imovel[]);
       } catch (error) {
-        console.error('Erro ao buscar imóveis:', error);
+        console.error("Erro ao buscar imóveis:", error);
       } finally {
         setLoading(false);
       }
