@@ -42,7 +42,7 @@ export default function Imoveis() {
   useEffect(() => {
     async function fetchImoveis() {
       const { data, error } = await supabase
-        .from('imoveis_unique')
+        .from('imoveis_santos')
         .select('*')
         .order('created_at', { ascending: false });
 
