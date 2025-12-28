@@ -55,6 +55,75 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      },
+      leads: {
+        Row: {
+          id: string
+          created_at: string
+          status: string | null
+          orcamento_max: number | null
+          nome: string | null
+          email: string | null
+          telefone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          status?: string | null
+          orcamento_max?: number | null
+          nome?: string | null
+          email?: string | null
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          status?: string | null
+          orcamento_max?: number | null
+          nome?: string | null
+          email?: string | null
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      },
+      imoveis_santos: {
+        Row: {
+          id: string
+          created_at: string
+          titulo: string | null
+          descricao: string | null
+          valor: number | null
+          endereco: string | null
+          bairro: string | null
+          quartos: number | null
+          metragem: number | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          titulo?: string | null
+          descricao?: string | null
+          valor?: number | null
+          endereco?: string | null
+          bairro?: string | null
+          quartos?: number | null
+          metragem?: number | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          titulo?: string | null
+          descricao?: string | null
+          valor?: number | null
+          endereco?: string | null
+          bairro?: string | null
+          quartos?: number | null
+          metragem?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
