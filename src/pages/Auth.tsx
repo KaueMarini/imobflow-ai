@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Building2, Lock, Mail, UserPlus, LogIn } from "lucide-react";
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false); // Começa na tela de Login
   const [loading, setLoading] = useState(false);
-  
+
   // Campos do formulário
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +20,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -34,18 +34,19 @@ export default function Auth() {
             // Aqui enviamos os dados extras para o Gatilho (Trigger) pegar
             data: {
               nome_empresa: nomeEmpresa,
-              whatsapp: whatsapp
-            }
-          }
+              whatsapp: whatsapp,
+            },
+            // Evita erro de redirect em confirmação de e-mail e funciona em qualquer domínio
+            emailRedirectTo: `${window.location.origin}/`,
+          },
         });
-        
+
         if (error) throw error;
-        toast({ 
-          title: "Cadastro realizado!", 
-          description: "Verifique seu e-mail para confirmar a conta antes de entrar." 
+        toast({
+          title: "Cadastro realizado!",
+          description: "Verifique seu e-mail para confirmar a conta antes de entrar.",
         });
         setIsSignUp(false); // Volta pro login
-
       } else {
         // === LOGIN ===
         const { error } = await supabase.auth.signInWithPassword({
@@ -58,10 +59,11 @@ export default function Auth() {
       }
     } catch (error: any) {
       console.error(error);
-      toast({ 
-        title: "Erro", 
-        description: error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message, 
-        variant: "destructive" 
+      toast({
+        title: "Erro",
+        description:
+          error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
