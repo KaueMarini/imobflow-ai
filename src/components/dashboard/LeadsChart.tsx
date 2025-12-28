@@ -1,24 +1,23 @@
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Area,
-  AreaChart,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Dados zerados - será substituído por dados reais quando tivermos tabela de leads
 const data = [
-  { name: "Seg", leads: 4 },
-  { name: "Ter", leads: 6 },
-  { name: "Qua", leads: 8 },
-  { name: "Qui", leads: 5 },
-  { name: "Sex", leads: 12 },
-  { name: "Sáb", leads: 15 },
-  { name: "Dom", leads: 9 },
+  { name: "Seg", leads: 0 },
+  { name: "Ter", leads: 0 },
+  { name: "Qua", leads: 0 },
+  { name: "Qui", leads: 0 },
+  { name: "Sex", leads: 0 },
+  { name: "Sáb", leads: 0 },
+  { name: "Dom", leads: 0 },
 ];
 
 export function LeadsChart() {

@@ -6,14 +6,48 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  User,
-  CreditCard,
-  Bell,
-  Shield,
-} from "lucide-react";
+import { User, CreditCard, Bell, Shield, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Configuracoes() {
+  const { user, clienteSaas, refreshClienteSaas } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [nomeEmpresa, setNomeEmpresa] = useState(clienteSaas?.nome_empresa || "");
+  const [telefoneAdmin, setTelefoneAdmin] = useState(clienteSaas?.telefone_admin || "");
+
+  const handleSave = async () => {
+    if (!clienteSaas?.id) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("cliente_saas")
+        .update({
+          nome_empresa: nomeEmpresa,
+          telefone_admin: telefoneAdmin,
+        })
+        .eq("id", clienteSaas.id);
+
+      if (error) throw error;
+      
+      await refreshClienteSaas();
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const planoLabel = clienteSaas?.plano === "free" ? "Gratuito" : 
+                     clienteSaas?.plano === "starter" ? "Starter" :
+                     clienteSaas?.plano === "professional" ? "Professional" :
+                     clienteSaas?.plano === "enterprise" ? "Enterprise" : "Gratuito";
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader
@@ -36,15 +70,38 @@ export default function Configuracoes() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome Completo</Label>
-                <Input id="nome" defaultValue="João da Imob" />
+                <Label htmlFor="nome">Nome da Empresa</Label>
+                <Input 
+                  id="nome" 
+                  value={nomeEmpresa} 
+                  onChange={(e) => setNomeEmpresa(e.target.value)}
+                  placeholder="Sua imobiliária"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue="joao@imob.com.br" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={user?.email || ""} 
+                  disabled 
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone Admin</Label>
+                <Input 
+                  id="telefone" 
+                  value={telefoneAdmin} 
+                  onChange={(e) => setTelefoneAdmin(e.target.value)}
+                  placeholder="(00) 00000-0000"
+                />
               </div>
             </div>
-            <Button>Salvar Alterações</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar Alterações
+            </Button>
           </CardContent>
         </Card>
 
@@ -67,34 +124,17 @@ export default function Configuracoes() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold">Plano Professional</p>
-                    <Badge className="bg-primary">Ativo</Badge>
+                    <p className="font-semibold">Plano {planoLabel}</p>
+                    <Badge className="bg-primary">
+                      {clienteSaas?.status_pagamento === "ativo" ? "Ativo" : "Pendente"}
+                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    R$ 297/mês • Renovação em 15/02/2025
+                    {clienteSaas?.plano === "free" ? "Funcionalidades básicas" : "Todas as funcionalidades"}
                   </p>
                 </div>
               </div>
               <Button variant="outline">Upgrade</Button>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold">500</p>
-                <p className="text-xs text-muted-foreground">Leads/mês</p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold">247</p>
-                <p className="text-xs text-muted-foreground">Usados</p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold">∞</p>
-                <p className="text-xs text-muted-foreground">Mensagens</p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold">5</p>
-                <p className="text-xs text-muted-foreground">Usuários</p>
-              </div>
             </div>
           </CardContent>
         </Card>
