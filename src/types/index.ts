@@ -30,19 +30,22 @@ export interface Lead {
 export interface ImovelUnico {
   id: string;
   titulo: string;
+  descricao?: string;
   preco: number;
+  condominio?: number;
+  iptu?: number;
   bairro: string;
   cidade: string;
-  area_m2?: number;
   quartos?: number;
   banheiros?: number;
   vagas?: number;
+  area_m2?: number;
   link?: string;
+  tipo?: string;
+  imagem_url?: string;
   origem: string;
   itens_lazer?: string[];
-  descricao?: string;
   created_at?: string;
-  tipo?: string;
 }
 
 // Chat Message
