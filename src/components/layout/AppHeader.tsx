@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface AppHeaderProps {
   title: string;
@@ -18,6 +20,32 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ title, subtitle }: AppHeaderProps) {
+  const { user, clienteSaas, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  // Pega as iniciais do nome da empresa ou do email
+  const getInitials = () => {
+    if (clienteSaas?.nome_empresa) {
+      return clienteSaas.nome_empresa
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+    return "US";
+  };
+
+  const displayName = clienteSaas?.nome_empresa || user?.email || "Usuário";
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-6">
       <div className="flex items-center gap-4">
@@ -48,7 +76,7 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-success">
-                3
+                0
               </Badge>
             </Button>
           </DropdownMenuTrigger>
@@ -56,21 +84,8 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
             <DropdownMenuLabel>Notificações</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">Novo lead captado!</span>
-              <span className="text-xs text-muted-foreground">
-                Maria Silva interessada em imóvel em Copacabana
-              </span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">Visita agendada</span>
-              <span className="text-xs text-muted-foreground">
-                João Paulo confirmou visita para amanhã às 14h
-              </span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">WhatsApp conectado</span>
-              <span className="text-xs text-muted-foreground">
-                Sua instância está online e pronta para uso
+              <span className="text-muted-foreground text-sm">
+                Nenhuma notificação no momento
               </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -82,22 +97,25 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
             <Button variant="ghost" className="gap-2 px-2">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  JD
+                  {getInitials()}
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden md:block text-sm font-medium">
-                João da Imob
+              <span className="hidden md:block text-sm font-medium truncate max-w-[150px]">
+                {displayName}
               </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Perfil</DropdownMenuItem>
-            <DropdownMenuItem>Configurações</DropdownMenuItem>
-            <DropdownMenuItem>Faturamento</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
+              Configurações
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem
+              className="text-destructive cursor-pointer"
+              onClick={handleSignOut}
+            >
               Sair
             </DropdownMenuItem>
           </DropdownMenuContent>

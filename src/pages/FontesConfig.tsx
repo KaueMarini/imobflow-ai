@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FonteImobiliaria {
   id: string;
@@ -44,27 +45,36 @@ const todasFontes: FonteImobiliaria[] = [
   { id: "10", nome: "ZAP Imóveis", tipo: "disponivel" },
 ];
 
-// ID do cliente SaaS - em produção viria do contexto de auth
-const CLIENTE_SAAS_ID = "1";
-
 export default function FontesConfig() {
-  const [fontesVIP, setFontesVIP] = useState<FonteImobiliaria[]>([
-    { id: "1", nome: "Lopes", tipo: "vip" },
-    { id: "2", nome: "Prime Imóveis", tipo: "vip" },
-  ]);
-
-  const [fontesFallback, setFontesFallback] = useState<FonteImobiliaria[]>([
-    { id: "3", nome: "R3 Imobiliária", tipo: "fallback" },
-    { id: "5", nome: "RE/MAX", tipo: "fallback" },
-    { id: "8", nome: "Patrimóvel", tipo: "fallback" },
-  ]);
-
+  const { clienteSaas, refreshClienteSaas } = useAuth();
+  const [fontesVIP, setFontesVIP] = useState<FonteImobiliaria[]>([]);
+  const [fontesFallback, setFontesFallback] = useState<FonteImobiliaria[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Carrega as fontes do banco ao montar
+  useEffect(() => {
+    if (clienteSaas) {
+      const vip = (clienteSaas.fontes_preferenciais || []).map((nome, index) => ({
+        id: `vip-${index}`,
+        nome,
+        tipo: "vip" as const,
+      }));
+      const fallback = (clienteSaas.fontes_secundarias || []).map((nome, index) => ({
+        id: `fb-${index}`,
+        nome,
+        tipo: "fallback" as const,
+      }));
+      setFontesVIP(vip);
+      setFontesFallback(fallback);
+      setLoading(false);
+    }
+  }, [clienteSaas]);
 
   const fontesDisponiveis = todasFontes.filter(
     (f) =>
-      !fontesVIP.find((v) => v.id === f.id) &&
-      !fontesFallback.find((fb) => fb.id === f.id)
+      !fontesVIP.find((v) => v.nome === f.nome) &&
+      !fontesFallback.find((fb) => fb.nome === f.nome)
   );
 
   const addFonteVIP = (id: string) => {
@@ -90,6 +100,11 @@ export default function FontesConfig() {
   };
 
   const handleSave = async () => {
+    if (!clienteSaas?.id) {
+      toast.error("Erro: cliente não encontrado");
+      return;
+    }
+
     setSaving(true);
     
     try {
@@ -102,7 +117,7 @@ export default function FontesConfig() {
           fontes_preferenciais: fontesPreferenciais,
           fontes_secundarias: fontesSecundarias,
         })
-        .eq('id', CLIENTE_SAAS_ID);
+        .eq('id', clienteSaas.id);
 
       if (error) {
         console.error('Erro ao salvar configurações:', error);
@@ -110,6 +125,7 @@ export default function FontesConfig() {
           description: error.message,
         });
       } else {
+        await refreshClienteSaas();
         toast.success('Configurações salvas!', {
           description: 'Suas regras de fontes foram atualizadas com sucesso.',
         });
@@ -121,6 +137,14 @@ export default function FontesConfig() {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

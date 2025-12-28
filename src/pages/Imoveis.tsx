@@ -25,7 +25,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { ImovelUnico } from "@/types";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
