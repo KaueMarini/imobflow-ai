@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,8 @@ import {
   MessageSquare,
   Lightbulb,
   Building2,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -74,9 +76,42 @@ const nicheTips: Record<string, string[]> = {
 export default function RoboConfig() {
   const [isConnected, setIsConnected] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingAgent, setIsCreatingAgent] = useState(false);
   const [agentCreated, setAgentCreated] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [timerActive, setTimerActive] = useState(false);
+
+  // Timer effect for 5 minutes countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (timerActive && timeRemaining > 0) {
+      interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setTimerActive(false);
+            setShowQR(false);
+            setQrCodeUrl(null);
+            toast.error("Tempo expirado! Gere um novo QR Code para conectar.");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive, timeRemaining]);
+
+  const formatTime = useCallback((seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
 
   // Form state
   const [businessType, setBusinessType] = useState<BusinessType>(null);
@@ -187,18 +222,50 @@ INSTRUÇÕES GERAIS:
     }
   };
 
-  const handleGenerateQR = () => {
+  const handleGenerateQR = async () => {
     setIsGenerating(true);
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch("https://webhook.saveautomatik.shop/webhook/criarInstancia", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          empresa: companyName,
+          telefone: whatsappNumber,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao gerar QR Code");
+      }
+
+      const data = await response.json();
+      
+      if (data.url) {
+        setQrCodeUrl(data.url);
+        setShowQR(true);
+        setTimeRemaining(300); // 5 minutes = 300 seconds
+        setTimerActive(true);
+        toast.success("QR Code gerado! Escaneie em até 5 minutos.");
+      } else {
+        throw new Error("URL do QR Code não retornada");
+      }
+    } catch (error) {
+      console.error("Erro ao gerar QR Code:", error);
+      toast.error("Erro ao gerar QR Code. Tente novamente.");
+    } finally {
       setIsGenerating(false);
-      setShowQR(true);
-    }, 1500);
+    }
   };
 
-  const handleConnect = () => {
+  const handleConfirmConnection = () => {
     setIsConnected(true);
     setShowQR(false);
-    toast.success("WhatsApp conectado com sucesso!");
+    setTimerActive(false);
+    setQrCodeUrl(null);
+    toast.success("WhatsApp conectado com sucesso! Seu robô está ativo.");
   };
 
   // If agent is created, show connection screen
@@ -318,39 +385,19 @@ INSTRUÇÕES GERAIS:
                 </div>
 
                 {/* QR Code Area */}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 space-y-4">
                   <div
                     className={cn(
-                      "w-64 h-64 rounded-xl border-2 border-dashed flex items-center justify-center",
+                      "w-64 h-64 rounded-xl border-2 border-dashed flex items-center justify-center overflow-hidden",
                       showQR ? "border-primary bg-card" : "border-border bg-muted/30"
                     )}
                   >
-                    {showQR ? (
-                      <div className="text-center space-y-3">
-                        {/* Simulated QR Code */}
-                        <div className="w-48 h-48 bg-foreground mx-auto rounded-lg p-2">
-                          <div className="w-full h-full bg-background rounded grid grid-cols-8 gap-0.5 p-1">
-                            {Array.from({ length: 64 }).map((_, i) => (
-                              <div
-                                key={i}
-                                className={cn(
-                                  "rounded-sm",
-                                  Math.random() > 0.5 ? "bg-foreground" : "bg-transparent"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={handleConnect}
-                          className="gap-2"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          Simular Conexão
-                        </Button>
-                      </div>
+                    {showQR && qrCodeUrl ? (
+                      <img 
+                        src={qrCodeUrl} 
+                        alt="QR Code WhatsApp" 
+                        className="w-full h-full object-contain p-2"
+                      />
                     ) : (
                       <div className="text-center space-y-2 p-4">
                         <QrCode className="h-12 w-12 mx-auto text-muted-foreground/50" />
@@ -362,6 +409,60 @@ INSTRUÇÕES GERAIS:
                       </div>
                     )}
                   </div>
+
+                  {/* Timer */}
+                  {showQR && timerActive && (
+                    <div className="text-center space-y-3">
+                      <div className={cn(
+                        "flex items-center justify-center gap-2 text-lg font-mono font-bold",
+                        timeRemaining <= 60 ? "text-destructive" : "text-primary"
+                      )}>
+                        <Clock className="h-5 w-5" />
+                        <span>{formatTime(timeRemaining)}</span>
+                      </div>
+                      {timeRemaining <= 60 && (
+                        <p className="text-xs text-destructive flex items-center justify-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          Tempo quase esgotando!
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Connection Instructions */}
+                  {showQR && !isConnected && (
+                    <Card className="bg-muted/50 border-dashed">
+                      <CardContent className="pt-4 space-y-3">
+                        <p className="text-sm font-medium">Como conectar:</p>
+                        <ol className="text-xs text-muted-foreground space-y-2">
+                          <li className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">1</span>
+                            Abra o WhatsApp Business no seu celular
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">2</span>
+                            Vá em Configurações → Dispositivos Conectados
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">3</span>
+                            Clique em "Conectar um Dispositivo"
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">4</span>
+                            Escaneie o QR Code acima
+                          </li>
+                        </ol>
+                        <Separator />
+                        <Button
+                          onClick={handleConfirmConnection}
+                          className="w-full gap-2"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Já Conectei
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               </div>
             </CardContent>
