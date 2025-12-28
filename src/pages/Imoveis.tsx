@@ -312,21 +312,31 @@ export default function Imoveis() {
                   )}
 
                   {/* Leisure items */}
-                  {imovel.itens_lazer && imovel.itens_lazer.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {imovel.itens_lazer.slice(0, 4).map((item, index) => (
-                        <Badge key={index} variant="outline" className="text-[10px] py-0.5 px-2">
-                          <Sparkles className="h-2.5 w-2.5 mr-1" />
-                          {item}
-                        </Badge>
-                      ))}
-                      {imovel.itens_lazer.length > 4 && (
-                        <Badge variant="outline" className="text-[10px] py-0.5 px-2">
-                          +{imovel.itens_lazer.length - 4}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
+                  {(() => {
+                    const lazerItems = Array.isArray(imovel.itens_lazer) 
+                      ? imovel.itens_lazer 
+                      : typeof imovel.itens_lazer === 'string' && imovel.itens_lazer
+                        ? (imovel.itens_lazer as string).split(',').map(s => s.trim()).filter(Boolean)
+                        : [];
+                    
+                    if (lazerItems.length === 0) return null;
+                    
+                    return (
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {lazerItems.slice(0, 4).map((item, index) => (
+                          <Badge key={index} variant="outline" className="text-[10px] py-0.5 px-2">
+                            <Sparkles className="h-2.5 w-2.5 mr-1" />
+                            {item}
+                          </Badge>
+                        ))}
+                        {lazerItems.length > 4 && (
+                          <Badge variant="outline" className="text-[10px] py-0.5 px-2">
+                            +{lazerItems.length - 4}
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* CTA Button */}
                   <a
