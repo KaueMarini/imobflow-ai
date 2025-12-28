@@ -4,8 +4,13 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { LeadsChart } from "@/components/dashboard/LeadsChart";
 import { RecentLeads } from "@/components/dashboard/RecentLeads";
-import { Users, Flame, Building2, TrendingUp, Loader2, DollarSign } from "lucide-react";
+import { Users, Flame, Building2, Loader2, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+type LeadRow = {
+  status: string | null;
+  orcamento_max: number | string | null;
+};
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -13,7 +18,7 @@ export default function Dashboard() {
     totalLeads: 0,
     leadsQuentes: 0,
     totalImoveis: 0,
-    potencialVendas: 0
+    potencialVendas: 0,
   });
 
   useEffect(() => {
@@ -21,31 +26,35 @@ export default function Dashboard() {
       try {
         setLoading(true);
 
+        // NOTE: seu banco externo tem tabelas que não estão no types.ts deste projeto.
+        // Para não quebrar o TypeScript, usamos o client sem tipagem aqui.
+        const sb = supabase as any;
+
         // 1. Contar Leads
-        const { data: leads, error: leadsError } = await supabase
-          .from('leads')
-          .select('status, orcamento_max');
-        
+        const { data: leads, error: leadsError } = await sb
+          .from("leads")
+          .select("status, orcamento_max");
+
         if (leadsError) throw leadsError;
 
-        const totalLeads = leads?.length || 0;
-        const leadsQuentes = leads?.filter(l => l.status === 'novo' || l.status === 'atendimento').length || 0;
-        const potencial = leads?.reduce((acc, curr) => acc + (Number(curr.orcamento_max) || 0), 0) || 0;
+        const rows = (leads ?? []) as LeadRow[];
+        const totalLeads = rows.length;
+        const leadsQuentes = rows.filter((l) => l.status === "novo" || l.status === "atendimento").length;
+        const potencial = rows.reduce((acc, curr) => acc + (Number(curr.orcamento_max) || 0), 0);
 
         // 2. Contar Imóveis
-        const { count, error: imoveisError } = await supabase
-          .from('imoveis_santos')
-          .select('*', { count: 'exact', head: true });
-        
+        const { count, error: imoveisError } = await sb
+          .from("imoveis_santos")
+          .select("*", { count: "exact", head: true });
+
         if (imoveisError) throw imoveisError;
 
         setStats({
           totalLeads,
           leadsQuentes,
           totalImoveis: count || 0,
-          potencialVendas: potencial
+          potencialVendas: potencial,
         });
-
       } catch (error) {
         console.error("Erro ao carregar dashboard:", error);
       } finally {
@@ -57,7 +66,11 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <div className="h-screen flex items-center justify-center bg-gray-50"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="animate-spin h-10 w-10 text-primary" />
+      </div>
+    );
   }
 
   return (
