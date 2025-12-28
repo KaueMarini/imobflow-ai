@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface FonteImobiliaria {
   id: string;
@@ -45,58 +44,22 @@ const todasFontes: FonteImobiliaria[] = [
   { id: "10", nome: "ZAP Imóveis", tipo: "disponivel" },
 ];
 
+// ID do cliente SaaS - em produção viria do contexto de auth
+const CLIENTE_SAAS_ID = "1";
+
 export default function FontesConfig() {
-  const { user } = useAuth();
-  const [fontesVIP, setFontesVIP] = useState<FonteImobiliaria[]>([]);
-  const [fontesFallback, setFontesFallback] = useState<FonteImobiliaria[]>([]);
+  const [fontesVIP, setFontesVIP] = useState<FonteImobiliaria[]>([
+    { id: "1", nome: "Lopes", tipo: "vip" },
+    { id: "2", nome: "Prime Imóveis", tipo: "vip" },
+  ]);
+
+  const [fontesFallback, setFontesFallback] = useState<FonteImobiliaria[]>([
+    { id: "3", nome: "R3 Imobiliária", tipo: "fallback" },
+    { id: "5", nome: "RE/MAX", tipo: "fallback" },
+    { id: "8", nome: "Patrimóvel", tipo: "fallback" },
+  ]);
+
   const [saving, setSaving] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
-  const [clienteId, setClienteId] = useState<string | null>(null);
-
-  // Carregar dados do cliente_saas do usuário logado
-  useEffect(() => {
-    async function loadClienteData() {
-      if (!user) return;
-      
-      setLoadingData(true);
-      const { data, error } = await supabase
-        .from('cliente_saas')
-        .select('id, fontes_preferenciais, fontes_secundarias')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Erro ao carregar dados:', error);
-        toast.error('Erro ao carregar configurações');
-      } else if (data) {
-        setClienteId(data.id);
-        
-        // Converter arrays de nomes para objetos FonteImobiliaria
-        if (data.fontes_preferenciais && Array.isArray(data.fontes_preferenciais)) {
-          const vipFontes = data.fontes_preferenciais.map((nome: string, index: number) => {
-            const fonte = todasFontes.find(f => f.nome === nome);
-            return fonte 
-              ? { ...fonte, tipo: 'vip' as const }
-              : { id: `custom-vip-${index}`, nome, tipo: 'vip' as const };
-          });
-          setFontesVIP(vipFontes);
-        }
-        
-        if (data.fontes_secundarias && Array.isArray(data.fontes_secundarias)) {
-          const fallbackFontes = data.fontes_secundarias.map((nome: string, index: number) => {
-            const fonte = todasFontes.find(f => f.nome === nome);
-            return fonte 
-              ? { ...fonte, tipo: 'fallback' as const }
-              : { id: `custom-fallback-${index}`, nome, tipo: 'fallback' as const };
-          });
-          setFontesFallback(fallbackFontes);
-        }
-      }
-      setLoadingData(false);
-    }
-
-    loadClienteData();
-  }, [user]);
 
   const fontesDisponiveis = todasFontes.filter(
     (f) =>
@@ -127,11 +90,6 @@ export default function FontesConfig() {
   };
 
   const handleSave = async () => {
-    if (!clienteId) {
-      toast.error('Erro: Cliente não encontrado');
-      return;
-    }
-
     setSaving(true);
     
     try {
@@ -144,7 +102,7 @@ export default function FontesConfig() {
           fontes_preferenciais: fontesPreferenciais,
           fontes_secundarias: fontesSecundarias,
         })
-        .eq('id', clienteId);
+        .eq('id', CLIENTE_SAAS_ID);
 
       if (error) {
         console.error('Erro ao salvar configurações:', error);
@@ -163,20 +121,6 @@ export default function FontesConfig() {
       setSaving(false);
     }
   };
-
-  if (loadingData) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppHeader
-          title="Regras de Fontes"
-          subtitle="Configure a prioridade de busca de imóveis por imobiliária"
-        />
-        <div className="flex items-center justify-center p-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -368,7 +312,7 @@ export default function FontesConfig() {
             size="lg" 
             className="gap-2" 
             onClick={handleSave}
-            disabled={saving || !clienteId}
+            disabled={saving}
           >
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />

@@ -25,13 +25,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { ImovelUnico } from "@/types";
-import { createClient } from "@supabase/supabase-js";
-
-// Cliente Supabase externo para a tabela imoveis_santos
-const externalSupabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-);
+import { supabase } from "@/lib/supabase";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
@@ -51,7 +45,7 @@ export default function Imoveis() {
 
   useEffect(() => {
     async function fetchImoveis() {
-      const { data, error } = await externalSupabase
+      const { data, error } = await supabase
         .from('imoveis_santos')
         .select('*')
         .order('created_at', { ascending: false });
@@ -59,7 +53,7 @@ export default function Imoveis() {
       if (error) {
         console.error('Erro ao buscar imóveis:', error);
       } else {
-        setImoveis((data as ImovelUnico[]) || []);
+        setImoveis(data || []);
       }
       setLoading(false);
     }
