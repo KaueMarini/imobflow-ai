@@ -14,6 +14,7 @@ import CRM from "./pages/CRM";
 import Auth from "./pages/Auth";
 import FontesConfig from "./pages/FontesConfig";
 import Configuracoes from "./pages/Configuracoes";
+import RoboConfig from "./pages/RoboConfig";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/imoveis" element={<Imoveis />} />
               <Route path="/crm" element={<CRM />} />
+              <Route path="/robo" element={<RoboConfig />} />
               <Route path="/fontes" element={<FontesConfig />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
             </Route>
