@@ -68,6 +68,9 @@ export default function FontesConfig() {
       setFontesVIP(vip);
       setFontesFallback(fallback);
       setLoading(false);
+    } else {
+      // Se não tem clienteSaas, ainda assim para de carregar
+      setLoading(false);
     }
   }, [clienteSaas]);
 
@@ -111,8 +114,10 @@ export default function FontesConfig() {
       const fontesPreferenciais = fontesVIP.map(f => f.nome);
       const fontesSecundarias = fontesFallback.map(f => f.nome);
 
-      const { error } = await supabase
-        .from('cliente_saas')
+      // Banco externo usa "clientes_saas" (com S no final)
+      const sb = supabase as any;
+      const { error } = await sb
+        .from('clientes_saas')
         .update({
           fontes_preferenciais: fontesPreferenciais,
           fontes_secundarias: fontesSecundarias,

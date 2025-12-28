@@ -1,9 +1,21 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 
-type ClienteSaas = Tables<"cliente_saas">;
+// Tipo para a tabela clientes_saas do banco externo
+interface ClienteSaas {
+  id: string;
+  created_at: string;
+  user_id: string | null;
+  nome_empresa: string | null;
+  instance_name: string | null;
+  plano: string | null;
+  status_pagamento: string | null;
+  mensagem_boas_vindas: string | null;
+  telefone_admin: string | null;
+  fontes_preferenciais: string[] | null;
+  fontes_secundarias: string[] | null;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -23,17 +35,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchClienteSaas = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("cliente_saas")
+    // Banco externo usa "clientes_saas" (com S no final)
+    const sb = supabase as any;
+    const { data, error } = await sb
+      .from("clientes_saas")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (error) {
-      console.error("Erro ao buscar cliente_saas:", error);
+      console.error("Erro ao buscar clientes_saas:", error);
       return null;
     }
-    return data;
+    return data as ClienteSaas | null;
   };
 
   const refreshClienteSaas = async () => {
