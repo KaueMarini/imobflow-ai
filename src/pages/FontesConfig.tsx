@@ -13,6 +13,7 @@ import {
   Save,
   Info,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import {
   Select,
@@ -21,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface FonteImobiliaria {
   id: string;
@@ -42,6 +44,9 @@ const todasFontes: FonteImobiliaria[] = [
   { id: "10", nome: "ZAP Imóveis", tipo: "disponivel" },
 ];
 
+// ID do cliente SaaS - em produção viria do contexto de auth
+const CLIENTE_SAAS_ID = "1";
+
 export default function FontesConfig() {
   const [fontesVIP, setFontesVIP] = useState<FonteImobiliaria[]>([
     { id: "1", nome: "Lopes", tipo: "vip" },
@@ -53,6 +58,8 @@ export default function FontesConfig() {
     { id: "5", nome: "RE/MAX", tipo: "fallback" },
     { id: "8", nome: "Patrimóvel", tipo: "fallback" },
   ]);
+
+  const [saving, setSaving] = useState(false);
 
   const fontesDisponiveis = todasFontes.filter(
     (f) =>
@@ -80,6 +87,39 @@ export default function FontesConfig() {
 
   const removeFonteFallback = (id: string) => {
     setFontesFallback(fontesFallback.filter((f) => f.id !== id));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    
+    try {
+      const fontesPreferenciais = fontesVIP.map(f => f.nome);
+      const fontesSecundarias = fontesFallback.map(f => f.nome);
+
+      const { error } = await supabase
+        .from('cliente_saas')
+        .update({
+          fontes_preferenciais: fontesPreferenciais,
+          fontes_secundarias: fontesSecundarias,
+        })
+        .eq('id', CLIENTE_SAAS_ID);
+
+      if (error) {
+        console.error('Erro ao salvar configurações:', error);
+        toast.error('Erro ao salvar configurações', {
+          description: error.message,
+        });
+      } else {
+        toast.success('Configurações salvas!', {
+          description: 'Suas regras de fontes foram atualizadas com sucesso.',
+        });
+      }
+    } catch (err) {
+      console.error('Erro inesperado:', err);
+      toast.error('Erro inesperado ao salvar');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -268,9 +308,18 @@ export default function FontesConfig() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <Button size="lg" className="gap-2">
-            <Save className="h-4 w-4" />
-            Salvar Configurações
+          <Button 
+            size="lg" 
+            className="gap-2" 
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {saving ? 'Salvando...' : 'Salvar Configurações'}
           </Button>
         </div>
       </div>

@@ -7,21 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
-  Settings,
   User,
   CreditCard,
   Bell,
   Shield,
-  Globe,
-  Palette,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export default function Configuracoes() {
   return (
@@ -52,14 +42,6 @@ export default function Configuracoes() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" defaultValue="joao@imob.com.br" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input id="telefone" defaultValue="+55 21 99999-0000" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="empresa">Nome da Empresa</Label>
-                <Input id="empresa" defaultValue="Imobiliária João da Imob" />
               </div>
             </div>
             <Button>Salvar Alterações</Button>
@@ -141,16 +123,6 @@ export default function Configuracoes() {
             <Separator />
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Visitas agendadas</p>
-                <p className="text-sm text-muted-foreground">
-                  Lembretes de visitas confirmadas
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="font-medium">Relatórios semanais</p>
                 <p className="text-sm text-muted-foreground">
                   Resumo de performance por email
@@ -167,51 +139,6 @@ export default function Configuracoes() {
                 </p>
               </div>
               <Switch defaultChecked />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Preferências
-            </CardTitle>
-            <CardDescription>
-              Personalize sua experiência
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Idioma</Label>
-                <Select defaultValue="pt-BR">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Fuso horário</Label>
-                <Select defaultValue="America/Sao_Paulo">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="America/Sao_Paulo">
-                      Brasília (GMT-3)
-                    </SelectItem>
-                    <SelectItem value="America/Manaus">Manaus (GMT-4)</SelectItem>
-                    <SelectItem value="America/Recife">Recife (GMT-3)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>
