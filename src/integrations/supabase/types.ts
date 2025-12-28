@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cliente_saas: {
+        Row: {
+          created_at: string
+          fontes_preferenciais: string[] | null
+          fontes_secundarias: string[] | null
+          id: string
+          instance_name: string | null
+          mensagem_boas_vindas: string | null
+          nome_empresa: string | null
+          plano: string | null
+          status_pagamento: string | null
+          telefone_admin: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fontes_preferenciais?: string[] | null
+          fontes_secundarias?: string[] | null
+          id?: string
+          instance_name?: string | null
+          mensagem_boas_vindas?: string | null
+          nome_empresa?: string | null
+          plano?: string | null
+          status_pagamento?: string | null
+          telefone_admin?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fontes_preferenciais?: string[] | null
+          fontes_secundarias?: string[] | null
+          id?: string
+          instance_name?: string | null
+          mensagem_boas_vindas?: string | null
+          nome_empresa?: string | null
+          plano?: string | null
+          status_pagamento?: string | null
+          telefone_admin?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
