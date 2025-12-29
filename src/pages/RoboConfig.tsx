@@ -170,6 +170,7 @@ INSTRUÇÕES GERAIS:
         .from("clientes_saas")
         .update({
           mensagem_boas_vindas: greetingMessage,
+          mensagem_saudacao: greetingMessage,
         })
         .eq("user_id", user.id);
 
@@ -200,43 +201,58 @@ INSTRUÇÕES GERAIS:
 
     try {
       const generatedPrompt = generatePrompt();
+      const instanceName = `robo_${companyName.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`;
+      const saudacao = greetingMessage || previewMessage;
 
-      // Chama o webhook para criar o agente
-      const response = await fetch("https://webhook.saveautomatik.shop/webhook/criarWorkflow", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          empresa: companyName,
-          prompt: generatedPrompt,
-          telefone: whatsappNumber,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao criar agente");
-      }
-
-      // Atualiza o clientes_saas com os dados do robô
+      // Primeiro salva os dados no Supabase externo
       const sb = supabase as any;
-      const { error } = await sb
+      const { error: updateError } = await sb
         .from("clientes_saas")
         .update({
           nome_empresa: companyName,
           telefone_admin: whatsappNumber,
-          mensagem_boas_vindas: greetingMessage,
-          instance_name: `robo_${companyName.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
+          mensagem_boas_vindas: saudacao,
+          mensagem_saudacao: saudacao,
+          instance_name: instanceName,
         })
         .eq("user_id", user.id);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error("Erro ao salvar no Supabase:", updateError);
+        throw updateError;
+      }
+
+      // Chama o webhook para criar o agente
+      try {
+        const response = await fetch("https://webhook.saveautomatik.shop/webhook/criarWorkflow", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            empresa: companyName,
+            prompt: generatedPrompt,
+            telefone: whatsappNumber,
+            instance_name: instanceName,
+          }),
+        });
+
+        if (!response.ok) {
+          console.warn("Webhook criarWorkflow não retornou sucesso, mas dados foram salvos");
+        }
+      } catch (webhookError) {
+        console.warn("Erro ao chamar webhook criarWorkflow:", webhookError);
+        // Continua mesmo se o webhook falhar - dados já foram salvos
+      }
 
       await refreshClienteSaas();
-      toast.success("Agente de IA criado com sucesso! Agora conecte seu WhatsApp.");
+      toast.success("Agente configurado! Agora conecte seu WhatsApp.");
+      
+      // Inicia automaticamente a geração do QR Code
+      await handleGenerateQR();
     } catch (error) {
       console.error("Erro ao criar agente:", error);
-      toast.error("Erro ao criar agente. Tente novamente.");
+      toast.error("Erro ao salvar configurações. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
@@ -252,29 +268,41 @@ INSTRUÇÕES GERAIS:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          empresa: companyName,
-          telefone: whatsappNumber,
+          empresa: companyName || clienteSaas?.nome_empresa,
+          telefone: whatsappNumber || clienteSaas?.telefone_admin,
+          instance_name: clienteSaas?.instance_name,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Erro ao gerar QR Code");
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
       }
-
-      const data = await response.json();
       
-      if (data.url) {
-        setQrCodeUrl(data.url);
+      if (data.url || data.qrcode || data.qr) {
+        const qrUrl = data.url || data.qrcode || data.qr;
+        setQrCodeUrl(qrUrl);
+        setShowQR(true);
+        setTimeRemaining(300);
+        setTimerActive(true);
+        toast.success("QR Code gerado! Escaneie em até 5 minutos.");
+      } else if (data.base64) {
+        setQrCodeUrl(`data:image/png;base64,${data.base64}`);
         setShowQR(true);
         setTimeRemaining(300);
         setTimerActive(true);
         toast.success("QR Code gerado! Escaneie em até 5 minutos.");
       } else {
-        throw new Error("URL do QR Code não retornada");
+        // Se não retornou QR, mostra o modal mesmo assim para tentar novamente
+        setShowQR(true);
+        toast.info("Aguardando QR Code... Clique em 'Gerar Novo QR' se não aparecer.");
       }
     } catch (error) {
       console.error("Erro ao gerar QR Code:", error);
-      toast.error("Erro ao gerar QR Code. Tente novamente.");
+      setShowQR(true);
+      toast.error("Erro ao conectar. Tente gerar o QR Code novamente.");
     } finally {
       setIsGenerating(false);
     }
@@ -595,20 +623,94 @@ INSTRUÇÕES GERAIS:
               </CardContent>
             </Card>
 
+            {/* QR Code Section - Aparece após clicar em criar */}
+            {showQR && (
+              <Card className="border-primary/30 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <QrCode className="h-5 w-5 text-primary" />
+                    Conectar WhatsApp
+                  </CardTitle>
+                  <CardDescription>
+                    Escaneie o QR Code com seu WhatsApp para ativar o robô
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {timerActive && timeRemaining > 0 && (
+                    <div className="flex items-center justify-center gap-2 text-warning">
+                      <Clock className="h-4 w-4" />
+                      <span className="font-mono font-bold">{formatTime(timeRemaining)}</span>
+                      <span className="text-sm text-muted-foreground">restantes</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-col items-center justify-center p-6 bg-background rounded-xl border">
+                    {qrCodeUrl ? (
+                      <img 
+                        src={qrCodeUrl} 
+                        alt="QR Code WhatsApp" 
+                        className="w-64 h-64 object-contain"
+                      />
+                    ) : isGenerating ? (
+                      <div className="w-64 h-64 flex items-center justify-center">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                      </div>
+                    ) : (
+                      <div className="w-64 h-64 flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-xl">
+                        <QrCode className="h-16 w-16 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground text-center">
+                          Clique no botão abaixo para gerar o QR Code
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleGenerateQR}
+                      disabled={isGenerating}
+                      className="flex-1 gap-2"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                      {isGenerating ? "Gerando..." : "Gerar Novo QR"}
+                    </Button>
+                    <Button
+                      onClick={handleConfirmConnection}
+                      className="flex-1 gap-2"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Já Escaneei
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    Após escanear, clique em "Já Escaneei" para confirmar a conexão
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Create Agent Button */}
-            <Button
-              size="lg"
-              className="w-full gap-2 h-14 text-lg"
-              onClick={handleCreateAgent}
-              disabled={isSaving || !companyName || !whatsappNumber}
-            >
-              {isSaving ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Sparkles className="h-5 w-5" />
-              )}
-              {isSaving ? "Criando Agente..." : "Criar Agente e Conectar WhatsApp"}
-            </Button>
+            {!showQR && (
+              <Button
+                size="lg"
+                className="w-full gap-2 h-14 text-lg"
+                onClick={handleCreateAgent}
+                disabled={isSaving || !companyName || !whatsappNumber}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-5 w-5" />
+                )}
+                {isSaving ? "Criando Agente..." : "Criar Agente e Conectar WhatsApp"}
+              </Button>
+            )}
           </div>
 
           {/* Preview Sidebar */}
