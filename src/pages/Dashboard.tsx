@@ -1,4 +1,3 @@
-// src/pages/Dashboard.tsx
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -6,52 +5,67 @@ import { LeadsChart } from "@/components/dashboard/LeadsChart";
 import { RecentLeads } from "@/components/dashboard/RecentLeads";
 import { Users, Flame, Building2, Loader2, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-type LeadRow = {
-  status: string | null;
-  orcamento_max: number | string | null;
-};
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [chartLeads, setChartLeads] = useState<any[]>([]); // Para o gráfico
   const [stats, setStats] = useState({
     totalLeads: 0,
-    leadsQuentes: 0,
+    leadsRecentes: 0,
     totalImoveis: 0,
     potencialVendas: 0,
   });
 
   useEffect(() => {
     async function fetchDashboardData() {
+      if (!user?.id) return;
+
       try {
         setLoading(true);
-
-        // NOTE: seu banco externo tem tabelas que não estão no types.ts deste projeto.
-        // Para não quebrar o TypeScript, usamos o client sem tipagem aqui.
         const sb = supabase as any;
 
-        // 1. Contar Leads
-        const { data: leads, error: leadsError } = await sb
+        // 1. Buscar Leads (Todos os campos necessários para KPI e Gráfico)
+        // Usamos user_id conforme sua tabela
+        const { data: leadsData, error: leadsError } = await sb
           .from("leads")
-          .select("status, orcamento_max");
+          .select("id, created_at, orcamento_max")
+          .eq("user_id", user.id);
 
         if (leadsError) throw leadsError;
 
-        const rows = (leads ?? []) as LeadRow[];
-        const totalLeads = rows.length;
-        const leadsQuentes = rows.filter((l) => l.status === "novo" || l.status === "atendimento").length;
-        const potencial = rows.reduce((acc, curr) => acc + (Number(curr.orcamento_max) || 0), 0);
+        const leads = leadsData || [];
+        setChartLeads(leads); // Salva para o gráfico
+
+        // Cálculos
+        const totalLeads = leads.length;
+        
+        // Leads Recentes (últimos 30 dias)
+        const trintaDiasAtras = new Date();
+        trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+        
+        const leadsRecentes = leads.filter((l: any) => 
+          new Date(l.created_at) > trintaDiasAtras
+        ).length;
+
+        const potencial = leads.reduce((acc: number, curr: any) => {
+          // Limpa a string de moeda se vier suja (ex: "R$ 500.000") ou pega o numero direto
+          const valor = Number(curr.orcamento_max) || 0;
+          return acc + valor;
+        }, 0);
 
         // 2. Contar Imóveis
         const { count, error: imoveisError } = await sb
           .from("imoveis_santos")
           .select("*", { count: "exact", head: true });
 
-        if (imoveisError) throw imoveisError;
+        // Nota: Se der erro nos imóveis (ex: RLS), não quebra o dashboard todo
+        if (imoveisError) console.error("Erro imóveis:", imoveisError);
 
         setStats({
           totalLeads,
-          leadsQuentes,
+          leadsRecentes,
           totalImoveis: count || 0,
           potencialVendas: potencial,
         });
@@ -63,7 +77,7 @@ export default function Dashboard() {
     }
 
     fetchDashboardData();
-  }, []);
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -74,46 +88,46 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-10">
       <AppHeader
         title="Dashboard"
-        subtitle="Visão geral em tempo real"
+        subtitle="Visão geral do seu negócio"
       />
 
       <div className="p-6 space-y-6">
-        {/* KPI Cards Reais */}
+        {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <KPICard
             title="Total de Leads"
             value={stats.totalLeads.toString()}
-            subtitle="Cadastrados no sistema"
+            subtitle="Total na sua base"
             icon={<Users className="h-6 w-6" />}
           />
           <KPICard
-            title="Leads Ativos"
-            value={stats.leadsQuentes.toString()}
-            subtitle="Aguardando ou em atendimento"
+            title="Leads Recentes"
+            value={stats.leadsRecentes.toString()}
+            subtitle="Últimos 30 dias"
             icon={<Flame className="h-6 w-6" />}
             variant="primary"
           />
           <KPICard
-            title="Imóveis na Base"
+            title="Imóveis Disponíveis"
             value={stats.totalImoveis.toString()}
-            subtitle="Capturados (Lopes, R3, etc)"
+            subtitle="Banco de dados total"
             icon={<Building2 className="h-6 w-6" />}
           />
           <KPICard
             title="Potencial (R$)"
             value={new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(stats.potencialVendas)}
-            subtitle="Soma dos orçamentos"
+            subtitle="Soma orçamentos máx"
             icon={<DollarSign className="h-6 w-6" />}
             variant="success"
           />
         </div>
 
-        {/* Gráficos e Listas (Ainda podem ter mocks internos se não alterarmos os componentes filhos, mas o painel principal agora é real) */}
+        {/* Gráficos e Listas */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <LeadsChart />
+          <LeadsChart leads={chartLeads} />
           <RecentLeads />
         </div>
       </div>

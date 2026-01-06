@@ -2,12 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // Adicionei Navigate
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext"; // Import useAuth para o redirecionamento
 
 // Páginas
+import Index from "./pages/Index"; // <--- IMPORTANTE: Importar a Landing Page
 import Dashboard from "./pages/Dashboard";
 import Imoveis from "./pages/Imoveis";
 import CRM from "./pages/CRM";
@@ -20,6 +21,17 @@ import Upgrade from "./pages/Upgrade";
 
 const queryClient = new QueryClient();
 
+// Componente auxiliar para redirecionar se já estiver logado
+// Se o usuário acessar a Landing Page (/) mas já estiver logado, joga para o Dashboard
+const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, loading } = useAuth();
+  
+  if (!loading && session) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -28,10 +40,28 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Rota Pública (Login) */}
-            <Route path="/auth" element={<Auth />} />
+            {/* Rota Raiz (Landing Page) */}
+            {/* Se estiver logado vai pro dashboard, se não, mostra a Landing Page */}
+            <Route 
+              path="/" 
+              element={
+                <PublicOnlyRoute>
+                  <Index />
+                </PublicOnlyRoute>
+              } 
+            />
 
-            {/* Rota de Upgrade (requer login; ProtectedRoute permite acesso mesmo para plano free) */}
+            {/* Rota Pública (Login) */}
+            <Route 
+              path="/auth" 
+              element={
+                <PublicOnlyRoute>
+                  <Auth />
+                </PublicOnlyRoute>
+              } 
+            />
+
+            {/* Rota de Upgrade */}
             <Route
               path="/upgrade"
               element={
@@ -41,7 +71,7 @@ const App = () => (
               }
             />
 
-            {/* Rotas Protegidas (Só entra se estiver logado) */}
+            {/* Rotas Protegidas (Dashboard e Sistema) */}
             <Route
               element={
                 <ProtectedRoute>
@@ -49,8 +79,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              {/* O Dashboard é a Home */}
-              <Route path="/" element={<Dashboard />} />
+              {/* Mudei de "/" para "/dashboard" */}
+              <Route path="/dashboard" element={<Dashboard />} /> 
               <Route path="/imoveis" element={<Imoveis />} />
               <Route path="/crm" element={<CRM />} />
               <Route path="/robo" element={<RoboConfig />} />
