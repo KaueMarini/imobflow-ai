@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, loading, profile } = useAuth();
+  const { session, loading, clienteSaas } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -21,7 +21,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Lógica do Bloqueio de Plano Free
   // Se o plano for 'free' E o usuário NÃO estiver já na página de upgrade
-  if (profile?.plano === 'free' && location.pathname !== '/upgrade') {
+  if (clienteSaas?.plano === 'free' && location.pathname !== '/upgrade') {
     return <Navigate to="/upgrade" replace />;
   }
 
