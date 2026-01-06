@@ -16,6 +16,7 @@ import FontesConfig from "./pages/FontesConfig";
 import Configuracoes from "./pages/Configuracoes";
 import RoboConfig from "./pages/RoboConfig";
 import NotFound from "./pages/NotFound";
+import Upgrade from "./pages/Upgrade";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,16 @@ const App = () => (
           <Routes>
             {/* Rota Pública (Login) */}
             <Route path="/auth" element={<Auth />} />
+
+            {/* Rota de Upgrade (requer login; ProtectedRoute permite acesso mesmo para plano free) */}
+            <Route
+              path="/upgrade"
+              element={
+                <ProtectedRoute>
+                  <Upgrade />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Rotas Protegidas (Só entra se estiver logado) */}
             <Route

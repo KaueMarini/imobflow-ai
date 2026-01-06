@@ -1,39 +1,32 @@
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<boolean | null>(null);
+export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, loading, profile } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    // 1. Verifica se já tem sessão ativa ao carregar
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(!!session);
-    });
-
-    // 2. Ouve mudanças (ex: se o usuário clicar em Sair)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Enquanto verifica, mostra um loading bonito
-  if (session === null) {
+  if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Se não tem sessão, manda pro Login
+  // Se não estiver logado, manda para login
   if (!session) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Se tem sessão, deixa entrar
+  // Lógica do Bloqueio de Plano Free
+  // Se o plano for 'free' E o usuário NÃO estiver já na página de upgrade
+  if (profile?.plano === 'free' && location.pathname !== '/upgrade') {
+    return <Navigate to="/upgrade" replace />;
+  }
+
+  // Se o plano NÃO for free, mas ele tentar acessar /upgrade manualmente,
+  // você pode decidir se deixa ou redireciona de volta pro dashboard (opcional)
+  
   return <>{children}</>;
-}
+};

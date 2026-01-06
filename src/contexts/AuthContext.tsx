@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-// Tipo para a tabela clientes_saas do banco externo
-interface ClienteSaas {
+// --- Interfaces (Mantidas iguais) ---
+export interface ClienteSaas {
   id: string;
   created_at: string;
   user_id: string | null;
@@ -34,20 +34,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [clienteSaas, setClienteSaas] = useState<ClienteSaas | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // --- Função de Busca (Separada e Segura) ---
   const fetchClienteSaas = async (userId: string) => {
-    // Banco externo usa "clientes_saas" (com S no final)
-    const sb = supabase as any;
-    const { data, error } = await sb
-      .from("clientes_saas")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    try {
+      console.log("Buscando dados do cliente para user:", userId);
+      const sb = supabase as any;
+      const { data, error } = await sb
+        .from("clientes_saas")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("Erro ao buscar clientes_saas:", error);
+      if (error) {
+        console.error("Erro Supabase ao buscar clientes_saas:", error);
+        return null;
+      }
+      return data as ClienteSaas | null;
+    } catch (error) {
+      console.error("Erro CRÍTICO no fetchClienteSaas:", error);
       return null;
     }
-    return data as ClienteSaas | null;
   };
 
   const refreshClienteSaas = async () => {
@@ -58,46 +64,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setClienteSaas(null);
+    setLoading(true);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setClienteSaas(null);
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    let mounted = true;
 
-        // Defer Supabase calls with setTimeout to avoid deadlock
-        if (session?.user) {
-          setTimeout(() => {
-            fetchClienteSaas(session.user.id).then(setClienteSaas);
-          }, 0);
-        } else {
-          setClienteSaas(null);
+    const initializeAuth = async () => {
+      try {
+        // 1. Pega sessão inicial
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
+
+        if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+
+          if (initialSession?.user) {
+            const dados = await fetchClienteSaas(initialSession.user.id);
+            if (mounted) setClienteSaas(dados);
+          }
+        }
+      } catch (error) {
+        console.error("Erro na inicialização da Auth:", error);
+      } finally {
+        // GARANTE que o loading termine, aconteça o que acontecer
+        if (mounted) {
+            console.log("Inicialização concluída. Loading set to false.");
+            setLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // 2. Listener de eventos
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("Auth Event:", event);
+        
+        if (!mounted) return;
+
+        // Atualiza estados básicos imediatamente
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+
+        // Se for login ou mudança de token, atualiza dados
+        // NOTA: Removi o setLoading(true) daqui para evitar o loop visual
+        if (newSession?.user) {
+            // Apenas busca dados se o ID do usuário mudou ou se não temos dados ainda
+            // Isso evita refetchs desnecessários
+             if (!clienteSaas || clienteSaas.user_id !== newSession.user.id) {
+                const dados = await fetchClienteSaas(newSession.user.id);
+                if (mounted) setClienteSaas(dados);
+             }
+        } else if (event === 'SIGNED_OUT') {
+            setClienteSaas(null);
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchClienteSaas(session.user.id).then((data) => {
-          setClienteSaas(data);
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
