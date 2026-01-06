@@ -6,17 +6,23 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, Bell, Shield, Loader2 } from "lucide-react";
+import { User, CreditCard, Bell, Shield, Loader2, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export default function Configuracoes() {
   const { user, clienteSaas, refreshClienteSaas } = useAuth();
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [nomeEmpresa, setNomeEmpresa] = useState(clienteSaas?.nome_empresa || "");
-  const [telefoneAdmin, setTelefoneAdmin] = useState(clienteSaas?.telefone_admin || "");
+  
+  // Estado para alteração de senha
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [alterandoSenha, setAlterandoSenha] = useState(false);
 
   const handleSave = async () => {
     if (!clienteSaas?.id) return;
@@ -27,7 +33,6 @@ export default function Configuracoes() {
         .from("cliente_saas")
         .update({
           nome_empresa: nomeEmpresa,
-          telefone_admin: telefoneAdmin,
         })
         .eq("id", clienteSaas.id);
 
@@ -40,6 +45,35 @@ export default function Configuracoes() {
       toast.error("Erro ao salvar configurações");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAlterarSenha = async () => {
+    if (novaSenha.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+    if (novaSenha !== confirmarSenha) {
+      toast.error("As senhas não coincidem");
+      return;
+    }
+
+    setAlterandoSenha(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: novaSenha
+      });
+
+      if (error) throw error;
+      
+      toast.success("Senha alterada com sucesso!");
+      setNovaSenha("");
+      setConfirmarSenha("");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Erro ao alterar senha");
+    } finally {
+      setAlterandoSenha(false);
     }
   };
 
@@ -88,19 +122,51 @@ export default function Configuracoes() {
                   className="bg-muted"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone Admin</Label>
-                <Input 
-                  id="telefone" 
-                  value={telefoneAdmin} 
-                  onChange={(e) => setTelefoneAdmin(e.target.value)}
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
             </div>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Salvar Alterações
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Alterar Senha */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Alterar Senha
+            </CardTitle>
+            <CardDescription>
+              Atualize sua senha de acesso
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="novaSenha">Nova Senha</Label>
+                <Input 
+                  id="novaSenha" 
+                  type="password"
+                  value={novaSenha} 
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmarSenha">Confirmar Nova Senha</Label>
+                <Input 
+                  id="confirmarSenha" 
+                  type="password"
+                  value={confirmarSenha} 
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            <Button onClick={handleAlterarSenha} disabled={alterandoSenha || !novaSenha}>
+              {alterandoSenha && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Alterar Senha
             </Button>
           </CardContent>
         </Card>
@@ -134,7 +200,7 @@ export default function Configuracoes() {
                   </p>
                 </div>
               </div>
-              <Button variant="outline">Upgrade</Button>
+              <Button variant="outline" onClick={() => navigate("/upgrade")}>Upgrade</Button>
             </div>
           </CardContent>
         </Card>
