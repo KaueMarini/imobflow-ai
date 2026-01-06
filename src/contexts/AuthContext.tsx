@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // --- Função de Busca (Separada e Segura) ---
   const fetchClienteSaas = async (userId: string) => {
     try {
-      console.log("Buscando dados do cliente para user:", userId);
+      console.log("🔍 Buscando dados do cliente para user:", userId);
       const sb = supabase as any;
       const { data, error } = await sb
         .from("clientes_saas")
@@ -46,12 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        console.error("Erro Supabase ao buscar clientes_saas:", error);
+        console.error("❌ Erro Supabase ao buscar clientes_saas:", error);
         return null;
       }
+      console.log("✅ Dados do cliente encontrados:", data);
+      console.log("📋 Plano do usuário:", data?.plano);
       return data as ClienteSaas | null;
     } catch (error) {
-      console.error("Erro CRÍTICO no fetchClienteSaas:", error);
+      console.error("❌ Erro CRÍTICO no fetchClienteSaas:", error);
       return null;
     }
   };
