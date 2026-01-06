@@ -113,26 +113,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 2. Listener de eventos
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log("Auth Event:", event);
-        
+
         if (!mounted) return;
 
-        // Atualiza estados básicos imediatamente
+        // Atualiza estados básicos imediatamente (NUNCA async aqui)
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        setLoading(false);
 
-        // Se for login ou mudança de token, atualiza dados
-        // NOTA: Removi o setLoading(true) daqui para evitar o loop visual
+        // Busca dados do cliente de forma adiada para evitar deadlocks
         if (newSession?.user) {
-            // Apenas busca dados se o ID do usuário mudou ou se não temos dados ainda
-            // Isso evita refetchs desnecessários
-             if (!clienteSaas || clienteSaas.user_id !== newSession.user.id) {
-                const dados = await fetchClienteSaas(newSession.user.id);
-                if (mounted) setClienteSaas(dados);
-             }
+          const nextUserId = newSession.user.id;
+          setTimeout(() => {
+            if (!mounted) return;
+            fetchClienteSaas(nextUserId).then((dados) => {
+              if (mounted) setClienteSaas(dados);
+            });
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
-            setClienteSaas(null);
+          setClienteSaas(null);
         }
       }
     );
