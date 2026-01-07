@@ -29,8 +29,8 @@ export default function Configuracoes() {
     
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("cliente_saas")
+      const { error } = await (supabase as any)
+        .from("clientes_saas")
         .update({
           nome_empresa: nomeEmpresa,
         })
