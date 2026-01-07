@@ -81,7 +81,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-background">
         <Loader2 className="animate-spin h-10 w-10 text-primary" />
       </div>
     );
