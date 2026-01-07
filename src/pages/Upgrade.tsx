@@ -11,29 +11,38 @@ export default function Upgrade() {
 
   const plans = [
     {
-      id: "starter",
-      name: "Starter",
-      price: "R$ 97",
-      description: "Perfeito para quem está começando a organizar seus processos.",
-      features: ["Até 50 Leads/mês", "Gestão Básica de Imóveis", "1 Usuário", "Suporte por Email"],
+      id: "start",
+      name: "Start",
+      price: "R$ 250",
+      description: "Perfeito para corretores autônomos que querem blindar seus leads.",
+      features: ["Até 100 Leads únicos/mês", "IA Concierge 24/7", "Inventário Infinito", "Dashboard de Controle", "Suporte por Email"],
       buttonText: "Começar Agora",
       popular: false,
     },
     {
-      id: "professional",
+      id: "pro",
       name: "Pro",
-      price: "R$ 197",
-      description: "Para imobiliárias que buscam escala e automação.",
-      features: ["Leads Ilimitados", "Integração com Portais", "Até 5 Usuários", "Automação de WhatsApp", "Suporte Prioritário"],
+      price: "R$ 500",
+      description: "Para high performers que não perdem nenhuma oportunidade.",
+      features: ["Até 250 Leads únicos/mês", "IA Concierge 24/7", "Inventário Infinito", "Prioridade VIP", "Suporte Prioritário"],
       buttonText: "Assinar Pro",
       popular: true,
     },
     {
+      id: "elite",
+      name: "Elite",
+      price: "R$ 800",
+      description: "Ideal para pequenas equipes que dominam o mercado.",
+      features: ["Até 500 Leads únicos/mês", "IA Concierge 24/7", "Inventário Infinito", "Multi-usuários", "Gerente de Conta"],
+      buttonText: "Assinar Elite",
+      popular: false,
+    },
+    {
       id: "enterprise",
       name: "Enterprise",
-      price: "R$ 497",
-      description: "Soluções customizadas para grandes operações.",
-      features: ["Tudo do Pro", "API Dedicada", "Usuários Ilimitados", "Gerente de Conta", "Treinamento da Equipe"],
+      price: "Sob Consulta",
+      description: "Soluções personalizadas para grandes imobiliárias.",
+      features: ["Leads Ilimitados", "IA Personalizada", "API Dedicada", "Treinamento da Equipe", "Suporte VIP 24/7"],
       buttonText: "Falar com Vendas",
       popular: false,
     },
@@ -51,8 +60,9 @@ export default function Upgrade() {
   const getPlanoLabel = (plano: string) => {
     switch (plano) {
       case "free": return "Gratuito";
-      case "starter": return "Starter";
-      case "professional": return "Pro";
+      case "start": return "Start";
+      case "pro": return "Pro";
+      case "elite": return "Elite";
       case "enterprise": return "Enterprise";
       default: return "Gratuito";
     }
@@ -140,6 +150,9 @@ export default function Upgrade() {
       </div>
       
       <p className="mt-8 text-sm text-muted-foreground">
+        Taxa de implementação: <span className="font-semibold">R$ 1.000,00</span> (setup obrigatório)
+      </p>
+      <p className="text-sm text-muted-foreground">
         Dúvidas sobre os planos? Entre em contato com nosso suporte.
       </p>
     </div>
