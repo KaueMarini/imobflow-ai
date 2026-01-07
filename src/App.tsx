@@ -18,6 +18,7 @@ import Configuracoes from "./pages/Configuracoes";
 import RoboConfig from "./pages/RoboConfig";
 import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
+import Agenda from "./pages/Agenda";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
             >
               {/* Mudei de "/" para "/dashboard" */}
               <Route path="/dashboard" element={<Dashboard />} /> 
+              <Route path="/agenda" element={<Agenda />} /> {/* <--- Adicione a rota */}
               <Route path="/imoveis" element={<Imoveis />} />
               <Route path="/crm" element={<CRM />} />
               <Route path="/robo" element={<RoboConfig />} />

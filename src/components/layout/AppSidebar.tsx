@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Building2,
   LogOut,
+  CalendarDays // Ícone de Agenda
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,8 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard }, // Ajustado para /dashboard se for o caso, ou / se preferir
+  { title: "Agenda de Visitas", href: "/agenda", icon: CalendarDays }, // <-- Novo Item
   { title: "CRM de Leads", href: "/crm", icon: Users },
   { title: "Imóveis", href: "/imoveis", icon: Building2 },
 ];
@@ -42,7 +44,7 @@ export function AppSidebar() {
 
   const isActive = (href: string) => {
     if (href === "/") {
-      return location.pathname === "/";
+      return location.pathname === "/" || location.pathname === "/dashboard";
     }
     return location.pathname.startsWith(href);
   };
@@ -55,6 +57,7 @@ export function AppSidebar() {
   // Dados reais do usuário
   const nomeEmpresa = clienteSaas?.nome_empresa || user?.user_metadata?.nome_empresa || "Minha Empresa";
   const plano = clienteSaas?.plano || "starter";
+  // Pega as duas primeiras letras do nome da empresa para o avatar
   const iniciais = nomeEmpresa.substring(0, 2).toUpperCase();
 
   const planoLabel = {
@@ -67,57 +70,61 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300 flex flex-col",
+        "fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300 flex flex-col border-r border-sidebar-border shadow-sm",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
+      <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border bg-sidebar-primary/5">
         {!collapsed && (
           <div className="flex items-center gap-2 animate-fade-in">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Building2 className="h-5 w-5 text-sidebar-primary-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
+              <Building2 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-sidebar-foreground text-lg">
+            <span className="font-bold text-sidebar-foreground text-lg tracking-tight">
               ImobSaaS
             </span>
           </div>
         )}
         {collapsed && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary mx-auto">
-            <Building2 className="h-5 w-5 text-sidebar-primary-foreground" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary mx-auto shadow-sm">
+            <Building2 className="h-5 w-5 text-primary-foreground" />
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
         <div className="space-y-1">
           {mainNavItems.map((item) => (
             <NavLink
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative",
                 isActive(item.href)
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-glow"
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
+              title={collapsed ? item.title : undefined}
             >
-              <item.icon className={cn("h-5 w-5 flex-shrink-0")} />
+              <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110")} />
               {!collapsed && (
-                <span className="animate-fade-in">{item.title}</span>
+                <span className="animate-fade-in truncate">{item.title}</span>
+              )}
+              {collapsed && isActive(item.href) && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-foreground rounded-r-full" />
               )}
             </NavLink>
           ))}
         </div>
 
-        <Separator className="my-4 bg-sidebar-border" />
+        <Separator className="my-4 bg-sidebar-border/60" />
 
         <div className="space-y-1">
           {!collapsed && (
-            <p className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-sidebar-muted">
-              Configurações
+            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-muted/80">
+              Ferramentas
             </p>
           )}
           {configNavItems.map((item) => (
@@ -125,33 +132,34 @@ export function AppSidebar() {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                 isActive(item.href)
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-glow"
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
+              title={collapsed ? item.title : undefined}
             >
-              <item.icon className={cn("h-5 w-5 flex-shrink-0")} />
+              <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110")} />
               {!collapsed && (
-                <span className="animate-fade-in">{item.title}</span>
+                <span className="animate-fade-in truncate">{item.title}</span>
               )}
             </NavLink>
           ))}
         </div>
       </nav>
 
-      {/* User section - Dados Reais */}
-      <div className="border-t border-sidebar-border p-3">
+      {/* User section */}
+      <div className="border-t border-sidebar-border p-3 bg-sidebar-accent/10">
         {!collapsed && (
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2 mb-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground font-semibold text-sm">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2 mb-2 bg-sidebar-accent/50 border border-sidebar-border/50">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm border border-primary/20">
               {iniciais}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
+              <p className="text-sm font-semibold text-sidebar-foreground truncate">
                 {nomeEmpresa}
               </p>
-              <p className="text-xs text-sidebar-muted truncate">
+              <p className="text-[10px] text-sidebar-muted truncate uppercase tracking-wide font-medium">
                 {planoLabel}
               </p>
             </div>
@@ -159,12 +167,13 @@ export function AppSidebar() {
         )}
         <Button
           variant="ghost"
-          size={collapsed ? "icon" : "default"}
+          size={collapsed ? "icon" : "sm"}
           onClick={handleSignOut}
           className={cn(
-            "w-full text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent",
+            "w-full text-sidebar-muted hover:text-destructive hover:bg-destructive/10 transition-colors",
             collapsed && "justify-center"
           )}
+          title="Sair do sistema"
         >
           <LogOut className="h-4 w-4" />
           {!collapsed && <span className="ml-2">Sair</span>}
@@ -176,12 +185,12 @@ export function AppSidebar() {
         variant="ghost"
         size="icon"
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-md hover:bg-sidebar-accent"
+        className="absolute -right-3 top-20 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-md hover:bg-sidebar-accent hover:text-primary z-50 p-0"
       >
         {collapsed ? (
-          <ChevronRight className="h-3 w-3 text-sidebar-foreground" />
+          <ChevronRight className="h-3 w-3" />
         ) : (
-          <ChevronLeft className="h-3 w-3 text-sidebar-foreground" />
+          <ChevronLeft className="h-3 w-3" />
         )}
       </Button>
     </aside>
