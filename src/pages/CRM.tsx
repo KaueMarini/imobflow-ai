@@ -20,15 +20,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast"; // Import do Toast
+import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, 
   Search, 
@@ -47,8 +45,8 @@ import {
   Calendar,
   Star,
   Sparkles,
-  CirclePause, // Ícone de Pausa
-  Bot // Ícone de Robô
+  CirclePause,
+  Bot
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,6 +70,11 @@ interface Imovel {
   link: string | null;
 }
 
+interface ScoredImovel extends Imovel {
+  score: number; 
+  matchReasons: string[]; // Gerado no front para exibição
+}
+
 interface Lead {
   id: string;
   created_at: string;
@@ -92,42 +95,38 @@ interface Lead {
   recommendedList?: Imovel[]; 
 }
 
-interface ScoredImovel extends Imovel {
-  score: number; 
-  matchReasons: string[];
-}
-
 export default function CRM() {
   const { user } = useAuth();
-  const { toast } = useToast(); // Hook de notificação
+  const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [imoveisCache, setImoveisCache] = useState<Imovel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  // Estado para controlar qual botão está carregando o webhook
   const [pausingId, setPausingId] = useState<string | null>(null);
+
+  // Helper para converter string "2+" ou null em número para o SQL
+  function parseNumber(val: string | number | null): number {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    const nums = val.replace(/\D/g, ""); 
+    return nums ? parseInt(nums) : 0;
+  }
+
+  const formatCurrency = (val: number | null) => {
+    if (!val) return "R$ -";
+    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  };
 
   useEffect(() => {
     async function fetchData() {
       if (!user?.id) return;
       setLoading(true);
+      
       try {
-        const sb = supabase as any;
-
-        // 1. Buscar Todos os Imóveis
-        const { data: imoveisData, error: imoveisError } = await sb
-          .from("imoveis_santos")
-          .select("id, titulo, descricao, preco, condominio, bairro, cidade, quartos, banheiros, vagas, area_m2, imagem_url, itens_lazer, link");
-        
-        if (imoveisError) throw imoveisError;
-        const listaImoveis = imoveisData as Imovel[];
-        setImoveisCache(listaImoveis);
-
-        // 2. Buscar Leads
-        const { data: leadsData, error: leadsError } = await sb
+        // 1. Buscar Leads do Usuário
+        // Usamos (supabase as any) para evitar erro de tipo TS se a tabela leads não estiver no types gerado
+        const { data: leadsData, error: leadsError } = await (supabase as any)
           .from("leads")
           .select("*") 
           .eq("user_id", user.id)
@@ -136,64 +135,101 @@ export default function CRM() {
         if (leadsError) throw leadsError;
         const listaLeads = leadsData as Lead[];
 
-        // 3. Processamento
-        const leadsProcessados = listaLeads.map(lead => {
+        // 2. Processamento Paralelo: Para cada lead, busca recomendados manuais e matches automáticos
+        const leadsProcessados = await Promise.all(listaLeads.map(async (lead) => {
+          
           let recommendedList: Imovel[] = [];
+          let matches: ScoredImovel[] = [];
+
+          // A. Buscar Imóveis Recomendados Manualmente (IDs fixos)
           if (lead.imoveis_recomendados && lead.imoveis_recomendados.length > 0) {
-            const recIdsString = lead.imoveis_recomendados.map(id => String(id));
-            recommendedList = listaImoveis.filter(imovel => 
-              recIdsString.includes(String(imovel.id))
-            );
+            
+            // Converte IDs para string para o .in() não reclamar
+            const idsParaBuscar = lead.imoveis_recomendados.map((id: string | number) => String(id));
+
+            const { data: manuais } = await (supabase as any)
+              .from("imoveis_santos")
+              .select("*")
+              .in("id", idsParaBuscar);
+            
+            if (manuais) recommendedList = manuais as Imovel[];
           }
-          const matches = calcularMatches(lead, listaImoveis);
+
+          // B. Buscar Matches Automáticos via RPC (Função SQL)
+          const params = {
+            p_orcamento: lead.orcamento_max || 0,
+            p_quartos: lead.quartos || 0,
+            p_banheiros: parseNumber(lead.banheiros),
+            p_vagas: parseNumber(lead.vagas),
+            p_bairro: lead.interesse_bairro || null,
+            p_cidade: lead.cidade || null
+          };
+
+          const { data: matchesData, error: rpcError } = await (supabase as any).rpc(
+            'buscar_matches_imoveis', 
+            params
+          );
+
+          if (!rpcError && matchesData) {
+            // Processar o retorno do SQL para adicionar as "tags" visuais
+            matches = (matchesData as any[]).map(m => {
+              const reasons: string[] = [];
+              
+              if (m.score >= 40 && lead.interesse_bairro && m.bairro?.toLowerCase().includes(lead.interesse_bairro.toLowerCase())) {
+                reasons.push("Bairro Exato");
+              }
+              if (lead.orcamento_max && m.preco <= lead.orcamento_max) {
+                reasons.push("Preço Ideal");
+              }
+              if (lead.quartos && m.quartos >= lead.quartos) {
+                reasons.push("Quartos OK");
+              }
+
+              return {
+                ...m,
+                matchReasons: reasons
+              };
+            });
+          } else if (rpcError) {
+            console.error("Erro na RPC para lead:", lead.nome, rpcError);
+          }
+
           return { ...lead, matches, recommendedList };
-        });
+        }));
 
         setLeads(leadsProcessados);
 
       } catch (error) {
         console.error("Erro ao carregar CRM:", error);
+        toast({
+            title: "Erro",
+            description: "Falha ao carregar dados do CRM.",
+            variant: "destructive"
+        });
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
-  // --- Função para Pausar Robô (Webhook n8n) ---
+  // --- Função para Pausar Robô ---
   const handlePauseRobot = async (lead: Lead, e: React.MouseEvent) => {
-    e.stopPropagation(); // Impede que abra a ficha do cliente ao clicar no botão
+    e.stopPropagation(); 
     setPausingId(lead.id);
 
-    // 👇 COLOQUE AQUI O SEU URL DO N8N
+    // 👇 Configure sua URL aqui
     const N8N_WEBHOOK_URL = "https://seu-n8n.com/webhook/pausar-robo"; 
 
     try {
-      // Simulação do envio (Remova o setTimeout e descomente o fetch quando tiver a URL)
-      // const response = await fetch(N8N_WEBHOOK_URL, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({
-      //     lead_id: lead.id,
-      //     nome: lead.nome,
-      //     whatsapp: lead.whatsapp,
-      //     action: "PAUSE_AUTOMATION"
-      //   })
-      // });
-      
-      // Simulação de delay para você ver o loading
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // await fetch(...) 
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
 
       toast({
         title: "⛔ Robô Pausado",
-        description: `Automação interrompida para ${lead.nome}. Dados enviados ao n8n.`,
-        variant: "destructive", // Vermelho
-      });
-
-      console.log("Webhook enviado para:", { 
-        nome: lead.nome, 
-        whatsapp: lead.whatsapp 
+        description: `Automação interrompida para ${lead.nome}.`,
+        variant: "destructive",
       });
 
     } catch (error) {
@@ -207,111 +243,15 @@ export default function CRM() {
     }
   };
 
-  function parseNumber(val: string | number | null): number {
-    if (typeof val === 'number') return val;
-    if (!val) return 0;
-    const nums = val.replace(/\D/g, ""); 
-    return nums ? parseInt(nums) : 0;
-  }
-
-  function calcularMatches(lead: Lead, imoveis: Imovel[]): ScoredImovel[] {
-    const recIdsString = lead.imoveis_recomendados?.map(id => String(id)) || [];
-
-    const scored = imoveis.map(imovel => {
-      if (recIdsString.includes(String(imovel.id))) {
-        return { ...imovel, score: -1, matchReasons: [] }; 
-      }
-
-      let score = 0;
-      const reasons: string[] = [];
-
-      const leadBairro = (lead.interesse_bairro || "").toLowerCase().trim();
-      const leadCidade = (lead.cidade || "").toLowerCase().trim();
-      const leadMaxPrice = lead.orcamento_max || 0;
-      const leadMinPrice = lead.orcamento_minimo || 0;
-      const leadQuartos = lead.quartos || 0;
-      const leadVagas = parseNumber(lead.vagas);
-      const leadBanheiros = parseNumber(lead.banheiros);
-
-      // Algoritmo de Match (Mantido igual)
-      const imovelBairro = (imovel.bairro || "").toLowerCase();
-      const imovelCidade = (imovel.cidade || "").toLowerCase();
-      
-      if (leadBairro) {
-        if (imovelBairro.includes(leadBairro) || imovelCidade.includes(leadBairro)) score += 40;
-        else if (leadCidade && imovelCidade.includes(leadCidade)) score += 10;
-        else score -= 50;
-      } else if (leadCidade) {
-        if (imovelCidade.includes(leadCidade)) score += 40;
-        else score -= 50;
-      } else {
-        score += 40;
-      }
-
-      const price = imovel.preco || 0;
-      if (price > 0 && leadMaxPrice > 0) {
-        if (price <= leadMaxPrice) {
-          const piso = leadMinPrice > 0 ? leadMinPrice : (leadMaxPrice * 0.6);
-          if (price >= piso) {
-             score += 25; 
-             reasons.push("Preço ideal");
-          } else {
-             score += 10;
-             reasons.push("Abaixo do padrão");
-          }
-        } else if (price <= leadMaxPrice * 1.1) {
-          score += 15;
-          reasons.push("Pouco acima");
-        } else {
-          score -= 30;
-        }
-      } else {
-        score += 25;
-      }
-
-      const imovelQuartos = imovel.quartos || 0;
-      if (leadQuartos > 0) {
-        if (imovelQuartos >= leadQuartos) {
-          score += 20;
-          reasons.push(`${imovelQuartos} quartos`);
-        } else if (imovelQuartos === leadQuartos - 1) score += 5;
-        else score -= 20;
-      } else score += 20;
-
-      if (leadVagas > 0 && (imovel.vagas || 0) >= leadVagas) score += 10;
-      else if (!leadVagas) score += 10;
-
-      if (leadBanheiros > 0 && (imovel.banheiros || 0) >= leadBanheiros) score += 5;
-
-      if (lead.itens_lazer) {
-        const keywords = lead.itens_lazer.split(',').map(k => k.trim().toLowerCase());
-        const imovelDesc = (imovel.descricao + " " + imovel.itens_lazer).toLowerCase();
-        if (keywords.some(k => k && imovelDesc.includes(k))) {
-          score += 5;
-          reasons.push("Item desejado");
-        }
-      }
-
-      return { ...imovel, score: Math.min(100, Math.max(0, Math.round(score))), matchReasons: reasons };
-    });
-
-    return scored
-      .filter(imovel => imovel.score >= 50)
-      .sort((a, b) => b.score - a.score);
-  }
-
-  const formatCurrency = (val: number | null) => {
-    if (!val) return "R$ -";
-    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-  };
-
   const filteredLeads = leads.filter(lead => 
     lead.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.interesse_bairro?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const ImovelCard = ({ imovel, lead, isRecommended = false }: { imovel: Imovel, lead: Lead, isRecommended?: boolean }) => {
-    const score = (imovel as ScoredImovel).score;
+    // Se vier da RPC tem score, se for manual definimos um padrão
+    const score = (imovel as ScoredImovel).score || 100;
+    const reasons = (imovel as ScoredImovel).matchReasons || [];
     
     return (
       <div className={`bg-card rounded-xl overflow-hidden flex flex-col hover:shadow-lg transition-all group h-full border ${isRecommended ? 'border-amber-400 shadow-md shadow-amber-100' : 'border-border'}`}>
@@ -336,10 +276,10 @@ export default function CRM() {
               )}
               {!isRecommended && (
                 <Badge className={`shadow-sm border-none text-white ${
-                  (score >= 90) ? 'bg-green-600' : 
-                  (score >= 70) ? 'bg-blue-600' : 'bg-yellow-600'
+                  (score >= 70) ? 'bg-green-600' : 
+                  (score >= 50) ? 'bg-blue-600' : 'bg-yellow-600'
                 }`}>
-                  {score}% Match
+                  {score} pts Match
                 </Badge>
               )}
           </div>
@@ -376,9 +316,9 @@ export default function CRM() {
             </div>
           </div>
 
-          {!isRecommended && (imovel as ScoredImovel).matchReasons && (
+          {!isRecommended && reasons.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4 min-h-[24px]">
-              {(imovel as ScoredImovel).matchReasons.slice(0, 2).map((reason, idx) => (
+              {reasons.slice(0, 2).map((reason, idx) => (
                 <span key={idx} className="text-[10px] bg-secondary/80 px-2 py-0.5 rounded-full text-secondary-foreground font-medium border border-secondary">
                   {reason}
                 </span>
@@ -488,21 +428,18 @@ export default function CRM() {
                            </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">
-                          {lead.matches?.length || 0} matches auto
+                          {lead.matches?.length || 0} matches DB
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      {/* Agrupamento de Botões de Ação */}
                       <div className="flex items-center justify-end gap-2">
-                        {/* Botão de Pausar Robô */}
                         <Button 
                           size="sm" 
                           variant="destructive" 
                           className="h-8 px-2.5"
                           onClick={(e) => handlePauseRobot(lead, e)}
                           disabled={pausingId === lead.id}
-                          title="Pausar automação do robô para este lead"
                         >
                           {pausingId === lead.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -514,7 +451,6 @@ export default function CRM() {
                           )}
                         </Button>
 
-                        {/* Botão de Ver Ficha */}
                         <Button size="sm" variant="ghost" className="h-8">
                           <User className="mr-2 h-4 w-4" /> Ficha
                         </Button>
@@ -574,26 +510,26 @@ export default function CRM() {
                        </div>
                        
                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                          {selectedLead.recommendedList.map((imovel) => (
-                            <ImovelCard key={imovel.id} imovel={imovel} lead={selectedLead} isRecommended={true} />
-                          ))}
+                         {selectedLead.recommendedList.map((imovel) => (
+                           <ImovelCard key={imovel.id} imovel={imovel} lead={selectedLead} isRecommended={true} />
+                         ))}
                        </div>
                     </div>
                   )}
 
-                  {/* SEÇÃO 2: MATCHES */}
+                  {/* SEÇÃO 2: MATCHES SQL */}
                   <div className="space-y-4">
-                     <div className="flex items-center gap-2 pb-2 border-b border-border">
-                        <div className="p-1.5 bg-primary/10 rounded-md">
-                          <Sparkles className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg text-foreground">Sugestões do Sistema</h3>
-                          <p className="text-xs text-muted-foreground">Baseado em inteligência artificial</p>
-                        </div>
-                     </div>
-                     
-                     {selectedLead?.matches && selectedLead.matches.length > 0 ? (
+                      <div className="flex items-center gap-2 pb-2 border-b border-border">
+                         <div className="p-1.5 bg-primary/10 rounded-md">
+                           <Sparkles className="h-5 w-5 text-primary" />
+                         </div>
+                         <div>
+                           <h3 className="font-bold text-lg text-foreground">Sugestões do Sistema (SQL)</h3>
+                           <p className="text-xs text-muted-foreground">Processado diretamente no banco de dados</p>
+                         </div>
+                      </div>
+                      
+                      {selectedLead?.matches && selectedLead.matches.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {selectedLead.matches.map((imovel) => (
                           <ImovelCard key={imovel.id} imovel={imovel} lead={selectedLead} />
@@ -602,7 +538,7 @@ export default function CRM() {
                     ) : (
                       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/20">
                         <Home className="h-10 w-10 opacity-20 mb-2" />
-                        <p>Nenhum match automático encontrado.</p>
+                        <p>Nenhum match encontrado com os filtros rígidos do banco.</p>
                       </div>
                     )}
                   </div>
