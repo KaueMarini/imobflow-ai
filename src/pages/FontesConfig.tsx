@@ -3,6 +3,8 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch"; 
+import { Label } from "@/components/ui/label";
 import {
   Layers,
   Crown,
@@ -14,6 +16,9 @@ import {
   Info,
   ChevronDown,
   Loader2,
+  Bot,
+  Lock,
+  ExternalLink
 } from "lucide-react";
 import {
   Select,
@@ -32,66 +37,80 @@ interface FonteImobiliaria {
   tipo: "vip" | "fallback" | "disponivel";
 }
 
-const todasFontes: FonteImobiliaria[] = [
-  { id: "1", nome: "Lopes", tipo: "disponivel" },
-  { id: "2", nome: "Prime Imóveis", tipo: "disponivel" },
-  { id: "3", nome: "R3 Imobiliária", tipo: "disponivel" },
-  { id: "4", nome: "Century 21", tipo: "disponivel" },
-  { id: "5", nome: "RE/MAX", tipo: "disponivel" },
-  { id: "6", nome: "Coelho da Fonseca", tipo: "disponivel" },
-  { id: "7", nome: "Sawala", tipo: "disponivel" },
-  { id: "8", nome: "Patrimóvel", tipo: "disponivel" },
-  { id: "9", nome: "Apolar", tipo: "disponivel" },
-  { id: "10", nome: "ZAP Imóveis", tipo: "disponivel" },
-];
-
 export default function FontesConfig() {
   const { clienteSaas, refreshClienteSaas } = useAuth();
+  
+  // Estados de Dados
   const [fontesVIP, setFontesVIP] = useState<FonteImobiliaria[]>([]);
   const [fontesFallback, setFontesFallback] = useState<FonteImobiliaria[]>([]);
+  const [fontesDisponiveisDB, setFontesDisponiveisDB] = useState<string[]>([]);
+  
+  // Estado do Robô (Manual vs Automático)
+  const [modoManual, setModoManual] = useState(false);
+
+  // Estados de UI
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Carrega as fontes do banco ao montar
+  // 1. Carregar Fontes REAIS do Banco + Configurações do Cliente
   useEffect(() => {
-    if (clienteSaas) {
-      const vip = (clienteSaas.fontes_preferenciais || []).map((nome, index) => ({
-        id: `vip-${index}`,
-        nome,
-        tipo: "vip" as const,
-      }));
-      const fallback = (clienteSaas.fontes_secundarias || []).map((nome, index) => ({
-        id: `fb-${index}`,
-        nome,
-        tipo: "fallback" as const,
-      }));
-      setFontesVIP(vip);
-      setFontesFallback(fallback);
-      setLoading(false);
-    } else {
-      // Se não tem clienteSaas, ainda assim para de carregar
-      setLoading(false);
+    async function loadData() {
+      try {
+        // A. Buscar todas as imobiliárias disponíveis (Distinct Origem)
+        // Usamos (supabase as any) para evitar erro de tipagem TS na tabela nova
+        const { data: imoveisData, error } = await (supabase as any)
+          .from('imoveis_santos')
+          .select('origem');
+        
+        if (error) throw error;
+
+        // Cria lista única de nomes
+        const nomesUnicos = Array.from(new Set((imoveisData || []).map((i: any) => i.origem).filter(Boolean)));
+        setFontesDisponiveisDB(nomesUnicos as string[]);
+
+        // B. Carregar Configurações Salvas do Cliente
+        if (clienteSaas) {
+          const vip = (clienteSaas.fontes_preferenciais || []).map((nome, index) => ({
+            id: `vip-${index}`,
+            nome,
+            tipo: "vip" as const,
+          }));
+          const fallback = (clienteSaas.fontes_secundarias || []).map((nome, index) => ({
+            id: `fb-${index}`,
+            nome,
+            tipo: "fallback" as const,
+          }));
+          
+          setFontesVIP(vip);
+          setFontesFallback(fallback);
+          
+          // Carrega o modo do robô (usamos 'as any' pois a coluna é nova no banco e o TS não sabe ainda)
+          setModoManual((clienteSaas as any).modo_manual_envio || false);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+        toast.error("Erro ao carregar lista de imobiliárias.");
+      } finally {
+        setLoading(false);
+      }
     }
+
+    loadData();
   }, [clienteSaas]);
 
-  const fontesDisponiveis = todasFontes.filter(
-    (f) =>
-      !fontesVIP.find((v) => v.nome === f.nome) &&
-      !fontesFallback.find((fb) => fb.nome === f.nome)
+  // Filtra as fontes que já foram selecionadas para não duplicar no Select
+  const fontesParaAdicionar = fontesDisponiveisDB.filter(
+    (nome) =>
+      !fontesVIP.find((v) => v.nome === nome) &&
+      !fontesFallback.find((fb) => fb.nome === nome)
   );
 
-  const addFonteVIP = (id: string) => {
-    const fonte = todasFontes.find((f) => f.id === id);
-    if (fonte) {
-      setFontesVIP([...fontesVIP, { ...fonte, tipo: "vip" }]);
-    }
+  const addFonteVIP = (nome: string) => {
+    setFontesVIP([...fontesVIP, { id: `new-vip-${Date.now()}`, nome, tipo: "vip" }]);
   };
 
-  const addFonteFallback = (id: string) => {
-    const fonte = todasFontes.find((f) => f.id === id);
-    if (fonte) {
-      setFontesFallback([...fontesFallback, { ...fonte, tipo: "fallback" }]);
-    }
+  const addFonteFallback = (nome: string) => {
+    setFontesFallback([...fontesFallback, { id: `new-fb-${Date.now()}`, nome, tipo: "fallback" }]);
   };
 
   const removeFonteVIP = (id: string) => {
@@ -114,25 +133,25 @@ export default function FontesConfig() {
       const fontesPreferenciais = fontesVIP.map(f => f.nome);
       const fontesSecundarias = fontesFallback.map(f => f.nome);
 
-      // Banco externo usa "clientes_saas" (com S no final)
       const sb = supabase as any;
       const { error } = await sb
-        .from('clientes_saas')
+        .from('clientes_saas') // Ou 'cliente_saas' dependendo do seu banco (singular/plural)
         .update({
           fontes_preferenciais: fontesPreferenciais,
           fontes_secundarias: fontesSecundarias,
+          modo_manual_envio: modoManual // Salva a configuração do robô
         })
         .eq('id', clienteSaas.id);
 
       if (error) {
-        console.error('Erro ao salvar configurações:', error);
-        toast.error('Erro ao salvar configurações', {
-          description: error.message,
-        });
+        console.error('Erro:', error);
+        toast.error('Erro ao salvar configurações');
       } else {
         await refreshClienteSaas();
         toast.success('Configurações salvas!', {
-          description: 'Suas regras de fontes foram atualizadas com sucesso.',
+          description: modoManual 
+            ? 'Robô configurado para aprovação manual.' 
+            : 'Robô configurado para envio automático.',
         });
       }
     } catch (err) {
@@ -152,27 +171,80 @@ export default function FontesConfig() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <AppHeader
-        title="Regras de Fontes"
-        subtitle="Configure a prioridade de busca de imóveis por imobiliária"
+        title="Cérebro do Robô"
+        subtitle="Configure como a IA busca e entrega os imóveis"
       />
 
-      <div className="p-6 space-y-6 max-w-4xl">
-        {/* Info Banner */}
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
-          <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium text-foreground">Como funciona a prioridade?</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              O sistema busca imóveis primeiro nas <strong>Fontes VIP</strong>. Se não encontrar
-              resultados suficientes, complementa com as <strong>Fontes de Fallback</strong>.
-              Isso garante que seus parceiros preferenciais apareçam primeiro para os leads.
-            </p>
-          </div>
+      <div className="p-6 space-y-8 max-w-4xl mx-auto">
+        
+        {/* --- 1. MODO DE OPERAÇÃO DO ROBÔ --- */}
+        <Card className={`border-2 transition-all ${modoManual ? 'border-amber-400 bg-amber-50/10' : 'border-green-500 bg-green-50/10'}`}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${modoManual ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
+                <Bot className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle>Comportamento de Envio</CardTitle>
+                <CardDescription>
+                  Decida se a IA envia os imóveis sozinha ou pede sua aprovação.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 bg-background border rounded-lg shadow-sm">
+              <div className="space-y-1">
+                <Label htmlFor="mode-switch" className="text-base font-semibold">
+                  {modoManual ? "Modo: Aprovação Manual (Human in the Loop)" : "Modo: Envio Automático (Velocidade)"}
+                </Label>
+                <p className="text-sm text-muted-foreground max-w-xl">
+                  {modoManual 
+                    ? "A IA vai analisar o lead, dizer 'Vou verificar algumas opções e já te retorno' e notificar você. Você seleciona os imóveis manualmente no CRM."
+                    : "A IA vai encontrar os 5 melhores matches e enviar IMEDIATAMENTE para o cliente com fotos e links, sem sua intervenção."
+                  }
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                 <span className={`text-xs font-bold ${!modoManual ? 'text-green-600' : 'text-muted-foreground'}`}>AUTO</span>
+                 <Switch 
+                    id="mode-switch"
+                    checked={modoManual}
+                    onCheckedChange={setModoManual}
+                 />
+                 <span className={`text-xs font-bold ${modoManual ? 'text-amber-600' : 'text-muted-foreground'}`}>MANUAL</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* --- INFO BANNER --- */}
+        <div className="grid gap-4 md:grid-cols-2">
+            <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 flex gap-3">
+                <ExternalLink className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                    <p className="font-bold text-sm">Fontes Preferenciais (Links Abertos)</p>
+                    <p className="text-xs mt-1 leading-relaxed">
+                        Imóveis destas fontes são enviados com <strong>Link Direto</strong> e <strong>Fotos</strong>. 
+                        O cliente vê a origem. Use para imóveis da sua carteira ou parceiros oficiais.
+                    </p>
+                </div>
+            </div>
+            <div className="p-4 rounded-lg bg-purple-50 border border-purple-200 text-purple-800 flex gap-3">
+                <Lock className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                    <p className="font-bold text-sm">Fontes de Fallback (Sigilosas)</p>
+                    <p className="text-xs mt-1 leading-relaxed">
+                        Usadas se não houver preferenciais. O robô envia <strong>apenas dados e descrição</strong>, 
+                        escondendo a origem e link. Ideal para captar leads de parceiros ocultos.
+                    </p>
+                </div>
+            </div>
         </div>
 
-        {/* VIP Sources */}
+        {/* --- 2. VIP SOURCES --- */}
         <Card className="border-2 border-primary/20">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -181,84 +253,54 @@ export default function FontesConfig() {
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  Fontes Preferenciais (VIP)
-                  <Badge className="bg-primary">Prioridade Alta</Badge>
+                  Fontes Preferenciais
+                  <Badge className="bg-primary">Links Visíveis</Badge>
                 </CardTitle>
-                <CardDescription>
-                  Imóveis dessas imobiliárias aparecem primeiro nas recomendações
-                </CardDescription>
+                <CardDescription>Busca prioritária. O cliente recebe o link do site.</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Selected VIP sources */}
             <div className="space-y-2">
               {fontesVIP.map((fonte, index) => (
-                <div
-                  key={fonte.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5"
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                  <Badge variant="outline" className="bg-primary/10 border-primary/20">
-                    #{index + 1}
-                  </Badge>
+                <div key={fonte.id} className="flex items-center gap-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                  <Badge variant="outline" className="bg-primary/10 border-primary/20">#{index + 1}</Badge>
                   <Building2 className="h-4 w-4 text-primary" />
                   <span className="font-medium flex-1">{fonte.nome}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeFonteVIP(fonte.id)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeFonteVIP(fonte.id)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
-
               {fontesVIP.length === 0 && (
                 <div className="p-6 text-center text-muted-foreground border border-dashed rounded-lg">
                   <Crown className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>Nenhuma fonte VIP selecionada</p>
-                  <p className="text-sm">Adicione suas imobiliárias parceiras preferenciais</p>
                 </div>
               )}
             </div>
 
-            {/* Add VIP source */}
             <Select onValueChange={addFonteVIP}>
-              <SelectTrigger className="max-w-xs">
-                <div className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  <SelectValue placeholder="Adicionar fonte VIP" />
-                </div>
+              <SelectTrigger className="w-full">
+                <div className="flex items-center gap-2"><Plus className="h-4 w-4" /><SelectValue placeholder="Adicionar imobiliária..." /></div>
               </SelectTrigger>
               <SelectContent>
-                {fontesDisponiveis.length === 0 ? (
-                  <SelectItem value="_" disabled>
-                    Todas as fontes já foram adicionadas
-                  </SelectItem>
-                ) : (
-                  fontesDisponiveis.map((fonte) => (
-                    <SelectItem key={fonte.id} value={fonte.id}>
-                      {fonte.nome}
-                    </SelectItem>
-                  ))
-                )}
+                {fontesParaAdicionar.map((nome) => (
+                    <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </CardContent>
         </Card>
 
-        {/* Hierarchy Arrow */}
-        <div className="flex justify-center">
-          <div className="flex flex-col items-center text-muted-foreground">
-            <ChevronDown className="h-6 w-6" />
-            <span className="text-xs">Se não encontrar, busca em</span>
-            <ChevronDown className="h-6 w-6" />
-          </div>
+        {/* Seta Hierárquica */}
+        <div className="flex justify-center -my-2 relative z-10">
+          <Badge variant="secondary" className="px-4 py-1 text-xs text-muted-foreground bg-muted border-border shadow-sm">
+             <ChevronDown className="h-3 w-3 mr-1" /> Se não encontrar, busca em:
+          </Badge>
         </div>
 
-        {/* Fallback Sources */}
+        {/* --- 3. FALLBACK SOURCES --- */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -267,90 +309,58 @@ export default function FontesConfig() {
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  Fontes de Fallback (Reserva)
-                  <Badge variant="secondary">Prioridade Normal</Badge>
+                  Fontes de Fallback
+                  <Badge variant="secondary" className="gap-1"><Lock className="h-3 w-3"/> Dados Ocultos</Badge>
                 </CardTitle>
-                <CardDescription>
-                  Usadas para complementar resultados quando as fontes VIP não são suficientes
-                </CardDescription>
+                <CardDescription>Busca secundária. O link e nome da imobiliária são removidos da mensagem.</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Selected fallback sources */}
             <div className="space-y-2">
               {fontesFallback.map((fonte, index) => (
-                <div
-                  key={fonte.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30"
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                  <Badge variant="outline" className="text-muted-foreground">
-                    #{index + 1}
-                  </Badge>
+                <div key={fonte.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                  <Badge variant="outline" className="text-muted-foreground">#{index + 1}</Badge>
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium flex-1">{fonte.nome}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeFonteFallback(fonte.id)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeFonteFallback(fonte.id)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
-
               {fontesFallback.length === 0 && (
                 <div className="p-6 text-center text-muted-foreground border border-dashed rounded-lg">
                   <Layers className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>Nenhuma fonte de fallback selecionada</p>
-                  <p className="text-sm">Adicione fontes secundárias para complementar resultados</p>
                 </div>
               )}
             </div>
 
-            {/* Add fallback source */}
             <Select onValueChange={addFonteFallback}>
-              <SelectTrigger className="max-w-xs">
-                <div className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  <SelectValue placeholder="Adicionar fonte de fallback" />
-                </div>
+              <SelectTrigger className="w-full">
+                <div className="flex items-center gap-2"><Plus className="h-4 w-4" /><SelectValue placeholder="Adicionar imobiliária..." /></div>
               </SelectTrigger>
               <SelectContent>
-                {fontesDisponiveis.length === 0 ? (
-                  <SelectItem value="_" disabled>
-                    Todas as fontes já foram adicionadas
-                  </SelectItem>
-                ) : (
-                  fontesDisponiveis.map((fonte) => (
-                    <SelectItem key={fonte.id} value={fonte.id}>
-                      {fonte.nome}
-                    </SelectItem>
-                  ))
-                )}
+                {fontesParaAdicionar.map((nome) => (
+                    <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </CardContent>
         </Card>
 
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button 
-            size="lg" 
-            className="gap-2" 
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {saving ? 'Salvando...' : 'Salvar Configurações'}
-          </Button>
+        {/* --- SAVE BAR --- */}
+        <div className="sticky bottom-4 flex justify-end">
+          <Card className="bg-background/80 backdrop-blur-md border shadow-lg">
+             <CardContent className="p-2">
+                <Button size="lg" className="gap-2 shadow-md" onClick={handleSave} disabled={saving}>
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {saving ? 'Salvando...' : 'Salvar Alterações'}
+                </Button>
+             </CardContent>
+          </Card>
         </div>
+
       </div>
     </div>
   );

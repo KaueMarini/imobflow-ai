@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom"; // <--- NOVO IMPORT
 import { AppHeader } from "@/components/layout/AppHeader";
 import {
   Card,
@@ -33,20 +34,25 @@ import {
   MapPin, 
   Car, 
   DollarSign, 
-  Home,
-  BedDouble,
-  Ruler,
-  ExternalLink,
-  MessageCircle,
-  User,
-  Phone,
-  Bath,
-  Palmtree,
-  Calendar,
-  Star,
-  Sparkles,
-  CirclePause,
-  Bot
+  Home, 
+  BedDouble, 
+  Ruler, 
+  ExternalLink, 
+  MessageCircle, 
+  User, 
+  Phone, 
+  Bath, 
+  Palmtree, 
+  Calendar, 
+  Star, 
+  Sparkles, 
+  CirclePause, 
+  Bot, 
+  Filter, 
+  X, 
+  ChevronLeft, 
+  ChevronRight,
+  Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,11 +74,13 @@ interface Imovel {
   imagem_url: string | null;
   itens_lazer: string | null;
   link: string | null;
+  origem?: string | null;
 }
 
 interface ScoredImovel extends Imovel {
   score: number; 
-  matchReasons: string[]; // Gerado no front para exibição
+  matchReasons: string[];
+  faixa_preco?: string;
 }
 
 interface Lead {
@@ -90,7 +98,8 @@ interface Lead {
   itens_lazer: string | null;
   
   imoveis_recomendados: (string | number)[] | null; 
-
+  
+  // Matches carregados sob demanda (Lazy Loading)
   matches?: ScoredImovel[]; 
   recommendedList?: Imovel[]; 
 }
@@ -98,14 +107,29 @@ interface Lead {
 export default function CRM() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams(); // <--- HOOK PARA LER URL
+  
+  // --- Estados de Dados ---
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingList, setLoadingList] = useState(true); 
+  const [loadingMatches, setLoadingMatches] = useState(false); 
+  
+  // --- Paginação ---
+  const [page, setPage] = useState(0);
+  const ROWS_PER_PAGE = 20; 
+  const [totalLeads, setTotalLeads] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // --- Lead Selecionado (Detalhes) ---
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [pausingId, setPausingId] = useState<string | null>(null);
 
-  // Helper para converter string "2+" ou null em número para o SQL
+  // --- Filtros de Fontes (SaaS) ---
+  const [availableSources, setAvailableSources] = useState<string[]>([]); 
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);   
+
+  // Helpers
   function parseNumber(val: string | number | null): number {
     if (typeof val === 'number') return val;
     if (!val) return 0;
@@ -113,144 +137,206 @@ export default function CRM() {
     return nums ? parseInt(nums) : 0;
   }
 
-  const formatCurrency = (val: number | null) => {
+  const formatCurrency = (val: number | null | string) => {
     if (!val) return "R$ -";
-    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+    const num = Number(val);
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  };
+
+  // 1. Carregar Configurações e Lista (Paginada)
+  const fetchLeads = useCallback(async () => {
+    if (!user?.id) return;
+    setLoadingList(true);
+
+    try {
+      // A. Buscar Fontes (apenas uma vez)
+      if (availableSources.length === 0) {
+        let saasResponse = await (supabase as any)
+          .from("clientes_saas")
+          .select("fontes_preferenciais, fontes_secundarias")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (!saasResponse.data) {
+           saasResponse = await (supabase as any).from("cliente_saas").select("*").eq("user_id", user.id).maybeSingle();
+        }
+        if (!saasResponse.data) {
+           saasResponse = await (supabase as any).from("clientes_saas").select("*").eq("id", user.id).maybeSingle();
+        }
+
+        if (saasResponse.data) {
+          const todas = [
+            ...(saasResponse.data.fontes_preferenciais || []),
+            ...(saasResponse.data.fontes_secundarias || [])
+          ];
+          setAvailableSources([...new Set(todas)]);
+        }
+      }
+
+      // B. Buscar Leads Pagindados
+      let query = (supabase as any)
+        .from("leads")
+        .select("*", { count: "exact" }) 
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (searchTerm) {
+        query = query.or(`nome.ilike.%${searchTerm}%,interesse_bairro.ilike.%${searchTerm}%`);
+      }
+
+      const from = page * ROWS_PER_PAGE;
+      const to = from + ROWS_PER_PAGE - 1;
+      
+      const { data, error, count } = await query.range(from, to);
+
+      if (error) throw error;
+
+      setLeads(data as Lead[]);
+      if (count !== null) setTotalLeads(count);
+
+    } catch (error) {
+      console.error("Erro ao buscar leads:", error);
+      toast({ title: "Erro", description: "Falha ao carregar lista.", variant: "destructive" });
+    } finally {
+      setLoadingList(false);
+    }
+  }, [user?.id, page, searchTerm, availableSources.length, toast]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  // 2. Carregar Matches para Lead Selecionado (Sob Demanda)
+  const fetchMatchesForLead = async (lead: Lead) => {
+    if (!user?.id) return;
+    setLoadingMatches(true);
+
+    try {
+      let recommendedList: Imovel[] = [];
+      let matches: ScoredImovel[] = [];
+
+      // A. Manuais
+      if (lead.imoveis_recomendados && lead.imoveis_recomendados.length > 0) {
+        const idsParaBuscar = lead.imoveis_recomendados.map((id: string | number) => String(id));
+        const { data: manuais } = await (supabase as any)
+          .from("imoveis_santos")
+          .select("*")
+          .in("id", idsParaBuscar);
+        if (manuais) recommendedList = manuais as Imovel[];
+      }
+
+      // B. Automáticos (RPC SQL)
+      const params = {
+        p_user_id: user.id,
+        p_orcamento: lead.orcamento_max || 0,
+        p_quartos: lead.quartos || 0,
+        p_banheiros: parseNumber(lead.banheiros),
+        p_vagas: parseNumber(lead.vagas),
+        p_bairro: lead.interesse_bairro || null,
+        p_cidade: lead.cidade || null,
+        p_filtro_fontes: selectedSources.length > 0 ? selectedSources : null
+      };
+
+      console.log("🔍 Buscando matches para:", lead.nome, params);
+
+      const { data: matchesData, error: rpcError } = await (supabase as any).rpc(
+        'buscar_matches_imoveis', 
+        params
+      );
+
+      if (matchesData) {
+        matches = (matchesData as any[]).map(m => {
+          const reasons: string[] = [];
+          
+          if (m.faixa_preco === 'ZONA IDEAL') {
+             reasons.push("Preço Ideal");
+          } else {
+             reasons.push("Oportunidade");
+          }
+
+          if (lead.interesse_bairro && m.bairro?.toLowerCase().includes(lead.interesse_bairro.toLowerCase())) {
+             reasons.push("Bairro Exato");
+          }
+          
+          return { ...m, matchReasons: reasons };
+        });
+      }
+
+      setSelectedLead({ ...lead, matches, recommendedList });
+
+    } catch (error) {
+      console.error("Erro matches:", error);
+    } finally {
+      setLoadingMatches(false);
+    }
   };
 
   useEffect(() => {
-    async function fetchData() {
-      if (!user?.id) return;
-      setLoading(true);
-      
-      try {
-        // 1. Buscar Leads do Usuário
-        // Usamos (supabase as any) para evitar erro de tipo TS se a tabela leads não estiver no types gerado
-        const { data: leadsData, error: leadsError } = await (supabase as any)
-          .from("leads")
-          .select("*") 
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        if (leadsError) throw leadsError;
-        const listaLeads = leadsData as Lead[];
-
-        // 2. Processamento Paralelo: Para cada lead, busca recomendados manuais e matches automáticos
-        const leadsProcessados = await Promise.all(listaLeads.map(async (lead) => {
-          
-          let recommendedList: Imovel[] = [];
-          let matches: ScoredImovel[] = [];
-
-          // A. Buscar Imóveis Recomendados Manualmente (IDs fixos)
-          if (lead.imoveis_recomendados && lead.imoveis_recomendados.length > 0) {
-            
-            // Converte IDs para string para o .in() não reclamar
-            const idsParaBuscar = lead.imoveis_recomendados.map((id: string | number) => String(id));
-
-            const { data: manuais } = await (supabase as any)
-              .from("imoveis_santos")
-              .select("*")
-              .in("id", idsParaBuscar);
-            
-            if (manuais) recommendedList = manuais as Imovel[];
-          }
-
-          // B. Buscar Matches Automáticos via RPC (Função SQL)
-          const params = {
-            p_orcamento: lead.orcamento_max || 0,
-            p_quartos: lead.quartos || 0,
-            p_banheiros: parseNumber(lead.banheiros),
-            p_vagas: parseNumber(lead.vagas),
-            p_bairro: lead.interesse_bairro || null,
-            p_cidade: lead.cidade || null
-          };
-
-          const { data: matchesData, error: rpcError } = await (supabase as any).rpc(
-            'buscar_matches_imoveis', 
-            params
-          );
-
-          if (!rpcError && matchesData) {
-            // Processar o retorno do SQL para adicionar as "tags" visuais
-            matches = (matchesData as any[]).map(m => {
-              const reasons: string[] = [];
-              
-              if (m.score >= 40 && lead.interesse_bairro && m.bairro?.toLowerCase().includes(lead.interesse_bairro.toLowerCase())) {
-                reasons.push("Bairro Exato");
-              }
-              if (lead.orcamento_max && m.preco <= lead.orcamento_max) {
-                reasons.push("Preço Ideal");
-              }
-              if (lead.quartos && m.quartos >= lead.quartos) {
-                reasons.push("Quartos OK");
-              }
-
-              return {
-                ...m,
-                matchReasons: reasons
-              };
-            });
-          } else if (rpcError) {
-            console.error("Erro na RPC para lead:", lead.nome, rpcError);
-          }
-
-          return { ...lead, matches, recommendedList };
-        }));
-
-        setLeads(leadsProcessados);
-
-      } catch (error) {
-        console.error("Erro ao carregar CRM:", error);
-        toast({
-            title: "Erro",
-            description: "Falha ao carregar dados do CRM.",
-            variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
+    if (selectedLead && isDialogOpen) {
+      fetchMatchesForLead(selectedLead);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSources]);
 
-    fetchData();
-  }, [user?.id, toast]);
+  // --- NOVA FUNCIONALIDADE: DEEP LINK DO DASHBOARD ---
+  // Verifica se a URL tem ?abrir=LEAD_ID e abre automaticamente
+  useEffect(() => {
+    const leadIdParaAbrir = searchParams.get("abrir");
+    
+    // Só executa se tiver ID na URL e a lista já tiver carregado (ou se estiver vazia)
+    // Usamos um flag !isDialogOpen para evitar re-abrir se já estiver aberto
+    if (leadIdParaAbrir && !isDialogOpen) {
+        
+        // 1. Tenta achar o lead na página atual
+        const leadEncontrado = leads.find(l => l.id === leadIdParaAbrir);
+        
+        if (leadEncontrado) {
+            setSelectedLead(leadEncontrado);
+            setIsDialogOpen(true);
+            fetchMatchesForLead(leadEncontrado);
+        } else {
+            // 2. Se não estiver na página atual (devido à paginação), busca do banco
+            (supabase as any)
+                .from('leads')
+                .select('*')
+                .eq('id', leadIdParaAbrir)
+                .single()
+                .then(({ data }: { data: any }) => {
+                    if (data) {
+                        const leadUnico = data as Lead;
+                        setSelectedLead(leadUnico);
+                        setIsDialogOpen(true);
+                        fetchMatchesForLead(leadUnico);
+                    }
+                });
+        }
+    }
+  }, [searchParams, leads]); // Executa quando a URL muda ou os leads carregam
 
-  // --- Função para Pausar Robô ---
+
   const handlePauseRobot = async (lead: Lead, e: React.MouseEvent) => {
     e.stopPropagation(); 
     setPausingId(lead.id);
-
-    // 👇 Configure sua URL aqui
-    const N8N_WEBHOOK_URL = "https://seu-n8n.com/webhook/pausar-robo"; 
-
+    const N8N_WEBHOOK_URL = "https://seu-n8n.com/webhook/pausar-robo"; // Configure sua URL
+    
     try {
-      // await fetch(...) 
+      // await fetch(N8N_WEBHOOK_URL, ... ) 
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
-
       toast({
         title: "⛔ Robô Pausado",
         description: `Automação interrompida para ${lead.nome}.`,
         variant: "destructive",
       });
-
     } catch (error) {
-      toast({
-        title: "Erro ao pausar",
-        description: "Não foi possível comunicar com o robô.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Falha ao pausar.", variant: "destructive" });
     } finally {
       setPausingId(null);
     }
   };
 
-  const filteredLeads = leads.filter(lead => 
-    lead.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.interesse_bairro?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  // Componente Card de Imóvel
   const ImovelCard = ({ imovel, lead, isRecommended = false }: { imovel: Imovel, lead: Lead, isRecommended?: boolean }) => {
-    // Se vier da RPC tem score, se for manual definimos um padrão
-    const score = (imovel as ScoredImovel).score || 100;
+    const score = (imovel as ScoredImovel).score || 0;
     const reasons = (imovel as ScoredImovel).matchReasons || [];
     
     return (
@@ -269,20 +355,27 @@ export default function CRM() {
           )}
           
           <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
-              {isRecommended && (
-                <Badge className="bg-amber-500 hover:bg-amber-600 border-none text-white shadow-sm flex gap-1 items-center px-2 py-1">
-                  <Star className="h-3 w-3 fill-white" /> Recomendado
+              {isRecommended ? (
+                <Badge className="bg-amber-500 border-none text-white px-2 py-1">
+                  <Star className="h-3 w-3 mr-1 fill-white" /> Recomendado
                 </Badge>
-              )}
-              {!isRecommended && (
+              ) : (
                 <Badge className={`shadow-sm border-none text-white ${
-                  (score >= 70) ? 'bg-green-600' : 
-                  (score >= 50) ? 'bg-blue-600' : 'bg-yellow-600'
+                  (score >= 1000) ? 'bg-green-600' : 'bg-blue-600'
                 }`}>
-                  {score} pts Match
+                  {score >= 1000 ? "Match Ideal" : "Oportunidade"}
                 </Badge>
               )}
           </div>
+
+          {/* Badge de Origem */}
+          {imovel.origem && (
+             <div className="absolute top-2 left-2">
+                <Badge variant="secondary" className="text-[10px] bg-black/50 text-white backdrop-blur-md border-none">
+                   {imovel.origem}
+                </Badge>
+             </div>
+          )}
           
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 pt-8">
             <p className="text-white text-xs font-medium truncate flex items-center gap-1.5">
@@ -325,12 +418,6 @@ export default function CRM() {
               ))}
             </div>
           )}
-
-          {isRecommended && (
-             <div className="flex items-center gap-1.5 mb-4 min-h-[24px] text-amber-700 bg-amber-50 px-2 py-1 rounded-md text-[11px] font-medium border border-amber-100">
-                <Sparkles className="h-3 w-3" /> Seleção Exclusiva
-             </div>
-          )}
           
           <div className="mt-auto grid grid-cols-2 gap-2">
             <Button variant="outline" size="sm" className="w-full text-xs h-9" asChild>
@@ -341,7 +428,7 @@ export default function CRM() {
             </Button>
             <Button size="sm" className={`w-full text-white text-xs h-9 ${isRecommended ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'}`} asChild>
               <a 
-                href={`https://wa.me/${lead.whatsapp}?text=Olá ${lead.nome}, ${isRecommended ? 'separei este imóvel exclusivo para você' : 'olha essa oportunidade que encontrei'}: ${imovel.link}`} 
+                href={`https://wa.me/${lead.whatsapp}?text=Olá ${lead.nome}, encontrei este imóvel: ${imovel.link}`} 
                 target="_blank" 
                 rel="noreferrer"
               >
@@ -365,9 +452,9 @@ export default function CRM() {
       <Card className="border-border shadow-soft flex-1 flex flex-col">
         <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-2">
           <div>
-            <CardTitle>Meus Leads</CardTitle>
+            <CardTitle>Meus Leads ({totalLeads})</CardTitle>
             <CardDescription>
-              {leads.length} clientes ativos na base
+              Gerencie seus atendimentos e visualze os matches.
             </CardDescription>
           </div>
           <div className="relative w-full sm:w-72">
@@ -376,90 +463,103 @@ export default function CRM() {
               placeholder="Buscar por nome, bairro..."
               className="pl-9"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {setSearchTerm(e.target.value); setPage(0);}}
             />
           </div>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto">
-          {loading ? (
+        <CardContent className="flex-1 overflow-auto flex flex-col">
+          {loadingList ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Perfil de Busca</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLeads.map((lead) => (
-                  <TableRow key={lead.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => { setSelectedLead(lead); setIsDialogOpen(true); }}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{lead.nome || "Cliente sem nome"}</p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                           <Phone className="h-3 w-3" />
-                           {lead.whatsapp}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1.5 font-medium text-foreground">
-                          <MapPin className="h-3.5 w-3.5 text-primary" />
-                          <span>{lead.interesse_bairro || lead.cidade || "Qualquer região"}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <DollarSign className="h-3.5 w-3.5" />
-                          <span>Até {formatCurrency(lead.orcamento_max)}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        {lead.recommendedList && lead.recommendedList.length > 0 && (
-                           <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200 text-[10px] px-2">
-                              <Star className="h-3 w-3 mr-1 fill-amber-600 text-amber-600" />
-                              {lead.recommendedList.length} Recomendados
-                           </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {lead.matches?.length || 0} matches DB
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="destructive" 
-                          className="h-8 px-2.5"
-                          onClick={(e) => handlePauseRobot(lead, e)}
-                          disabled={pausingId === lead.id}
-                        >
-                          {pausingId === lead.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Bot className="h-4 w-4 mr-1.5" />
-                              <CirclePause className="h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-
-                        <Button size="sm" variant="ghost" className="h-8">
-                          <User className="mr-2 h-4 w-4" /> Ficha
-                        </Button>
-                      </div>
-                    </TableCell>
+            <>
+            <div className="flex-1">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Perfil de Busca</TableHead>
+                    <TableHead className="text-center">Status Matches</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {leads.map((lead) => (
+                    <TableRow key={lead.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => { 
+                        setSelectedLead(lead); 
+                        setIsDialogOpen(true); 
+                        fetchMatchesForLead(lead);
+                    }}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{lead.nome || "Cliente sem nome"}</p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                             <Phone className="h-3 w-3" />
+                             {lead.whatsapp}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5 font-medium text-foreground">
+                            <MapPin className="h-3.5 w-3.5 text-primary" />
+                            <span>{lead.interesse_bairro || lead.cidade || "Qualquer região"}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <DollarSign className="h-3.5 w-3.5" />
+                            <span>Até {formatCurrency(lead.orcamento_max)}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary cursor-pointer hover:bg-primary/10">
+                           <Eye className="h-3 w-3 mr-1" /> Ver
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            className="h-8 px-2.5"
+                            onClick={(e) => handlePauseRobot(lead, e)}
+                            disabled={pausingId === lead.id}
+                          >
+                            {pausingId === lead.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Bot className="h-4 w-4 mr-1.5" />
+                                <CirclePause className="h-4 w-4" />
+                              </>
+                            )}
+                          </Button>
+
+                          <Button size="sm" variant="ghost" className="h-8">
+                            <User className="mr-2 h-4 w-4" /> Ficha
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+             </div>
+
+             {/* --- Paginação --- */}
+             <div className="flex items-center justify-end gap-2 py-4 border-t mt-auto">
+                <span className="text-xs text-muted-foreground mr-2">
+                  Página {page + 1} de {Math.max(1, Math.ceil(totalLeads / ROWS_PER_PAGE))}
+                </span>
+                <Button variant="outline" size="icon" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => setPage(p => p + 1)} disabled={(page + 1) * ROWS_PER_PAGE >= totalLeads}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+             </div>
+             </>
           )}
         </CardContent>
       </Card>
@@ -484,6 +584,52 @@ export default function CRM() {
             </div>
           </DialogHeader>
 
+          {/* --- BARRA DE FILTRO DE FONTES --- */}
+          <div className="px-6 py-3 bg-muted/30 border-b border-border flex flex-wrap gap-2 items-center">
+            <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wider mr-2">
+              <Filter className="h-3.5 w-3.5" />
+              Filtrar Fontes:
+            </div>
+            
+            {availableSources.length === 0 && (
+               <span className="text-xs text-red-400">Nenhuma fonte configurada. Contate o suporte.</span>
+            )}
+
+            {availableSources.map(source => {
+              const isSelected = selectedSources.includes(source);
+              return (
+                <Button
+                  key={source}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  className={`h-7 text-xs rounded-full border-dashed ${isSelected ? "bg-primary text-white border-solid" : "text-muted-foreground"}`}
+                  onClick={() => {
+                    if (isSelected) {
+                      setSelectedSources(prev => prev.filter(s => s !== source));
+                    } else {
+                      setSelectedSources(prev => [...prev, source]);
+                    }
+                  }}
+                >
+                  {source}
+                  {isSelected && <X className="ml-1 h-3 w-3" />}
+                </Button>
+              )
+            })}
+            
+            {selectedSources.length > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                onClick={() => setSelectedSources([])}
+              >
+                Limpar
+              </Button>
+            )}
+          </div>
+          {/* --------------------------------------- */}
+
           <Tabs defaultValue="matches" className="flex-1 flex flex-col overflow-hidden">
             <div className="px-6 py-2 border-b border-border bg-background flex-shrink-0 z-10">
               <TabsList className="grid w-full max-w-[400px] grid-cols-2">
@@ -499,7 +645,7 @@ export default function CRM() {
                   {/* SEÇÃO 1: RECOMENDADOS */}
                   {selectedLead?.recommendedList && selectedLead.recommendedList.length > 0 && (
                     <div className="space-y-4">
-                       <div className="flex items-center gap-2 pb-2 border-b border-amber-200/60">
+                        <div className="flex items-center gap-2 pb-2 border-b border-amber-200/60">
                           <div className="p-1.5 bg-amber-100 rounded-md">
                             <Star className="h-5 w-5 fill-amber-600 text-amber-600" />
                           </div>
@@ -507,40 +653,56 @@ export default function CRM() {
                             <h3 className="font-bold text-lg text-amber-900">Imóveis Recomendados</h3>
                             <p className="text-xs text-amber-700/80">Seleção manual ideal para este perfil</p>
                           </div>
-                       </div>
-                       
-                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                         {selectedLead.recommendedList.map((imovel) => (
-                           <ImovelCard key={imovel.id} imovel={imovel} lead={selectedLead} isRecommended={true} />
-                         ))}
-                       </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          {selectedLead.recommendedList.map((imovel) => (
+                            <ImovelCard key={imovel.id} imovel={imovel} lead={selectedLead} isRecommended={true} />
+                          ))}
+                        </div>
                     </div>
                   )}
 
                   {/* SEÇÃO 2: MATCHES SQL */}
                   <div className="space-y-4">
                       <div className="flex items-center gap-2 pb-2 border-b border-border">
-                         <div className="p-1.5 bg-primary/10 rounded-md">
-                           <Sparkles className="h-5 w-5 text-primary" />
-                         </div>
-                         <div>
-                           <h3 className="font-bold text-lg text-foreground">Sugestões do Sistema (SQL)</h3>
-                           <p className="text-xs text-muted-foreground">Processado diretamente no banco de dados</p>
-                         </div>
+                          <div className="p-1.5 bg-primary/10 rounded-md">
+                            <Sparkles className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg text-foreground">Sugestões do Sistema</h3>
+                            <p className="text-xs text-muted-foreground">
+                                {selectedSources.length > 0 
+                                  ? `Filtrando por: ${selectedSources.join(", ")}` 
+                                  : "Exibindo todas as fontes permitidas"}
+                            </p>
+                          </div>
                       </div>
                       
-                      {selectedLead?.matches && selectedLead.matches.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {selectedLead.matches.map((imovel) => (
-                          <ImovelCard key={imovel.id} imovel={imovel} lead={selectedLead} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/20">
-                        <Home className="h-10 w-10 opacity-20 mb-2" />
-                        <p>Nenhum match encontrado com os filtros rígidos do banco.</p>
-                      </div>
-                    )}
+                      {loadingMatches ? (
+                         <div className="flex flex-col items-center justify-center py-20">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
+                            <p className="text-muted-foreground">Buscando as melhores oportunidades...</p>
+                         </div>
+                      ) : (
+                        <>
+                          {selectedLead?.matches && selectedLead.matches.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                              {selectedLead.matches.map((imovel) => (
+                                <ImovelCard key={imovel.id} imovel={imovel} lead={selectedLead} />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/20">
+                              <Home className="h-10 w-10 opacity-20 mb-2" />
+                              <p>Nenhum match encontrado com os filtros atuais.</p>
+                              {selectedSources.length > 0 && (
+                                  <Button variant="link" onClick={() => setSelectedSources([])}>Limpar filtros de imobiliária</Button>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
                   </div>
 
                 </div>
