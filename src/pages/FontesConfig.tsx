@@ -9,11 +9,9 @@ import {
   Layers,
   Crown,
   Building2,
-  GripVertical,
   Plus,
   X,
   Save,
-  Info,
   ChevronDown,
   Loader2,
   Bot,
@@ -56,17 +54,32 @@ export default function FontesConfig() {
   useEffect(() => {
     async function loadData() {
       try {
-        // A. Buscar todas as imobiliárias disponíveis (Distinct Origem)
-        // Usamos (supabase as any) para evitar erro de tipagem TS na tabela nova
-        const { data: imoveisData, error } = await (supabase as any)
-          .from('imoveis_santos')
-          .select('origem');
-        
-        if (error) throw error;
+        console.log("Iniciando carregamento de fontes...");
 
-        // Cria lista única de nomes
-        const nomesUnicos = Array.from(new Set((imoveisData || []).map((i: any) => i.origem).filter(Boolean)));
-        setFontesDisponiveisDB(nomesUnicos as string[]);
+        // A. Buscar nomes das imobiliárias (Usando RPC para performance/unicidade)
+        // Isso resolve o problema de limitar a 1000 linhas
+        const { data: nomesData, error: rpcError } = await (supabase as any)
+          .rpc('get_imobiliarias_unicas');
+        
+        let listaNomes: string[] = [];
+
+        if (rpcError) {
+            console.error("Erro RPC (tentando fallback):", rpcError);
+            // Fallback se a função RPC não existir: Select normal (limitado)
+            const { data: fallbackData } = await (supabase as any)
+                .from('imoveis_santos')
+                .select('origem')
+                .limit(1000);
+            
+            if (fallbackData) {
+                listaNomes = Array.from(new Set((fallbackData as any[]).map(i => i.origem).filter(Boolean)));
+            }
+        } else if (nomesData) {
+            // Sucesso RPC: Mapeia o resultado [{origem: "X"}, {origem: "Y"}]
+            listaNomes = nomesData.map((item: any) => item.origem).filter(Boolean);
+        }
+
+        setFontesDisponiveisDB(listaNomes.sort());
 
         // B. Carregar Configurações Salvas do Cliente
         if (clienteSaas) {
@@ -84,12 +97,12 @@ export default function FontesConfig() {
           setFontesVIP(vip);
           setFontesFallback(fallback);
           
-          // Carrega o modo do robô (usamos 'as any' pois a coluna é nova no banco e o TS não sabe ainda)
+          // Carrega o modo do robô
           setModoManual((clienteSaas as any).modo_manual_envio || false);
         }
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
-        toast.error("Erro ao carregar lista de imobiliárias.");
+        console.error("Erro geral ao carregar dados:", err);
+        toast.error("Erro inesperado ao carregar configurações.");
       } finally {
         setLoading(false);
       }
@@ -106,10 +119,12 @@ export default function FontesConfig() {
   );
 
   const addFonteVIP = (nome: string) => {
+    if (!nome) return;
     setFontesVIP([...fontesVIP, { id: `new-vip-${Date.now()}`, nome, tipo: "vip" }]);
   };
 
   const addFonteFallback = (nome: string) => {
+    if (!nome) return;
     setFontesFallback([...fontesFallback, { id: `new-fb-${Date.now()}`, nome, tipo: "fallback" }]);
   };
 
@@ -135,11 +150,11 @@ export default function FontesConfig() {
 
       const sb = supabase as any;
       const { error } = await sb
-        .from('clientes_saas') // Ou 'cliente_saas' dependendo do seu banco (singular/plural)
+        .from('clientes_saas')
         .update({
           fontes_preferenciais: fontesPreferenciais,
           fontes_secundarias: fontesSecundarias,
-          modo_manual_envio: modoManual // Salva a configuração do robô
+          modo_manual_envio: modoManual
         })
         .eq('id', clienteSaas.id);
 
@@ -285,9 +300,13 @@ export default function FontesConfig() {
                 <div className="flex items-center gap-2"><Plus className="h-4 w-4" /><SelectValue placeholder="Adicionar imobiliária..." /></div>
               </SelectTrigger>
               <SelectContent>
-                {fontesParaAdicionar.map((nome) => (
-                    <SelectItem key={nome} value={nome}>{nome}</SelectItem>
-                ))}
+                {fontesParaAdicionar.length > 0 ? (
+                    fontesParaAdicionar.map((nome) => (
+                        <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                    ))
+                ) : (
+                    <div className="p-2 text-xs text-muted-foreground text-center">Nenhuma fonte nova encontrada.</div>
+                )}
               </SelectContent>
             </Select>
           </CardContent>
@@ -341,9 +360,13 @@ export default function FontesConfig() {
                 <div className="flex items-center gap-2"><Plus className="h-4 w-4" /><SelectValue placeholder="Adicionar imobiliária..." /></div>
               </SelectTrigger>
               <SelectContent>
-                {fontesParaAdicionar.map((nome) => (
-                    <SelectItem key={nome} value={nome}>{nome}</SelectItem>
-                ))}
+                {fontesParaAdicionar.length > 0 ? (
+                    fontesParaAdicionar.map((nome) => (
+                        <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                    ))
+                ) : (
+                    <div className="p-2 text-xs text-muted-foreground text-center">Nenhuma fonte nova encontrada.</div>
+                )}
               </SelectContent>
             </Select>
           </CardContent>
