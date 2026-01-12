@@ -45,7 +45,7 @@ const Index = () => {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Building2 className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">Imobflow AI</span>
+            <span className="text-xl font-bold text-foreground">FlyImob</span>
           </div>
           
           <nav className="hidden md:flex items-center gap-6">
@@ -686,7 +686,7 @@ const Index = () => {
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <Building2 className="h-8 w-8 text-primary" />
-                <span className="text-xl font-bold text-foreground">Imobflow AI</span>
+                <span className="text-xl font-bold text-foreground">FlyImob</span>
               </div>
               <p className="text-muted-foreground mb-4 max-w-md">
                 A revolução da inteligência imobiliária. Inventário Infinito para corretores da Baixada Santista.
@@ -722,21 +722,21 @@ const Index = () => {
               <h4 className="font-semibold text-foreground mb-4">Contato</h4>
               <ul className="space-y-2">
                 <li>
-                  <a href="mailto:contato@imobflow.ai" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                  <a href="mailto:contato@flyimob.com.br" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                     <Mail className="h-4 w-4" />
-                    contato@imobflow.ai
+                    contato@flyimob.com.br
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                     <Instagram className="h-4 w-4" />
-                    @imobflow.ai
+                    @flyimob
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                     <Linkedin className="h-4 w-4" />
-                    Imobflow AI
+                    FlyImob
                   </a>
                 </li>
               </ul>
@@ -744,7 +744,7 @@ const Index = () => {
           </div>
           
           <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>© 2026 Imobflow AI. Todos os direitos reservados.</p>
+            <p>© 2026 FlyImob. Todos os direitos reservados.</p>
             <p className="mt-1">Feito com ❤️ para corretores da Baixada Santista</p>
           </div>
         </div>
