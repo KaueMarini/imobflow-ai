@@ -2,6 +2,7 @@ import { Check, Zap, Crown, Rocket, Building2, Shield, Sparkles } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -204,8 +205,76 @@ export default function Upgrade() {
         })}
       </div>
       
+      {/* FAQ Section */}
+      <div className="mt-20 w-full max-w-4xl animate-fade-in" style={{ animationDelay: "400ms" }}>
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+            Perguntas Frequentes
+          </h2>
+          <p className="text-muted-foreground">
+            Tire suas dúvidas sobre os planos FlyImob
+          </p>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full space-y-3">
+          <AccordionItem value="item-1" className="border border-border rounded-lg px-4 bg-card/50">
+            <AccordionTrigger className="text-left hover:no-underline">
+              O que são "Leads Únicos"?
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">
+              Leads únicos são contatos individuais que interagem com a IA pelo WhatsApp. Cada número de telefone é contado uma única vez, independente de quantas mensagens enviar. Se o mesmo cliente voltar a conversar, não conta como novo lead.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="item-2" className="border border-border rounded-lg px-4 bg-card/50">
+            <AccordionTrigger className="text-left hover:no-underline">
+              O que é a taxa de implementação de R$ 1.000?
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">
+              A taxa de implementação é um pagamento único que cobre a configuração inicial do sistema, integração com WhatsApp, treinamento da IA com seus imóveis VIP e onboarding completo. É cobrada apenas uma vez no início.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="item-3" className="border border-border rounded-lg px-4 bg-card/50">
+            <AccordionTrigger className="text-left hover:no-underline">
+              Como funciona o "Inventário Infinito"?
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">
+              A IA tem acesso a mais de 40.000 imóveis da Baixada Santista. Seus imóveis próprios aparecem como VIP (com fotos e links), enquanto os demais aparecem como Background (apenas descrição). Quando o cliente se interessa por um imóvel Background, você recebe o link da fonte para fazer o Fifty 50/50 com outro corretor.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="item-4" className="border border-border rounded-lg px-4 bg-card/50">
+            <AccordionTrigger className="text-left hover:no-underline">
+              Posso mudar de plano depois?
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">
+              Sim! Você pode fazer upgrade a qualquer momento. O valor será ajustado proporcionalmente ao período restante. Para downgrade, a mudança será aplicada no próximo ciclo de cobrança.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="item-5" className="border border-border rounded-lg px-4 bg-card/50">
+            <AccordionTrigger className="text-left hover:no-underline">
+              O que acontece se eu atingir o limite de leads?
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">
+              Quando você atingir 80% do limite, receberá uma notificação. Ao atingir 100%, a IA continuará respondendo leads existentes, mas novos leads serão pausados até o próximo ciclo ou upgrade de plano.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="item-6" className="border border-border rounded-lg px-4 bg-card/50">
+            <AccordionTrigger className="text-left hover:no-underline">
+              O que é a Academia Fly?
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">
+              É um curso exclusivo de R$ 29,90 disponível no dashboard que ensina como maximizar suas vendas usando IA. Inclui técnicas de qualificação de leads, scripts de fechamento e melhores práticas para usar o sistema.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+
       {/* Footer Info */}
-      <div className="mt-16 text-center space-y-3 animate-fade-in" style={{ animationDelay: "400ms" }}>
+      <div className="mt-16 text-center space-y-3 animate-fade-in" style={{ animationDelay: "500ms" }}>
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 border border-border">
           <span className="text-sm text-muted-foreground">
             Taxa de implementação: <span className="font-bold text-foreground">R$ 1.000,00</span>
