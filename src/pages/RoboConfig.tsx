@@ -238,12 +238,12 @@ export default function RoboConfig() {
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Nome da Imobiliária</Label>
+                <Label>Nome do Corretor</Label>
                 <Input 
                   value={companyName} 
                   onChange={e => setCompanyName(e.target.value)} 
                   disabled={isConnected} 
-                  placeholder="Ex: Imobiliária Silva"
+                  placeholder="Ex: João Silva"
                 />
               </div>
               <div className="space-y-2">
@@ -282,16 +282,6 @@ export default function RoboConfig() {
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Mensagem de Saudação</Label>
-                <Textarea 
-                  value={greetingMessage} 
-                  onChange={e => setGreetingMessage(e.target.value)} 
-                  placeholder="Deixe em branco para usar a saudação automática..."
-                  className="min-h-[100px] resize-none"
-                />
               </div>
 
             </CardContent>
@@ -333,28 +323,6 @@ export default function RoboConfig() {
             </Card>
           )}
 
-          <Card className="bg-slate-50 overflow-hidden">
-            <CardHeader className="pb-3 border-b bg-white">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Smartphone className="h-4 w-4" /> Preview da Conversa
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              <div className="flex justify-end">
-                <div className="bg-green-100 text-green-900 rounded-2xl rounded-tr-none px-4 py-2 text-sm max-w-[85%] shadow-sm">
-                  Olá, gostaria de saber mais sobre um imóvel.
-                </div>
-              </div>
-              <div className="flex justify-start">
-                <div className="bg-white border text-slate-800 rounded-2xl rounded-tl-none px-4 py-2 text-sm max-w-[85%] shadow-sm">
-                  <span className="block text-xs font-bold text-blue-600 mb-1">
-                    {companyName || "Bot Imobiliária"}
-                  </span>
-                  {previewMessage}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
       </div>
