@@ -1,40 +1,39 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { KPICard } from "@/components/dashboard/KPICard";
-import { LeadsChart } from "@/components/dashboard/LeadsChart";
+import { LeadsChart } from "@/components/dashboard/LeadsChart"; // Usando o gráfico de área bonito
 import { RecentLeads } from "@/components/dashboard/RecentLeads";
-import { 
-  Users, 
-  Flame, 
-  Wallet, 
-  DollarSign, 
-  Loader2, 
-  MapPin, 
-  TrendingUp 
+import {
+  Users, Flame, Wallet, DollarSign, Loader2, MapPin, TrendingUp, Calendar
 } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+import {
+  Card, CardContent, CardHeader, CardTitle, CardDescription
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [chartLeads, setChartLeads] = useState<any[]>([]);
-  
+
+  // Padrão 'this_week'
+  const [timeRange, setTimeRange] = useState("this_week");
+
+  const [chartData, setChartData] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalLeads: 0,
-    leadsRecentes: 0,
-    ticketMedio: 0, 
+    ticketMedio: 0,
     potencialVendas: 0,
   });
-
   const [insights, setInsights] = useState({
     topBairros: [] as { nome: string; count: number; percent: number }[],
     faixasPreco: [] as { label: string; count: number; percent: number }[]
@@ -46,212 +45,247 @@ export default function Dashboard() {
 
       try {
         setLoading(true);
+
+        const endDate = new Date();
+        // Define o fim do dia para garantir que pegue leads de hoje
+        endDate.setHours(23, 59, 59, 999);
         
-        // CORREÇÃO AQUI: Usamos (supabase as any) para o TypeScript não reclamar da tabela 'leads'
-        const { data: leadsData, error: leadsError } = await (supabase as any)
-          .from("leads")
-          .select("id, created_at, orcamento_max, interesse_bairro")
-          .eq("user_id", user.id);
+        const startDate = new Date();
+        // Zera o horário inicial
+        startDate.setHours(0, 0, 0, 0);
 
-        if (leadsError) throw leadsError;
+        // Lógica de Datas
+        if (timeRange === "this_week") {
+            // Pega Segunda-feira da semana atual
+            const day = startDate.getDay();
+            // Se domingo (0), volta 6 dias. Se outro dia, volta (day - 1)
+            const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
+            startDate.setDate(diff);
+        } else {
+            // Dias corridos (30 ou 60)
+            startDate.setDate(startDate.getDate() - parseInt(timeRange));
+        }
 
-        const leads = leadsData || [];
-        setChartLeads(leads);
+        // Chamada RPC
+        const { data, error } = await (supabase as any).rpc('get_dashboard_stats', {
+            p_user_id: user.id,
+            p_start_date: startDate.toISOString(),
+            p_end_date: endDate.toISOString()
+        });
 
-        // --- CÁLCULOS DE KPI ---
-        const totalLeads = leads.length;
-        
-        // Leads Recentes (30 dias)
-        const trintaDiasAtras = new Date();
-        trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
-        const leadsRecentes = leads.filter((l: any) => new Date(l.created_at) > trintaDiasAtras).length;
+        if (error) throw error;
 
-        // Potencial (Soma)
-        const potencial = leads.reduce((acc: number, curr: any) => acc + (Number(curr.orcamento_max) || 0), 0);
-        
-        // Ticket Médio (Média do orçamento dos clientes)
-        const ticketMedio = totalLeads > 0 ? potencial / totalLeads : 0;
+        const response = data as any;
 
+        // Processamento dos KPIs e Insights (sem alterações aqui)
+        const kpis = response.kpis || {};
+        const total = kpis.total_leads || 0;
         setStats({
-          totalLeads,
-          leadsRecentes,
-          ticketMedio,
-          potencialVendas: potencial,
+          totalLeads: total,
+          ticketMedio: kpis.ticket_medio || 0,
+          potencialVendas: kpis.potencial_vendas || 0,
         });
 
-        // --- CÁLCULOS DE INTELIGÊNCIA (INSIGHTS) ---
-
-        // A. Top Bairros
-        const bairrosMap: Record<string, number> = {};
-        leads.forEach((l: any) => {
-          if (l.interesse_bairro) {
-            const bairro = l.interesse_bairro.trim();
-            bairrosMap[bairro] = (bairrosMap[bairro] || 0) + 1;
-          }
-        });
-
-        const sortedBairros = Object.entries(bairrosMap)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 5) // Top 5
-          .map(([nome, count]) => ({
-            nome,
-            count,
-            percent: (count / totalLeads) * 100
-          }));
-
-        // B. Faixas de Preço
-        const faixas = {
-          'Até 300k': 0,
-          '300k - 600k': 0,
-          '600k - 1M': 0,
-          'Acima de 1M': 0
-        };
-
-        leads.forEach((l: any) => {
-          const val = Number(l.orcamento_max) || 0;
-          if (val === 0) return;
-          if (val <= 300000) faixas['Até 300k']++;
-          else if (val <= 600000) faixas['300k - 600k']++;
-          else if (val <= 1000000) faixas['600k - 1M']++;
-          else faixas['Acima de 1M']++;
-        });
-
-        const faixasArray = Object.entries(faixas).map(([label, count]) => ({
-          label,
-          count,
-          percent: totalLeads > 0 ? (count / totalLeads) * 100 : 0
-        }));
-
+        const bairrosRaw = response.top_bairros || [];
         setInsights({
-          topBairros: sortedBairros,
-          faixasPreco: faixasArray
+          topBairros: bairrosRaw.map((b: any) => ({
+            nome: b.nome,
+            count: b.count,
+            percent: total > 0 ? (b.count / total) * 100 : 0
+          })),
+          faixasPreco: [
+            { label: 'Até 300k', prop: 'Ate_300k' },
+            { label: '300k - 600k', prop: '300k_600k' },
+            { label: '600k - 1M', prop: '600k_1M' },
+            { label: 'Acima de 1M', prop: 'Acima_1M' },
+          ].map(item => {
+             const count = (response.faixas_preco || {})[item.prop] || 0;
+             return {
+                label: item.label,
+                count: count,
+                percent: total > 0 ? (count / total) * 100 : 0
+             };
+          })
         });
+
+        const graficoRaw = response.grafico || [];
+
+        // --- LÓGICA DE PREENCHIMENTO DE LACUNAS (GAP FILLING) ---
+
+        // 1. Criar um mapa rápido dos dados que vieram do banco
+        // Chave = YYYY-MM-DD, Valor = Quantidade
+        const dataMap = new Map();
+        graficoRaw.forEach((item: any) => {
+            // Extrai apenas a parte da data (YYYY-MM-DD) para comparar
+            const dateKey = new Date(item.data).toISOString().split('T')[0];
+            dataMap.set(dateKey, item.leads);
+        });
+
+        // 2. Gerar a lista completa de dias do intervalo
+        const filledData = [];
+        // Clonamos as datas para usar no loop sem alterar as originais
+        let loopDate = new Date(startDate);
+        const finalLoopDate = new Date(endDate);
+
+        // Loop enquanto a data for menor ou igual a data final
+        while (loopDate <= finalLoopDate) {
+            const dateKey = loopDate.toISOString().split('T')[0];
+
+            filledData.push({
+                // Mantém o formato ISO completo que o gráfico espera
+                data: loopDate.toISOString(),
+                // Se o dia existe no mapa do banco, usa o valor. Se não, usa 0.
+                leads: dataMap.get(dateKey) || 0
+            });
+
+            // Avança para o próximo dia
+            loopDate.setDate(loopDate.getDate() + 1);
+        }
+
+        // Atualiza o gráfico com os dados completos (incluindo zeros)
+        setChartData(filledData);
+        // -------------------------------------------------------
 
       } catch (error) {
-        console.error("Erro ao carregar dashboard:", error);
+        console.error("Erro no dashboard:", error);
+        toast.error("Erro ao carregar dados do dashboard");
       } finally {
         setLoading(false);
       }
     }
 
     fetchDashboardData();
-  }, [user?.id]);
+  }, [user?.id, timeRange]);
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin h-10 w-10 text-primary" />
-      </div>
-    );
-  }
-
-  const formatCompact = (val: number) => 
+  const formatCompact = (val: number) =>
     new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(val);
 
   return (
     <div className="min-h-screen bg-background pb-10">
-      <AppHeader
-        title="Dashboard Estratégico"
-        subtitle="Visão geral e inteligência de mercado"
-      />
 
-      <div className="p-6 space-y-6">
-        
-        {/* --- 1. KPIs --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <KPICard
-            title="Total de Leads"
-            value={stats.totalLeads.toString()}
-            subtitle="Base de contatos"
-            icon={<Users className="h-6 w-6" />}
-          />
-          <KPICard
-            title="Leads Recentes"
-            value={stats.leadsRecentes.toString()}
-            subtitle="Últimos 30 dias"
-            icon={<Flame className="h-6 w-6" />}
-            variant="primary"
-          />
-          <KPICard
-            title="Ticket Médio"
-            value={formatCompact(stats.ticketMedio)}
-            subtitle="Média de orçamento"
-            icon={<Wallet className="h-6 w-6" />}
-          />
-          <KPICard
-            title="Pipeline Total"
-            value={formatCompact(stats.potencialVendas)}
-            subtitle="Soma orçamentos máx"
-            icon={<DollarSign className="h-6 w-6" />}
-            variant="success"
-          />
+      <AppHeader title="ImobFlow AI" />
+
+      <div className="px-6 pt-8 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 className="text-3xl font-bold tracking-tight">Dashboard Estratégico</h2>
+                <p className="text-muted-foreground mt-1">
+                    Visão geral e inteligência de mercado
+                </p>
+            </div>
+
+            <div className="flex items-center gap-2 bg-card p-1.5 rounded-lg border shadow-sm">
+                <Calendar className="h-4 w-4 text-muted-foreground ml-2" />
+                <Select value={timeRange} onValueChange={setTimeRange}>
+                    <SelectTrigger className="w-[160px] h-9 border-none focus:ring-0 shadow-none bg-transparent">
+                        <SelectValue placeholder="Período" />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                        <SelectItem value="this_week">Esta Semana</SelectItem>
+                        <SelectItem value="30">Últimos 30 dias</SelectItem>
+                        <SelectItem value="60">Últimos 60 dias</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
-
-        {/* --- 2. INTELIGÊNCIA --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <div className="lg:col-span-2">
-             <LeadsChart leads={chartLeads} />
-          </div>
-
-          <div className="space-y-6">
-            {/* Top Bairros */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  Regiões Mais Buscadas
-                </CardTitle>
-                <CardDescription>Onde seus clientes querem morar</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-2">
-                {insights.topBairros.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Sem dados suficientes.</p>
-                ) : (
-                  insights.topBairros.map((bairro, idx) => (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">{bairro.nome || "Não informado"}</span>
-                        <span className="text-muted-foreground">{bairro.count} leads</span>
-                      </div>
-                      <Progress value={bairro.percent} className="h-2" />
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Faixa de Preço */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
-                  Poder de Compra
-                </CardTitle>
-                <CardDescription>Faixa de orçamento preferida</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-2">
-                 {insights.faixasPreco.map((faixa, idx) => (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{faixa.label}</span>
-                        <span className="font-bold">{Math.round(faixa.percent)}%</span>
-                      </div>
-                      <Progress 
-                        value={faixa.percent} 
-                        className={`h-2 ${idx === 0 ? 'bg-secondary' : ''}`} 
-                      />
-                    </div>
-                 ))}
-              </CardContent>
-            </Card>
-
-          </div>
-        </div>
-
-        {/* --- 3. RECENTES --- */}
-        <RecentLeads />
       </div>
+
+      {loading ? (
+        <div className="h-[50vh] flex items-center justify-center">
+          <Loader2 className="animate-spin h-10 w-10 text-primary" />
+        </div>
+      ) : (
+        <div className="px-6 space-y-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <KPICard
+              title="Leads"
+              value={stats.totalLeads.toString()}
+              subtitle={timeRange === "this_week" ? "Cadastrados na semana" : "No período selecionado"}
+              icon={<Users className="h-6 w-6" />}
+            />
+            <KPICard
+              title="Ticket Médio"
+              value={formatCompact(stats.ticketMedio)}
+              subtitle="Média dos orçamentos"
+              icon={<Wallet className="h-6 w-6" />}
+            />
+            <KPICard
+              title="Pipeline"
+              value={formatCompact(stats.potencialVendas)}
+              subtitle="Soma total do período"
+              icon={<DollarSign className="h-6 w-6" />}
+              variant="success"
+            />
+             <KPICard
+              title="Meta Mensal"
+              value="85%"
+              subtitle="Meta hipotética"
+              icon={<Flame className="h-6 w-6" />}
+              variant="primary"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* GRÁFICO DE ÁREA (Agora com todos os dias) */}
+            <LeadsChart data={chartData} />
+
+            <div className="space-y-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    Regiões (Top 5)
+                  </CardTitle>
+                  <CardDescription>Bairros mais buscados</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-2">
+                  {insights.topBairros.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Sem dados.</p>
+                  ) : (
+                    insights.topBairros.map((bairro, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium truncate max-w-[150px]">{bairro.nome || "Não informado"}</span>
+                          <span className="text-muted-foreground">{bairro.count}</span>
+                        </div>
+                        <Progress value={bairro.percent} className="h-2" />
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    Poder de Compra
+                  </CardTitle>
+                  <CardDescription>Faixa de orçamento</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-2">
+                   {insights.faixasPreco.map((faixa, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{faixa.label}</span>
+                          <span className="font-bold">{Math.round(faixa.percent)}%</span>
+                        </div>
+                        <Progress
+                          value={faixa.percent}
+                          className={`h-2 ${idx === 0 ? 'bg-secondary' : ''}`}
+                        />
+                      </div>
+                   ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <RecentLeads />
+        </div>
+      )}
     </div>
   );
 }

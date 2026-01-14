@@ -13,13 +13,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils"; // Importante para juntar as classes
 
 interface AppHeaderProps {
   title: string;
   subtitle?: string;
+  className?: string; // <--- ADICIONADO: Permite receber estilos extras
 }
 
-export function AppHeader({ title, subtitle }: AppHeaderProps) {
+export function AppHeader({ title, subtitle, className }: AppHeaderProps) {
   const { user, clienteSaas, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -28,7 +30,6 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
     navigate("/auth");
   };
 
-  // Pega as iniciais do nome da empresa ou do email
   const getInitials = () => {
     if (clienteSaas?.nome_empresa) {
       return clienteSaas.nome_empresa
@@ -47,7 +48,8 @@ export function AppHeader({ title, subtitle }: AppHeaderProps) {
   const displayName = clienteSaas?.nome_empresa || user?.email || "Usuário";
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-6">
+    // AQUI: Usamos a função cn() para misturar as classes padrão com a className que vem de fora
+    <header className={cn("sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-6", className)}>
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="lg:hidden">
           <Menu className="h-5 w-5" />

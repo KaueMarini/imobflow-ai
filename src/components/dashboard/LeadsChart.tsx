@@ -9,45 +9,39 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMemo } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface LeadsChartProps {
-  leads: any[]; // Recebe a lista de leads completa para processar
+  data: any[]; // Recebe os dados já processados do Supabase
 }
 
-export function LeadsChart({ leads }: LeadsChartProps) {
-  // Processa os dados para agrupar por dia (últimos 7 dias)
+export function LeadsChart({ data }: LeadsChartProps) {
+  
+  // Formata os dados para o Recharts entender (Visual que você pediu)
   const chartData = useMemo(() => {
-    const today = new Date();
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(today.getDate() - (6 - i));
-      return d;
-    });
-
-    return last7Days.map((date) => {
-      const dateStr = date.toISOString().split("T")[0]; // YYYY-MM-DD
-      const dayName = date.toLocaleDateString("pt-BR", { weekday: "short" });
+    return (data || []).map((item) => {
+      const dateObj = new Date(item.data);
+      // Cria o nome do eixo X (ex: "Seg", "Ter" ou "12/01" dependendo do que preferir)
+      // Aqui configurei para pegar o dia (Ex: 15/01) para ficar bom em 30 dias também
+      const dayName = format(dateObj, "dd/MM", { locale: ptBR });
       
-      // Conta quantos leads tem created_at batendo com esse dia
-      const count = leads.filter((lead) => 
-        lead.created_at?.startsWith(dateStr)
-      ).length;
-
       return {
-        name: dayName.charAt(0).toUpperCase() + dayName.slice(1), // Ex: "Seg"
-        leads: count,
+        name: dayName,
+        leads: Number(item.leads),
+        fullDate: format(dateObj, "dd 'de' MMMM", { locale: ptBR }) // Para o Tooltip
       };
     });
-  }, [leads]);
+  }, [data]);
 
   return (
-    <Card className="border-border shadow-soft">
+    <Card className="border-border shadow-soft col-span-1 lg:col-span-2 h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">
           Volume de Leads
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Novos contatos nos últimos 7 dias
+          Evolução de novos contatos no período
         </p>
       </CardHeader>
       <CardContent>
@@ -70,6 +64,7 @@ export function LeadsChart({ leads }: LeadsChartProps) {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "hsl(215, 16%, 47%)", fontSize: 12 }}
+                tickMargin={10}
               />
               <YAxis
                 axisLine={false}
@@ -84,7 +79,14 @@ export function LeadsChart({ leads }: LeadsChartProps) {
                   borderRadius: "8px",
                   boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
                 }}
-                labelStyle={{ color: "hsl(222, 47%, 11%)", fontWeight: 600 }}
+                labelStyle={{ color: "hsl(222, 47%, 11%)", fontWeight: 600, marginBottom: '0.25rem' }}
+                formatter={(value: any) => [`${value} leads`, undefined]}
+                labelFormatter={(label, payload) => {
+                    if (payload && payload.length > 0) {
+                        return payload[0].payload.fullDate;
+                    }
+                    return label;
+                }}
               />
               <Area
                 type="monotone"
