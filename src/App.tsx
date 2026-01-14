@@ -2,13 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // Adicionei Navigate
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; 
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AuthProvider, useAuth } from "./contexts/AuthContext"; // Import useAuth para o redirecionamento
+import { AuthProvider, useAuth } from "./contexts/AuthContext"; 
 
 // Páginas
-import Index from "./pages/Index"; // <--- IMPORTANTE: Importar a Landing Page
+import Index from "./pages/Index"; 
 import Dashboard from "./pages/Dashboard";
 import Imoveis from "./pages/Imoveis";
 import CRM from "./pages/CRM";
@@ -19,11 +19,11 @@ import RoboConfig from "./pages/RoboConfig";
 import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
 import Agenda from "./pages/Agenda";
+import Integracoes from "./pages/Integracoes"; // <--- IMPORTAÇÃO NOVA
 
 const queryClient = new QueryClient();
 
 // Componente auxiliar para redirecionar se já estiver logado
-// Se o usuário acessar a Landing Page (/) mas já estiver logado, joga para o Dashboard
 const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
@@ -42,7 +42,6 @@ const App = () => (
         <AuthProvider>
           <Routes>
             {/* Rota Raiz (Landing Page) */}
-            {/* Se estiver logado vai pro dashboard, se não, mostra a Landing Page */}
             <Route 
               path="/" 
               element={
@@ -80,10 +79,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              {/* Mudei de "/" para "/dashboard" */}
               <Route path="/dashboard" element={<Dashboard />} /> 
-              <Route path="/agenda" element={<Agenda />} /> {/* <--- Adicione a rota */}
+              <Route path="/agenda" element={<Agenda />} /> 
               <Route path="/imoveis" element={<Imoveis />} />
+              
+              {/* --- ROTA NOVA --- */}
+              <Route path="/integracoes" element={<Integracoes />} />
+              {/* ----------------- */}
+
               <Route path="/crm" element={<CRM />} />
               <Route path="/robo" element={<RoboConfig />} />
               <Route path="/fontes" element={<FontesConfig />} />

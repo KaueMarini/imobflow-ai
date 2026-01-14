@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Building2,
   LogOut,
-  CalendarDays // Ícone de Agenda
+  CalendarDays,
+  Plug // <--- IMPORTAÇÃO NOVA
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,10 +25,11 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard }, // Ajustado para /dashboard se for o caso, ou / se preferir
-  { title: "Agenda de Visitas", href: "/agenda", icon: CalendarDays }, // <-- Novo Item
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Agenda de Visitas", href: "/agenda", icon: CalendarDays },
   { title: "CRM de Leads", href: "/crm", icon: Users },
   { title: "Imóveis", href: "/imoveis", icon: Building2 },
+  { title: "Integrações XML", href: "/integracoes", icon: Plug }, // <--- NOVO ITEM AQUI
 ];
 
 const configNavItems: NavItem[] = [
