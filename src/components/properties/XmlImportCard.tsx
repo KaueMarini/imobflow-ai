@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Importando Label
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,108 +17,234 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+// --- DICIONÁRIOS (MANTIDOS) ---
+const MAPA_TIPOS: Record<string, string> = {
+  "apartment": "Apartamento", "residential / apartment": "Apartamento", "flat": "Apartamento", "penthouse": "Cobertura",
+  "house": "Casa", "residential / home": "Casa", "sobrado": "Casa", "land": "Terreno", "lot": "Terreno",
+  "residential / land": "Terreno", "commercial": "Comercial", "office": "Sala Comercial", "store": "Loja", "warehouse": "Galpão",
+  "apto": "Apartamento", "residencia": "Casa", "lote": "Terreno", "terrenos": "Terreno", "casas": "Casa", "apartamentos": "Apartamento",
+  "home": "Casa", "condo": "Apartamento"
+};
+
+const MAPA_LAZER: Record<string, string> = {
+  "furnished": "Mobiliado", "pool": "Piscina", "swimming pool": "Piscina", "barbecue": "Churrasqueira", "bbq": "Churrasqueira",
+  "air conditioning": "Ar Condicionado", "cooling": "Ar Condicionado", "elevator": "Elevador", "gym": "Academia",
+  "fitness center": "Academia", "garden": "Jardim", "balcony": "Sacada", "veranda": "Varanda", "fenced yard": "Quintal Murado",
+  "kitchen": "Cozinha Planejada", "close to schools": "Próximo a Escolas", "close to shopping centers": "Próximo a Shopping",
+  "gated community": "Condomínio Fechado", "security": "Segurança 24h", "garage": "Garagem", "laundry": "Lavanderia",
+  "party room": "Salão de Festas", "playground": "Playground", "sauna": "Sauna", "spa": "Spa"
+};
+
 export function XmlImportCard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("link");
-  
-  // Novos estados
   const [xmlUrl, setXmlUrl] = useState("");
   const [xmlContent, setXmlContent] = useState("");
-  const [originName, setOriginName] = useState(""); // Estado para o nome da origem
-  
+  const [originName, setOriginName] = useState(""); 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | 'info' | 'warning', message: string } | null>(null);
 
+  // --- FUNÇÕES AUXILIARES ---
+  
+  // NOVA FUNÇÃO: Formata "BOQUEIRAO" para "Boqueirão"
+  const formatarTexto = (texto: string): string => {
+    if (!texto) return "";
+    
+    // Lista de palavras que devem ficar minúsculas (preposições)
+    const excecoes = ["de", "da", "do", "das", "dos", "e", "em", "na", "no", "com"];
+    
+    return texto
+      .toLowerCase()
+      .trim()
+      .split(/\s+/) // Divide por qualquer espaço em branco
+      .map((palavra, index) => {
+        // Se for a primeira palavra ou não for exceção, capitaliza
+        if (index === 0 || !excecoes.includes(palavra)) {
+          return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+        }
+        return palavra;
+      })
+      .join(" ");
+  };
+
+  const traduzirTipo = (raw: string): string => {
+    if (!raw) return "Outros";
+    const termo = raw.toLowerCase().trim();
+    for (const key in MAPA_TIPOS) {
+      if (termo.includes(key)) return MAPA_TIPOS[key];
+    }
+    return formatarTexto(raw); // Aplica formatação aqui também se não achar no mapa
+  };
+
+  const traduzirLazer = (featuresArray: string[]): string => {
+    const traduzidos = featuresArray.map(item => {
+      const termo = item.toLowerCase().trim();
+      for (const key in MAPA_LAZER) {
+        if (termo === key || termo.includes(key)) return MAPA_LAZER[key];
+      }
+      return formatarTexto(item); // Formata também os que não foram traduzidos
+    });
+    return [...new Set(traduzidos)].join(", ");
+  };
+
   const processXmlData = async (textData: string) => {
-    // Validação básica
-    if (!textData || (!textData.includes("<Listing") && !textData.includes("<Imovel") && !textData.includes("DataFeed"))) {
-        console.error("Conteúdo inválido recebido:", textData.substring(0, 100));
-        throw new Error("O conteúdo recebido não parece ser um XML válido. Se baixou via link, o servidor pode ter bloqueado.");
+    if (!textData || textData.length < 50) {
+        throw new Error("O conteúdo recebido está vazio ou inválido.");
     }
     
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(textData, "text/xml");
     
     const listings = xmlDoc.getElementsByTagName("Listing");
-    const imoveisEncontrados = listings.length > 0 ? listings : xmlDoc.getElementsByTagName("Imovel");
+    const imoveis = xmlDoc.getElementsByTagName("Imovel");
+    const ads = xmlDoc.getElementsByTagName("ad"); 
+    const entries = xmlDoc.getElementsByTagName("entry");
+    
+    let imoveisEncontrados = listings.length > 0 ? listings : imoveis;
+    if (imoveisEncontrados.length === 0) imoveisEncontrados = ads;
+    if (imoveisEncontrados.length === 0) imoveisEncontrados = entries;
 
     if (imoveisEncontrados.length === 0) {
-      throw new Error("XML lido, mas nenhum imóvel encontrado dentro das tags <Listing> ou <Imovel>.");
+      throw new Error("Nenhum imóvel encontrado.");
     }
 
-    // Define a origem final (Se estiver vazio, usa um padrão)
     const origemFinal = originName.trim() || "Importação XML";
+    
+    setStatus({ type: 'info', message: `Processando e Formatando ${imoveisEncontrados.length} imóveis...` });
 
-    setStatus({ type: 'info', message: `Processando ${imoveisEncontrados.length} imóveis como "${origemFinal}"...` });
-    let count = 0;
+    let countUpsert = 0;
+    const referenciasNoXml: string[] = []; 
 
     for (let i = 0; i < imoveisEncontrados.length; i++) {
       const listing = imoveisEncontrados[i];
-      const getTag = (tag: string) => listing.getElementsByTagName(tag)[0]?.textContent || "";
-
-      // Tratamento de Lazer
-      const featuresNodes = listing.getElementsByTagName("Feature");
-      const featuresArray = [];
-      for(let j=0; j < featuresNodes.length; j++) {
-          if (featuresNodes[j].textContent) featuresArray.push(featuresNodes[j].textContent);
-      }
-      const itensLazerStr = featuresArray.join(", ");
-
-      // Tratamento de Imagem
-      const mediaNodes = listing.getElementsByTagName("Item");
-      let primeiraImagem = "";
-      if (mediaNodes.length > 0) {
-          primeiraImagem = mediaNodes[0].textContent || "";
-      }
-
-      // --- MAPEAMENTO DE DADOS ---
-      const imovelData = {
-        referencia: getTag("ListingID") || getTag("Codigo"),
-        titulo: getTag("Title") || getTag("Titulo") || "Imóvel sem título",
-        descricao: getTag("Description") || getTag("Descricao"),
-        tipo: getTag("PropertyType") || getTag("Tipo"),
-        preco: parseFloat(getTag("ListPrice") || getTag("PrecoVenda") || "0"),
-        
-        link: getTag("DetailViewUrl") || getTag("Url") || "",
-
-        vagas: parseInt(getTag("Garage") || getTag("Vagas") || "0"),
-        area_m2: parseFloat(getTag("LivingArea") || getTag("UsefulArea") || getTag("AreaUtil") || getTag("LotArea") || "0"),
-        imagem_url: primeiraImagem,
-        itens_lazer: itensLazerStr,
-        
-        // AQUI ESTÁ A MUDANÇA: Usamos o nome digitado no input
-        origem: origemFinal, 
-        
-        quartos: parseInt(getTag("Bedrooms") || getTag("Quartos") || "0"),
-        banheiros: parseInt(getTag("Bathrooms") || getTag("Banheiros") || "0"),
-        bairro: getTag("Neighborhood") || getTag("Bairro") || "",
-        cidade: getTag("City") || getTag("Cidade") || "", 
-        
-        condominio: parseFloat(getTag("PropertyAdministrationFee") || getTag("Condominio") || "0"),
-        iptu: parseFloat(getTag("YearlyTax") || getTag("Iptu") || "0"),
-
-        user_id: user?.id
+      
+      const getTag = (...tags: string[]) => {
+        for (const tag of tags) {
+            const el = listing.getElementsByTagName(tag)[0];
+            if (el && el.textContent) return el.textContent;
+        }
+        return "";
       };
 
-      if (imovelData.referencia) {
-          const { error } = await (supabase as any)
+      const ref = getTag(
+          "ListingID", "Codigo", "CodigoImovel", "ExternalID", 
+          "id", "ad_id", "home_listing_id"
+      );
+
+      if (ref) {
+        referenciasNoXml.push(ref);
+
+        // Imagens
+        let primeiraImagem = "";
+        const mediaItem = listing.getElementsByTagName("Item")[0];
+        if (mediaItem) primeiraImagem = mediaItem.textContent || "";
+        if (!primeiraImagem) {
+            const fotoUrl = listing.getElementsByTagName("URLArquivo")[0];
+            if (fotoUrl) primeiraImagem = fotoUrl.textContent || "";
+        }
+        if (!primeiraImagem) {
+            const img = listing.getElementsByTagName("image")[0];
+            if (img && img.getElementsByTagName("url")[0]) {
+                 primeiraImagem = img.getElementsByTagName("url")[0].textContent || "";
+            } else if (img) {
+                 primeiraImagem = img.textContent || "";
+            }
+        }
+        if (!primeiraImagem) {
+             const pic = listing.getElementsByTagName("picture")[0];
+             if (pic) {
+                 const urlPic = pic.getElementsByTagName("url")[0];
+                 if(urlPic) primeiraImagem = urlPic.textContent || "";
+             }
+        }
+
+        // Features
+        const featuresNodes = listing.getElementsByTagName("Feature");
+        const featuresArray = [];
+        for(let j=0; j < featuresNodes.length; j++) {
+            if (featuresNodes[j].textContent) featuresArray.push(featuresNodes[j].textContent);
+        }
+        
+        // Preço
+        let precoFinal = parseFloat(getTag("ListPrice", "PrecoVenda", "Preco", "price", "amount") || "0");
+        if (precoFinal === 0) {
+            precoFinal = parseFloat(getTag("PrecoLocacao", "Aluguel") || "0");
+        }
+
+        // --- APLICAÇÃO DA FORMATAÇÃO DE TEXTO ---
+        const bairroFormatado = formatarTexto(getTag("Neighborhood", "Bairro", "addr1"));
+        const cidadeFormatada = formatarTexto(getTag("City", "Cidade", "city", "addr2"));
+        // Opcional: Formatar Título também para ficar bonito
+        const tituloFormatado = getTag("Title", "Titulo", "TituloAnuncio", "Header", "name"); 
+
+        const imovelData = {
+          referencia: ref,
+          
+          titulo: tituloFormatado, // Pode usar formatarTexto(tituloFormatado) se quiser forçar
+          
+          descricao: getTag("Description", "Descricao", "Observacao", "Destaque", "content", "summary"),
+          
+          tipo: traduzirTipo(getTag("PropertyType", "Tipo", "SubTipoImovel", "Categoria", "property_type")),
+          
+          preco: precoFinal,
+          link: getTag("DetailViewUrl", "Url", "Link", "url"),
+          vagas: parseInt(getTag("Garage", "Vagas", "Vaga") || "0"),
+          area_m2: parseFloat(getTag("LivingArea", "UsefulArea", "AreaUtil", "AreaTotal", "AreaPrivativa", "area") || "0"),
+          imagem_url: primeiraImagem,
+          itens_lazer: traduzirLazer(featuresArray),
+          origem: origemFinal,
+          quartos: parseInt(getTag("Bedrooms", "Quartos", "Dormitorios", "num_beds") || "0"),
+          banheiros: parseInt(getTag("Bathrooms", "Banheiros", "num_baths") || "0"),
+          
+          bairro: bairroFormatado, // Salva "Boqueirão" em vez de "BOQUEIRAO"
+          cidade: cidadeFormatada, 
+          
+          condominio: parseFloat(getTag("PropertyAdministrationFee", "Condominio", "PrecoCondominio") || "0"),
+          iptu: parseFloat(getTag("YearlyTax", "Iptu", "ValorIPTU") || "0"),
+          
+          user_id: user?.id
+        };
+
+        const { error } = await (supabase as any)
           .from('imoveis_santos')
           .upsert(imovelData, { onConflict: 'referencia' });
 
-          if (!error) count++;
-          else console.error("Erro ao salvar imóvel:", error.message);
+        if (!error) countUpsert++;
       }
     }
 
-    setStatus({ type: 'success', message: `Sucesso! ${count} imóveis importados da origem "${origemFinal}".` });
-    toast.success("Importação concluída!");
-    // Não limpamos o xmlUrl propositalmente para facilitar re-importação se precisar
+    // Limpeza
+    let countDeleted = 0;
+    const { data: imoveisExistentes } = await (supabase as any)
+      .from('imoveis_santos')
+      .select('referencia')
+      .eq('origem', origemFinal);
+
+    if (imoveisExistentes && imoveisExistentes.length > 0) {
+      const referenciasParaDeletar = imoveisExistentes
+        .map((i: any) => i.referencia)
+        .filter((refDb: string) => !referenciasNoXml.includes(refDb));
+
+      if (referenciasParaDeletar.length > 0) {
+        const { error: deleteError } = await (supabase as any)
+          .from('imoveis_santos')
+          .delete()
+          .in('referencia', referenciasParaDeletar);
+        if (!deleteError) countDeleted = referenciasParaDeletar.length;
+      }
+    }
+
+    setStatus({ 
+      type: 'success', 
+      message: `Sucesso! ${countUpsert} imóveis processados. ${countDeleted} antigos removidos.` 
+    });
+    toast.success(`Importação Concluída!`);
     setXmlContent("");
   };
 
   const handleImport = async () => {
     if (!originName.trim()) {
-      toast.error("Por favor, digite o nome da Imobiliária ou Corretor (Origem).");
+      toast.error("Por favor, digite o nome da Origem (ex: OLX, VivaReal).");
       return;
     }
 
@@ -171,36 +297,37 @@ export function XmlImportCard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Server className="h-6 w-6 text-primary" />
-            Importação de Imóveis
+            Importador Universal (Multi-Padrão)
           </CardTitle>
           <CardDescription>
-            Sincronize seu portfólio via Link (Edge Function) ou Manualmente.
+            Sincronização com formatação automática de texto (Maiúsculas/Minúsculas).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
 
-          {/* INPUT DA ORIGEM (NOVO) */}
           <div className="space-y-2">
-            <Label className="text-base font-semibold">Nome da Imobiliária ou Corretor (Origem)</Label>
+            <Label className="text-base font-semibold">Nome da Origem (Ex: Imoview, Kenlo)</Label>
             <Input 
-              placeholder="Ex: Imobiliária Silva, Corretor João, Parceiro X..." 
+              placeholder="Digite o nome do sistema de origem..." 
               value={originName}
               onChange={(e) => setOriginName(e.target.value)}
               className="h-11 border-primary/30 focus-visible:ring-primary"
             />
-            <p className="text-xs text-muted-foreground">Este nome aparecerá na coluna "Origem" da lista de imóveis.</p>
+            <p className="text-xs text-muted-foreground text-orange-600">
+               ⚠️ Atenção: Imóveis desta origem que <strong>não</strong> estiverem no XML serão excluídos.
+            </p>
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="link" className="flex gap-2"><LinkIcon className="h-4 w-4" /> Via Link (Automático)</TabsTrigger>
-              <TabsTrigger value="text" className="flex gap-2"><FileText className="h-4 w-4" /> Colar XML (Manual)</TabsTrigger>
+              <TabsTrigger value="link" className="flex gap-2"><LinkIcon className="h-4 w-4" /> Via Link</TabsTrigger>
+              <TabsTrigger value="text" className="flex gap-2"><FileText className="h-4 w-4" /> Colar XML</TabsTrigger>
             </TabsList>
 
             <TabsContent value="link" className="space-y-4">
                <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm mb-2 flex gap-2 items-start">
                   <Info className="h-4 w-4 mt-0.5" />
-                  <p>O sistema usará nosso servidor seguro para baixar o XML.</p>
+                  <p>O sistema baixará o XML via servidor seguro.</p>
                </div>
                <div className="flex flex-col sm:flex-row gap-3">
                 <Input 
@@ -211,16 +338,12 @@ export function XmlImportCard() {
                 />
                 <Button onClick={handleImport} disabled={loading} className="h-11 px-6 font-semibold">
                   {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                  {loading ? "Baixando..." : "Importar Link"}
+                  {loading ? "Sincronizar" : "Sincronizar"}
                 </Button>
               </div>
             </TabsContent>
 
             <TabsContent value="text" className="space-y-4">
-               <div className="bg-yellow-50 text-yellow-800 p-3 rounded-md text-sm mb-2 flex gap-2 items-start">
-                  <Info className="h-4 w-4 mt-0.5" />
-                  <p>Opção infalível: Copie o conteúdo do XML (Ctrl+A, Ctrl+C) e cole abaixo.</p>
-               </div>
                <Textarea 
                   placeholder="Cole aqui o conteúdo do XML..." 
                   value={xmlContent}
@@ -229,16 +352,16 @@ export function XmlImportCard() {
                />
                <Button onClick={handleImport} disabled={loading} className="w-full h-11 font-semibold">
                   {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                  {loading ? "Processando..." : "Importar Conteúdo Colado"}
+                  {loading ? "Processando..." : "Importar Manualmente"}
                </Button>
             </TabsContent>
           </Tabs>
 
           {status && (
             <Alert variant={status.type === 'error' ? "destructive" : "default"} className={status.type === 'success' ? "border-green-500 bg-green-50 text-green-900" : ""}>
-              {status.type === 'error' ? <AlertTriangle className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+              {status.type === 'error' ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
               <AlertTitle>
-                {status.type === 'error' ? "Erro" : status.type === 'success' ? "Pronto!" : "Status"}
+                {status.type === 'error' ? "Erro" : status.type === 'success' ? "Sucesso!" : "Status"}
               </AlertTitle>
               <AlertDescription>{status.message}</AlertDescription>
             </Alert>
@@ -250,24 +373,16 @@ export function XmlImportCard() {
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <HelpCircle className="h-5 w-5 text-primary" />
-            Ajuda
+            Recursos
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="origem">
-              <AccordionTrigger className="text-sm">O que é a Origem?</AccordionTrigger>
-              <AccordionContent className="text-xs text-muted-foreground">
-                É o nome que identifica de onde vieram esses imóveis. Útil se você importa de múltiplos parceiros.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="link-bloqueado">
-              <AccordionTrigger className="text-sm">Erro com o Link?</AccordionTrigger>
-              <AccordionContent className="text-xs text-muted-foreground">
-                Se o link automático falhar, use a aba "Colar XML (Manual)" para garantir a importação.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+             <li><strong>Poliglota:</strong> Aceita XML da OLX, VivaReal, Zap e outros.</li>
+             <li><strong>Formatação:</strong> Corrige "BOQUEIRAO" para "Boqueirão" automaticamente.</li>
+             <li><strong>Tradução:</strong> Converte "Apartment" para "Apartamento".</li>
+             <li><strong>Limpeza:</strong> Remove imóveis que não estão mais no XML.</li>
+          </ul>
         </CardContent>
       </Card>
     </div>
