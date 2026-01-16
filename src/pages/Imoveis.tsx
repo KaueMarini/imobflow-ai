@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // IMPORTANTE: Abas adicionadas
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Bed, Car, Maximize2, ExternalLink, Building2, Loader2, Bath, Filter, X, Search, DollarSign, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ImovelUnico } from "@/types";
@@ -23,7 +23,7 @@ export default function Imoveis() {
   // Ref para o infinite scroll
   const observer = useRef<IntersectionObserver | null>(null);
   
-  // NOVO: Filtro de Negócio (Venda ou Aluguel)
+  // Filtro de Negócio (Venda ou Aluguel)
   const [negocioFilter, setNegocioFilter] = useState<string>("venda");
 
   // Estados dos filtros
@@ -52,7 +52,7 @@ export default function Imoveis() {
     origens: [] as string[]
   });
 
-  // 1. Carregar opções de filtro (COM CORREÇÃO DE ERRO E LIMPEZA)
+  // 1. Carregar opções de filtro
   useEffect(() => {
     async function fetchOptions() {
       try {
@@ -64,7 +64,6 @@ export default function Imoveis() {
         }
 
         if (data) {
-          // Função auxiliar para evitar erro de string vazia no Select
           const limpar = (arr: any[]) => 
             (arr || [])
             .filter(item => item && typeof item === 'string' && item.trim() !== '')
@@ -93,10 +92,12 @@ export default function Imoveis() {
         .from("imoveis_santos")
         .select("*", { count: "exact" });
 
-      // --- FILTRO DE TIPO DE NEGÓCIO (NOVO) ---
-      // Se não for "todos", filtra pela coluna nova
-      if (negocioFilter !== "todos") {
-         query = query.eq("tipo_negocio", negocioFilter);
+      // --- LÓGICA CORRIGIDA: FILTRO DE TIPO DE NEGÓCIO ---
+      // Se for "venda", traz 'venda' OU nulos (para compatibilidade com legado)
+      if (negocioFilter === "venda") {
+        query = query.or('tipo_negocio.eq.venda,tipo_negocio.is.null');
+      } else if (negocioFilter === "aluguel") {
+        query = query.eq("tipo_negocio", "aluguel");
       }
 
       // --- Demais Filtros ---
@@ -162,8 +163,7 @@ export default function Imoveis() {
         tipo: item.tipo,
         imagem_url: item.imagem_url,
         origem: item.origem || 'Scraper',
-        // Mapeando o novo campo
-        tipo_negocio: item.tipo_negocio || 'venda',
+        tipo_negocio: item.tipo_negocio || 'venda', // Fallback visual
         itens_lazer: item.itens_lazer,
         created_at: item.created_at
       }));
@@ -184,7 +184,6 @@ export default function Imoveis() {
   };
 
   // 3. Resetar e buscar quando filtros mudam
-  // Adicionado 'negocioFilter' nas dependências
   useEffect(() => {
     const timer = setTimeout(() => {
         setPage(0);
@@ -225,7 +224,6 @@ export default function Imoveis() {
     setAreaMin("");
     setAreaMax("");
     setOrderBy("recentes");
-    // Nota: Não limpamos o negocioFilter (abas) pois é uma navegação de nível superior
   };
 
   const activeFiltersCount = [
@@ -249,7 +247,7 @@ export default function Imoveis() {
       
       <div className="p-6 container mx-auto">
         
-        {/* NOVO: ABAS DE TIPO DE NEGÓCIO */}
+        {/* ABAS DE TIPO DE NEGÓCIO */}
         <div className="flex justify-center mb-6">
             <Tabs value={negocioFilter} onValueChange={setNegocioFilter} className="w-[300px]">
                 <TabsList className="grid w-full grid-cols-2">
@@ -285,7 +283,6 @@ export default function Imoveis() {
                   <SheetTitle className="flex items-center gap-2"><Filter className="h-5 w-5" /> Filtros Avançados</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 space-y-6">
-                  {/* ... CONTEÚDO DO SHEET (MANTIDO) ... */}
                   <div className="space-y-3">
                     <Label className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Preço</Label>
                     <div className="grid grid-cols-2 gap-2">
@@ -423,7 +420,7 @@ const ImovelCardItem = ({ imovel }: { imovel: ImovelUnico }) => (
         {imovel.imagem_url ? (
         <img 
             src={imovel.imagem_url} 
-            alt={imovel.titulo} 
+            alt={imovel.titulo || "Imóvel"} 
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             onError={(e) => (e.currentTarget.style.display = 'none')} 
         />
@@ -432,11 +429,9 @@ const ImovelCardItem = ({ imovel }: { imovel: ImovelUnico }) => (
         )}
         
         <div className="absolute top-3 left-3 flex gap-2">
-            {/* Badge de Origem */}
             <Badge className="bg-black/70 backdrop-blur-sm capitalize">{imovel.origem}</Badge>
-            {/* NOVO: Badge de Venda/Aluguel */}
             <Badge variant={imovel.tipo_negocio === 'aluguel' ? "secondary" : "default"} className="backdrop-blur-sm capitalize border border-white/20">
-                {imovel.tipo_negocio === 'venda' ? 'Venda' : 'Aluguel'}
+                {imovel.tipo_negocio === 'aluguel' ? 'Aluguel' : 'Venda'}
             </Badge>
         </div>
 
@@ -445,7 +440,7 @@ const ImovelCardItem = ({ imovel }: { imovel: ImovelUnico }) => (
         </div>
     </div>
     <CardContent className="p-5 flex-1 flex flex-col">
-        <h3 className="font-bold text-lg mb-2 line-clamp-1 text-foreground" title={imovel.titulo}>{imovel.titulo}</h3>
+        <h3 className="font-bold text-lg mb-2 line-clamp-1 text-foreground" title={imovel.titulo || "Imóvel"}>{imovel.titulo || "Imóvel sem título"}</h3>
         <div className="flex items-center text-sm text-muted-foreground mb-4 font-medium">
         <MapPin className="h-4 w-4 mr-1 text-primary" /> {imovel.bairro || "Bairro não informado"}
         </div>

@@ -46,6 +46,7 @@ export interface ImovelUnico {
   origem: string;
   itens_lazer?: string[];
   created_at?: string;
+  tipo_negocio?: string | null;
 }
 
 // Chat Message

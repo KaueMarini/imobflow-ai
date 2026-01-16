@@ -19,7 +19,8 @@ import RoboConfig from "./pages/RoboConfig";
 import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
 import Agenda from "./pages/Agenda";
-import Integracoes from "./pages/Integracoes"; // <--- IMPORTAÇÃO NOVA
+import Integracoes from "./pages/Integracoes";
+import Captacao from "./pages/Captacao"; // <--- NOVO IMPORT
 
 const queryClient = new QueryClient();
 
@@ -82,11 +83,8 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} /> 
               <Route path="/agenda" element={<Agenda />} /> 
               <Route path="/imoveis" element={<Imoveis />} />
-              
-              {/* --- ROTA NOVA --- */}
+              <Route path="/captacao" element={<Captacao />} /> {/* <--- NOVA ROTA */}
               <Route path="/integracoes" element={<Integracoes />} />
-              {/* ----------------- */}
-
               <Route path="/crm" element={<CRM />} />
               <Route path="/robo" element={<RoboConfig />} />
               <Route path="/fontes" element={<FontesConfig />} />

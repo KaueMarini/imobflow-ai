@@ -11,7 +11,8 @@ import {
   Building2,
   LogOut,
   CalendarDays,
-  Plug // <--- IMPORTAÇÃO NOVA
+  Plug,
+  Satellite // <--- NOVO ÍCONE (Radar)
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,8 @@ const mainNavItems: NavItem[] = [
   { title: "Agenda de Visitas", href: "/agenda", icon: CalendarDays },
   { title: "CRM de Leads", href: "/crm", icon: Users },
   { title: "Imóveis", href: "/imoveis", icon: Building2 },
-  { title: "Integrações XML", href: "/integracoes", icon: Plug }, // <--- NOVO ITEM AQUI
+  { title: "Radar Captação", href: "/captacao", icon: Satellite }, // <--- NOVO ITEM
+  { title: "Integrações XML", href: "/integracoes", icon: Plug },
 ];
 
 const configNavItems: NavItem[] = [

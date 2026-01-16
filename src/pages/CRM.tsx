@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "react-router-dom"; // Hook para ler URL (?abrir=ID)
+import { useSearchParams } from "react-router-dom"; // Hook para ler URL
 import { AppHeader } from "@/components/layout/AppHeader";
 import {
   Card,
@@ -52,7 +52,8 @@ import {
   X, 
   ChevronLeft, 
   ChevronRight,
-  Eye
+  Eye,
+  Satellite // <--- ÍCONE DO RADAR
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,7 +76,23 @@ interface Imovel {
   itens_lazer: string | null;
   link: string | null;
   origem?: string | null;
-  tipo_negocio?: string | null; // <--- CAMPO NOVO (Venda/Aluguel)
+  tipo_negocio?: string | null; // Venda ou Aluguel
+}
+
+// Interface para Captação (Vem da tabela imoveis_captacao)
+interface CaptacaoImovel {
+  id: string;
+  titulo: string;
+  preco: number;
+  bairro: string;
+  cidade: string;
+  quartos: number;
+  area_m2: number;
+  link_original: string;
+  nome_proprietario: string;
+  telefone_proprietario: string;
+  created_at: string;
+  score: number;
 }
 
 interface ScoredImovel extends Imovel {
@@ -102,6 +119,7 @@ interface Lead {
   
   // Matches carregados sob demanda (Lazy Loading)
   matches?: ScoredImovel[]; 
+  captacaoMatches?: CaptacaoImovel[]; // <--- NOVO: Matches de captação
   recommendedList?: Imovel[]; 
 }
 
@@ -215,6 +233,7 @@ export default function CRM() {
     try {
       let recommendedList: Imovel[] = [];
       let matches: ScoredImovel[] = [];
+      let captacaoMatches: CaptacaoImovel[] = [];
 
       // A. Manuais
       if (lead.imoveis_recomendados && lead.imoveis_recomendados.length > 0) {
@@ -226,7 +245,7 @@ export default function CRM() {
         if (manuais) recommendedList = manuais as Imovel[];
       }
 
-      // B. Automáticos (RPC SQL)
+      // B. Automáticos (RPC SQL - Estoque da Imobiliária)
       const params = {
         p_user_id: user.id,
         p_orcamento: lead.orcamento_max || 0,
@@ -238,9 +257,7 @@ export default function CRM() {
         p_filtro_fontes: selectedSources.length > 0 ? selectedSources : null
       };
 
-      console.log("🔍 Buscando matches para:", lead.nome, params);
-
-      const { data: matchesData, error: rpcError } = await (supabase as any).rpc(
+      const { data: matchesData } = await (supabase as any).rpc(
         'buscar_matches_imoveis', 
         params
       );
@@ -263,7 +280,20 @@ export default function CRM() {
         });
       }
 
-      setSelectedLead({ ...lead, matches, recommendedList });
+      // C. Captação (RPC SQL - Radar de Proprietários) - NOVO!
+      const paramsCaptacao = {
+          p_orcamento: lead.orcamento_max || 0,
+          p_quartos: lead.quartos || 0,
+          p_bairro: lead.interesse_bairro || null
+      };
+
+      const { data: captacaoData } = await (supabase as any).rpc('buscar_match_captacao', paramsCaptacao);
+      if (captacaoData) {
+          captacaoMatches = captacaoData as CaptacaoImovel[];
+      }
+
+      // Atualiza o estado com TODAS as listas
+      setSelectedLead({ ...lead, matches, recommendedList, captacaoMatches });
 
     } catch (error) {
       console.error("Erro matches:", error);
@@ -279,28 +309,17 @@ export default function CRM() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSources]);
 
-  // --- NOVA FUNCIONALIDADE: DEEP LINK DO DASHBOARD ---
-  // Verifica se a URL tem ?abrir=LEAD_ID e abre automaticamente
+  // --- DEEP LINK DO DASHBOARD ---
   useEffect(() => {
     const leadIdParaAbrir = searchParams.get("abrir");
-    
-    // Só executa se tiver ID na URL e a lista já tiver carregado (ou se estiver vazia)
     if (leadIdParaAbrir && !isDialogOpen) {
-        
-        // 1. Tenta achar o lead na página atual
         const leadEncontrado = leads.find(l => l.id === leadIdParaAbrir);
-        
         if (leadEncontrado) {
             setSelectedLead(leadEncontrado);
             setIsDialogOpen(true);
             fetchMatchesForLead(leadEncontrado);
         } else {
-            // 2. Se não estiver na página atual, busca do banco
-            (supabase as any)
-                .from('leads')
-                .select('*')
-                .eq('id', leadIdParaAbrir)
-                .single()
+            (supabase as any).from('leads').select('*').eq('id', leadIdParaAbrir).single()
                 .then(({ data }: { data: any }) => {
                     if (data) {
                         const leadUnico = data as Lead;
@@ -311,13 +330,12 @@ export default function CRM() {
                 });
         }
     }
-  }, [searchParams, leads]); // Executa quando a URL muda ou os leads carregam
+  }, [searchParams, leads]);
 
 
   const handlePauseRobot = async (lead: Lead, e: React.MouseEvent) => {
     e.stopPropagation(); 
     setPausingId(lead.id);
-    // Aqui viria a chamada real ao n8n
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
       toast({
@@ -332,7 +350,7 @@ export default function CRM() {
     }
   };
 
-  // Componente Card de Imóvel
+  // Componente Card de Imóvel (Estoque da Imobiliária)
   const ImovelCard = ({ imovel, lead, isRecommended = false }: { imovel: Imovel, lead: Lead, isRecommended?: boolean }) => {
     const score = (imovel as ScoredImovel).score || 0;
     const reasons = (imovel as ScoredImovel).matchReasons || [];
@@ -366,14 +384,12 @@ export default function CRM() {
               )}
           </div>
 
-          {/* Badge de Origem e Tipo de Negócio */}
           <div className="absolute top-2 left-2 flex gap-1 flex-col items-start">
              {imovel.origem && (
                 <Badge variant="secondary" className="text-[10px] bg-black/50 text-white backdrop-blur-md border-none">
                    {imovel.origem}
                 </Badge>
              )}
-             {/* Badge Venda/Aluguel */}
              {imovel.tipo_negocio && (
                 <Badge variant={imovel.tipo_negocio === 'aluguel' ? "secondary" : "default"} className="text-[10px] backdrop-blur-md border-none opacity-90">
                    {imovel.tipo_negocio === 'aluguel' ? 'Aluguel' : 'Venda'}
@@ -431,11 +447,7 @@ export default function CRM() {
               </a>
             </Button>
             <Button size="sm" className={`w-full text-white text-xs h-9 ${isRecommended ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'}`} asChild>
-              <a 
-                href={`https://wa.me/${lead.whatsapp}?text=Olá ${lead.nome}, encontrei este imóvel: ${imovel.link}`} 
-                target="_blank" 
-                rel="noreferrer"
-              >
+              <a href={`https://wa.me/${lead.whatsapp}?text=Olá ${lead.nome}, encontrei este imóvel: ${imovel.link}`} target="_blank" rel="noreferrer">
                 <MessageCircle className="mr-2 h-3 w-3" />
                 Enviar
               </a>
@@ -444,6 +456,66 @@ export default function CRM() {
         </div>
       </div>
     );
+  };
+
+  // --- NOVO COMPONENTE: CARD DE CAPTAÇÃO ---
+  const CaptacaoCard = ({ imovel }: { imovel: CaptacaoImovel }) => {
+     return (
+       <div className="bg-card rounded-xl border border-dashed border-primary/40 flex flex-col hover:border-primary transition-all group h-full">
+         <div className="p-4 bg-primary/5 border-b border-primary/10 flex justify-between items-center">
+            <Badge variant="outline" className="bg-white border-primary/20 text-primary font-bold shadow-sm">
+                Radar Particular
+            </Badge>
+            <span className="text-xs text-muted-foreground flex items-center">
+               <Calendar className="h-3 w-3 mr-1" /> 
+               {new Date(imovel.created_at).toLocaleDateString('pt-BR')}
+            </span>
+         </div>
+         <div className="p-4 flex-1 flex flex-col">
+            <h4 className="font-semibold text-sm leading-tight mb-2 line-clamp-2 text-foreground/90">{imovel.titulo}</h4>
+            
+            <p className="text-lg font-bold text-foreground mb-3">{formatCurrency(imovel.preco)}</p>
+            
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-4">
+               <MapPin className="h-3.5 w-3.5" /> {imovel.bairro} - {imovel.cidade}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-muted-foreground bg-muted/40 p-2 rounded-md">
+               <div className="flex items-center gap-2"><BedDouble className="h-3.5 w-3.5" /> {imovel.quartos} quartos</div>
+               <div className="flex items-center gap-2"><Ruler className="h-3.5 w-3.5" /> {imovel.area_m2} m²</div>
+            </div>
+
+            <div className="mt-auto space-y-2">
+                <div className="flex items-center gap-2 mb-2 p-2 bg-green-50 rounded-md border border-green-100">
+                    <div className="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-green-700 font-bold shrink-0">
+                        <User className="h-4 w-4" />
+                    </div>
+                    <div className="overflow-hidden">
+                        <p className="text-xs text-green-800 font-medium truncate">{imovel.nome_proprietario || "Proprietário"}</p>
+                        <p className="text-[10px] text-green-600">Anunciante Particular</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" className="w-full text-xs h-9" asChild>
+                        <a href={imovel.link_original || "#"} target="_blank" rel="noreferrer">
+                            <ExternalLink className="mr-2 h-3 w-3" /> Anúncio
+                        </a>
+                    </Button>
+                    {imovel.telefone_proprietario ? (
+                        <Button size="sm" className="w-full text-white text-xs h-9 bg-green-600 hover:bg-green-700" asChild>
+                            <a href={`https://wa.me/55${imovel.telefone_proprietario.replace(/\D/g,'')}`} target="_blank" rel="noreferrer">
+                                <MessageCircle className="mr-2 h-3 w-3" /> Ligar
+                            </a>
+                        </Button>
+                    ) : (
+                         <Button size="sm" variant="ghost" disabled className="w-full text-xs h-9 opacity-50">Sem tel.</Button>
+                    )}
+                </div>
+            </div>
+         </div>
+       </div>
+     );
   };
 
   return (
@@ -484,8 +556,7 @@ export default function CRM() {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Perfil de Busca</TableHead>
-                    <TableHead className="text-center">Status Matches</TableHead>
-                    <TableHead className="text-right">Ação</TableHead>
+                    <TableHead className="text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -517,33 +588,25 @@ export default function CRM() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary cursor-pointer hover:bg-primary/10">
-                           <Eye className="h-3 w-3 mr-1" /> Ver
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="destructive" 
-                            className="h-8 px-2.5"
-                            onClick={(e) => handlePauseRobot(lead, e)}
-                            disabled={pausingId === lead.id}
-                          >
-                            {pausingId === lead.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Bot className="h-4 w-4 mr-1.5" />
-                                <CirclePause className="h-4 w-4" />
-                              </>
-                            )}
-                          </Button>
-
-                          <Button size="sm" variant="ghost" className="h-8">
-                            <User className="mr-2 h-4 w-4" /> Ficha
-                          </Button>
-                        </div>
+                         <div className="flex items-center justify-center gap-2">
+                             <Button size="sm" variant="ghost" className="h-8 text-primary">
+                                <Eye className="h-4 w-4 mr-2" /> Abrir CRM
+                             </Button>
+                             
+                             <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-8 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => handlePauseRobot(lead, e)}
+                                disabled={pausingId === lead.id}
+                             >
+                                {pausingId === lead.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CirclePause className="h-4 w-4" />
+                                )}
+                             </Button>
+                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -636,12 +699,19 @@ export default function CRM() {
 
           <Tabs defaultValue="matches" className="flex-1 flex flex-col overflow-hidden">
             <div className="px-6 py-2 border-b border-border bg-background flex-shrink-0 z-10">
-              <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+              <TabsList className="grid w-full max-w-[600px] grid-cols-3">
                 <TabsTrigger value="matches">Imóveis & Oportunidades</TabsTrigger>
+                
+                {/* --- ABA NOVA: CAPTAÇÃO --- */}
+                <TabsTrigger value="captacao" className="text-amber-600 data-[state=active]:text-amber-700 data-[state=active]:bg-amber-50">
+                    <Satellite className="h-4 w-4 mr-2" /> Radar Captação
+                </TabsTrigger>
+
                 <TabsTrigger value="dados">Dados Completos</TabsTrigger>
               </TabsList>
             </div>
 
+            {/* --- CONTEÚDO 1: ESTOQUE E MATCHES (MANTIDO IGUAL) --- */}
             <TabsContent value="matches" className="flex-1 overflow-hidden relative mt-0">
               <ScrollArea className="h-full w-full">
                 <div className="p-6 pb-20 space-y-8">
@@ -713,6 +783,50 @@ export default function CRM() {
               </ScrollArea>
             </TabsContent>
 
+            {/* --- CONTEÚDO 2: CAPTAÇÃO (NOVO) --- */}
+            <TabsContent value="captacao" className="flex-1 overflow-hidden relative mt-0">
+                <ScrollArea className="h-full w-full">
+                    <div className="p-6 pb-20 space-y-8">
+                        
+                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start gap-3">
+                            <div className="p-2 bg-amber-100 rounded-full">
+                                <Satellite className="h-5 w-5 text-amber-700" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-amber-900">Oportunidades de Captação (Particular)</h4>
+                                <p className="text-xs text-amber-800/80 mt-1">
+                                    Estes imóveis são de proprietários anunciando direto na internet. 
+                                    Use esta lista para oferecer seus serviços ou agendar visitas para o seu lead.
+                                </p>
+                            </div>
+                        </div>
+
+                        {loadingMatches ? (
+                            <div className="flex flex-col items-center justify-center py-20">
+                                <Loader2 className="h-10 w-10 animate-spin text-amber-600 mb-2" />
+                                <p className="text-muted-foreground">Varrendo o mercado...</p>
+                            </div>
+                        ) : (
+                            <>
+                                {selectedLead?.captacaoMatches && selectedLead.captacaoMatches.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {selectedLead.captacaoMatches.map((item) => (
+                                            <CaptacaoCard key={item.id} imovel={item} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                                        <Satellite className="h-10 w-10 opacity-20 mb-2" />
+                                        <p>Nenhuma oportunidade de captação encontrada neste perfil (Bairro/Preço).</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </ScrollArea>
+            </TabsContent>
+
+            {/* --- CONTEÚDO 3: DADOS DO LEAD (MANTIDO IGUAL) --- */}
             <TabsContent value="dados" className="flex-1 overflow-hidden mt-0 relative">
               <ScrollArea className="h-full w-full">
                 <div className="p-8 space-y-8 max-w-4xl mx-auto">
