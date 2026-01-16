@@ -46,19 +46,18 @@ export function XmlImportCard() {
 
   // --- FUNÇÕES AUXILIARES ---
   
-  // NOVA FUNÇÃO: Formata "BOQUEIRAO" para "Boqueirão"
   const formatarTexto = (texto: string): string => {
     if (!texto) return "";
     
-    // Lista de palavras que devem ficar minúsculas (preposições)
+    // Remove pontos, vírgulas ou espaços estranhos no final
+    let limpo = texto.replace(/[.,;]+$/, "").trim();
+
     const excecoes = ["de", "da", "do", "das", "dos", "e", "em", "na", "no", "com"];
     
-    return texto
+    return limpo
       .toLowerCase()
-      .trim()
-      .split(/\s+/) // Divide por qualquer espaço em branco
+      .split(/\s+/) 
       .map((palavra, index) => {
-        // Se for a primeira palavra ou não for exceção, capitaliza
         if (index === 0 || !excecoes.includes(palavra)) {
           return palavra.charAt(0).toUpperCase() + palavra.slice(1);
         }
@@ -73,7 +72,7 @@ export function XmlImportCard() {
     for (const key in MAPA_TIPOS) {
       if (termo.includes(key)) return MAPA_TIPOS[key];
     }
-    return formatarTexto(raw); // Aplica formatação aqui também se não achar no mapa
+    return formatarTexto(raw);
   };
 
   const traduzirLazer = (featuresArray: string[]): string => {
@@ -82,7 +81,7 @@ export function XmlImportCard() {
       for (const key in MAPA_LAZER) {
         if (termo === key || termo.includes(key)) return MAPA_LAZER[key];
       }
-      return formatarTexto(item); // Formata também os que não foram traduzidos
+      return formatarTexto(item);
     });
     return [...new Set(traduzidos)].join(", ");
   };
@@ -105,15 +104,16 @@ export function XmlImportCard() {
     if (imoveisEncontrados.length === 0) imoveisEncontrados = entries;
 
     if (imoveisEncontrados.length === 0) {
-      throw new Error("Nenhum imóvel encontrado.");
+      throw new Error("Nenhum imóvel encontrado no XML.");
     }
 
     const origemFinal = originName.trim() || "Importação XML";
     
-    setStatus({ type: 'info', message: `Processando e Formatando ${imoveisEncontrados.length} imóveis...` });
+    setStatus({ type: 'info', message: `Processando ${imoveisEncontrados.length} imóveis...` });
 
-    let countUpsert = 0;
+    const imoveisParaSalvar: any[] = [];
     const referenciasNoXml: string[] = []; 
+    const TAMANHO_LOTE = 50; 
 
     for (let i = 0; i < imoveisEncontrados.length; i++) {
       const listing = imoveisEncontrados[i];
@@ -134,7 +134,6 @@ export function XmlImportCard() {
       if (ref) {
         referenciasNoXml.push(ref);
 
-        // Imagens
         let primeiraImagem = "";
         const mediaItem = listing.getElementsByTagName("Item")[0];
         if (mediaItem) primeiraImagem = mediaItem.textContent || "";
@@ -146,47 +145,43 @@ export function XmlImportCard() {
             const img = listing.getElementsByTagName("image")[0];
             if (img && img.getElementsByTagName("url")[0]) {
                  primeiraImagem = img.getElementsByTagName("url")[0].textContent || "";
-            } else if (img) {
-                 primeiraImagem = img.textContent || "";
-            }
+            } else if (img) primeiraImagem = img.textContent || "";
         }
         if (!primeiraImagem) {
              const pic = listing.getElementsByTagName("picture")[0];
-             if (pic) {
-                 const urlPic = pic.getElementsByTagName("url")[0];
-                 if(urlPic) primeiraImagem = urlPic.textContent || "";
+             if (pic && pic.getElementsByTagName("url")[0]) {
+                 primeiraImagem = pic.getElementsByTagName("url")[0].textContent || "";
              }
         }
 
-        // Features
         const featuresNodes = listing.getElementsByTagName("Feature");
         const featuresArray = [];
         for(let j=0; j < featuresNodes.length; j++) {
             if (featuresNodes[j].textContent) featuresArray.push(featuresNodes[j].textContent);
         }
         
-        // Preço
         let precoFinal = parseFloat(getTag("ListPrice", "PrecoVenda", "Preco", "price", "amount") || "0");
+        let tipoNegocio = "venda";
+
         if (precoFinal === 0) {
-            precoFinal = parseFloat(getTag("PrecoLocacao", "Aluguel") || "0");
+            const precoLocacao = parseFloat(getTag("PrecoLocacao", "Aluguel", "RentalPrice") || "0");
+            if (precoLocacao > 0) {
+                precoFinal = precoLocacao;
+                tipoNegocio = "aluguel";
+            }
         }
 
-        // --- APLICAÇÃO DA FORMATAÇÃO DE TEXTO ---
         const bairroFormatado = formatarTexto(getTag("Neighborhood", "Bairro", "addr1"));
         const cidadeFormatada = formatarTexto(getTag("City", "Cidade", "city", "addr2"));
-        // Opcional: Formatar Título também para ficar bonito
         const tituloFormatado = getTag("Title", "Titulo", "TituloAnuncio", "Header", "name"); 
 
         const imovelData = {
           referencia: ref,
-          
-          titulo: tituloFormatado, // Pode usar formatarTexto(tituloFormatado) se quiser forçar
-          
-          descricao: getTag("Description", "Descricao", "Observacao", "Destaque", "content", "summary"),
-          
+          titulo: tituloFormatado,
+          descricao: getTag("Description", "Descricao", "Observacao", "Destaque", "content", "summary")?.substring(0, 5000),
           tipo: traduzirTipo(getTag("PropertyType", "Tipo", "SubTipoImovel", "Categoria", "property_type")),
-          
           preco: precoFinal,
+          tipo_negocio: tipoNegocio,
           link: getTag("DetailViewUrl", "Url", "Link", "url"),
           vagas: parseInt(getTag("Garage", "Vagas", "Vaga") || "0"),
           area_m2: parseFloat(getTag("LivingArea", "UsefulArea", "AreaUtil", "AreaTotal", "AreaPrivativa", "area") || "0"),
@@ -195,25 +190,37 @@ export function XmlImportCard() {
           origem: origemFinal,
           quartos: parseInt(getTag("Bedrooms", "Quartos", "Dormitorios", "num_beds") || "0"),
           banheiros: parseInt(getTag("Bathrooms", "Banheiros", "num_baths") || "0"),
-          
-          bairro: bairroFormatado, // Salva "Boqueirão" em vez de "BOQUEIRAO"
+          bairro: bairroFormatado,
           cidade: cidadeFormatada, 
-          
           condominio: parseFloat(getTag("PropertyAdministrationFee", "Condominio", "PrecoCondominio") || "0"),
           iptu: parseFloat(getTag("YearlyTax", "Iptu", "ValorIPTU") || "0"),
-          
           user_id: user?.id
         };
 
-        const { error } = await (supabase as any)
-          .from('imoveis_santos')
-          .upsert(imovelData, { onConflict: 'referencia' });
-
-        if (!error) countUpsert++;
+        imoveisParaSalvar.push(imovelData);
       }
     }
 
-    // Limpeza
+    // --- SALVAMENTO EM LOTES ---
+    setStatus({ type: 'info', message: `Salvando ${imoveisParaSalvar.length} imóveis no banco...` });
+    
+    let countUpsert = 0;
+    
+    for (let i = 0; i < imoveisParaSalvar.length; i += TAMANHO_LOTE) {
+        const lote = imoveisParaSalvar.slice(i, i + TAMANHO_LOTE);
+        
+        const { error } = await (supabase as any)
+          .from('imoveis_santos')
+          .upsert(lote, { onConflict: 'referencia' });
+
+        if (error) {
+            console.error("Erro ao salvar lote:", error);
+        } else {
+            countUpsert += lote.length;
+        }
+    }
+
+    // --- LIMPEZA DE VENDIDOS (CORREÇÃO AQUI) ---
     let countDeleted = 0;
     const { data: imoveisExistentes } = await (supabase as any)
       .from('imoveis_santos')
@@ -226,17 +233,22 @@ export function XmlImportCard() {
         .filter((refDb: string) => !referenciasNoXml.includes(refDb));
 
       if (referenciasParaDeletar.length > 0) {
-        const { error: deleteError } = await (supabase as any)
-          .from('imoveis_santos')
-          .delete()
-          .in('referencia', referenciasParaDeletar);
-        if (!deleteError) countDeleted = referenciasParaDeletar.length;
+        for (let i = 0; i < referenciasParaDeletar.length; i += 100) {
+             const chunk = referenciasParaDeletar.slice(i, i + 100);
+             // Usei alias 'deleteError' para não dar conflito
+             const { error: deleteError } = await (supabase as any)
+               .from('imoveis_santos')
+               .delete()
+               .in('referencia', chunk);
+             
+             if (!deleteError) countDeleted += chunk.length;
+        }
       }
     }
 
     setStatus({ 
       type: 'success', 
-      message: `Sucesso! ${countUpsert} imóveis processados. ${countDeleted} antigos removidos.` 
+      message: `Sucesso! ${countUpsert} atualizados. ${countDeleted} removidos.` 
     });
     toast.success(`Importação Concluída!`);
     setXmlContent("");
@@ -300,7 +312,7 @@ export function XmlImportCard() {
             Importador Universal (Multi-Padrão)
           </CardTitle>
           <CardDescription>
-            Sincronização com formatação automática de texto (Maiúsculas/Minúsculas).
+            Sincronização com formatação automática, detecção de Venda/Aluguel e otimização.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -373,15 +385,16 @@ export function XmlImportCard() {
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <HelpCircle className="h-5 w-5 text-primary" />
-            Recursos
+            Recursos Novos
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
              <li><strong>Poliglota:</strong> Aceita XML da OLX, VivaReal, Zap e outros.</li>
-             <li><strong>Formatação:</strong> Corrige "BOQUEIRAO" para "Boqueirão" automaticamente.</li>
-             <li><strong>Tradução:</strong> Converte "Apartment" para "Apartamento".</li>
-             <li><strong>Limpeza:</strong> Remove imóveis que não estão mais no XML.</li>
+             <li><strong>Formatação:</strong> Corrige "BOQUEIRAO" e "Gonzaga." automaticamente.</li>
+             <li><strong>Venda/Aluguel:</strong> Detecta automaticamente o tipo de negócio.</li>
+             <li><strong>Performance:</strong> Salva em lotes de 50 para não travar.</li>
+             <li><strong>Limpeza:</strong> Remove imóveis vendidos/antigos.</li>
           </ul>
         </CardContent>
       </Card>

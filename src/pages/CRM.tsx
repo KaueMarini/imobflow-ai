@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "react-router-dom"; // <--- NOVO IMPORT
+import { useSearchParams } from "react-router-dom"; // Hook para ler URL (?abrir=ID)
 import { AppHeader } from "@/components/layout/AppHeader";
 import {
   Card,
@@ -75,6 +75,7 @@ interface Imovel {
   itens_lazer: string | null;
   link: string | null;
   origem?: string | null;
+  tipo_negocio?: string | null; // <--- CAMPO NOVO (Venda/Aluguel)
 }
 
 interface ScoredImovel extends Imovel {
@@ -107,7 +108,7 @@ interface Lead {
 export default function CRM() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams(); // <--- HOOK PARA LER URL
+  const [searchParams] = useSearchParams(); // Hook para ler a URL
   
   // --- Estados de Dados ---
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -284,7 +285,6 @@ export default function CRM() {
     const leadIdParaAbrir = searchParams.get("abrir");
     
     // Só executa se tiver ID na URL e a lista já tiver carregado (ou se estiver vazia)
-    // Usamos um flag !isDialogOpen para evitar re-abrir se já estiver aberto
     if (leadIdParaAbrir && !isDialogOpen) {
         
         // 1. Tenta achar o lead na página atual
@@ -295,7 +295,7 @@ export default function CRM() {
             setIsDialogOpen(true);
             fetchMatchesForLead(leadEncontrado);
         } else {
-            // 2. Se não estiver na página atual (devido à paginação), busca do banco
+            // 2. Se não estiver na página atual, busca do banco
             (supabase as any)
                 .from('leads')
                 .select('*')
@@ -317,10 +317,8 @@ export default function CRM() {
   const handlePauseRobot = async (lead: Lead, e: React.MouseEvent) => {
     e.stopPropagation(); 
     setPausingId(lead.id);
-    const N8N_WEBHOOK_URL = "https://seu-n8n.com/webhook/pausar-robo"; // Configure sua URL
-    
+    // Aqui viria a chamada real ao n8n
     try {
-      // await fetch(N8N_WEBHOOK_URL, ... ) 
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
       toast({
         title: "⛔ Robô Pausado",
@@ -368,14 +366,20 @@ export default function CRM() {
               )}
           </div>
 
-          {/* Badge de Origem */}
-          {imovel.origem && (
-             <div className="absolute top-2 left-2">
+          {/* Badge de Origem e Tipo de Negócio */}
+          <div className="absolute top-2 left-2 flex gap-1 flex-col items-start">
+             {imovel.origem && (
                 <Badge variant="secondary" className="text-[10px] bg-black/50 text-white backdrop-blur-md border-none">
                    {imovel.origem}
                 </Badge>
-             </div>
-          )}
+             )}
+             {/* Badge Venda/Aluguel */}
+             {imovel.tipo_negocio && (
+                <Badge variant={imovel.tipo_negocio === 'aluguel' ? "secondary" : "default"} className="text-[10px] backdrop-blur-md border-none opacity-90">
+                   {imovel.tipo_negocio === 'aluguel' ? 'Aluguel' : 'Venda'}
+                </Badge>
+             )}
+          </div>
           
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 pt-8">
             <p className="text-white text-xs font-medium truncate flex items-center gap-1.5">

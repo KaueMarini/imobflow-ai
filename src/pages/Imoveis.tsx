@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { MapPin, Bed, Car, Maximize2, ExternalLink, Building2, Loader2, Bath, Filter, X, Search, DollarSign, SlidersHorizontal } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // IMPORTANTE: Abas adicionadas
+import { MapPin, Bed, Car, Maximize2, ExternalLink, Building2, Loader2, Bath, Filter, X, Search, DollarSign, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ImovelUnico } from "@/types";
 
@@ -22,6 +23,9 @@ export default function Imoveis() {
   // Ref para o infinite scroll
   const observer = useRef<IntersectionObserver | null>(null);
   
+  // NOVO: Filtro de Negócio (Venda ou Aluguel)
+  const [negocioFilter, setNegocioFilter] = useState<string>("venda");
+
   // Estados dos filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [bairroFilter, setBairroFilter] = useState<string>("todos");
@@ -32,13 +36,15 @@ export default function Imoveis() {
   const [banheirosFilter, setBanheirosFilter] = useState<string>("todos");
   const [vagasFilter, setVagasFilter] = useState<string>("todos");
   
+  // Estado de Ordenação
+  const [orderBy, setOrderBy] = useState<string>("recentes");
+
   // Ranges numéricos
   const [precoMin, setPrecoMin] = useState<number | "">("");
   const [precoMax, setPrecoMax] = useState<number | "">("");
   const [areaMin, setAreaMin] = useState<number | "">("");
   const [areaMax, setAreaMax] = useState<number | "">("");
 
-  // Estado para opções dos filtros
   const [filterOptions, setFilterOptions] = useState({
     bairros: [] as string[],
     cidades: [] as string[],
@@ -46,42 +52,54 @@ export default function Imoveis() {
     origens: [] as string[]
   });
 
-  // 1. Carregar opções de filtro (Executa apenas uma vez na montagem)
+  // 1. Carregar opções de filtro (COM CORREÇÃO DE ERRO E LIMPEZA)
   useEffect(() => {
     async function fetchOptions() {
-      // CORREÇÃO: (supabase as any) para ignorar checagem de tipo da tabela
-      const { data } = await (supabase as any)
-        .from("imoveis_santos")
-        .select("bairro, cidade, tipo, origem")
-        .limit(1000);
+      try {
+        const { data, error } = await (supabase.rpc as any)('get_filtros_unicos');
 
-      if (data) {
-        // Forçamos data como any[] para evitar o erro de "instanciação profunda"
-        const safeData = data as any[];
-        
-        const bairros = [...new Set(safeData.map(i => i.bairro).filter(Boolean))].sort() as string[];
-        const cidades = [...new Set(safeData.map(i => i.cidade).filter(Boolean))].sort() as string[];
-        const tipos = [...new Set(safeData.map(i => i.tipo).filter(Boolean))].sort() as string[];
-        const origens = [...new Set(safeData.map(i => i.origem).filter(Boolean))].sort() as string[];
-        
-        setFilterOptions({ bairros, cidades, tipos, origens });
+        if (error) {
+          console.error("Erro ao carregar filtros:", error);
+          return;
+        }
+
+        if (data) {
+          // Função auxiliar para evitar erro de string vazia no Select
+          const limpar = (arr: any[]) => 
+            (arr || [])
+            .filter(item => item && typeof item === 'string' && item.trim() !== '')
+            .sort();
+
+          setFilterOptions({
+            bairros: limpar(data.bairros),
+            cidades: limpar(data.cidades),
+            tipos: limpar(data.tipos),
+            origens: limpar(data.origens)
+          });
+        }
+      } catch (err) {
+        console.error("Erro inesperado nos filtros:", err);
       }
     }
     fetchOptions();
   }, []);
 
-  // 2. Função Principal de Busca (Server-Side Filtering)
+  // 2. Função Principal de Busca
   const fetchImoveis = async (pageNumber: number, isNewFilter: boolean = false) => {
     try {
       setLoading(true);
       
-      // CORREÇÃO: (supabase as any) aqui também
       let query = (supabase as any)
         .from("imoveis_santos")
         .select("*", { count: "exact" });
 
-      // --- Aplicação dos Filtros na Query ---
-      
+      // --- FILTRO DE TIPO DE NEGÓCIO (NOVO) ---
+      // Se não for "todos", filtra pela coluna nova
+      if (negocioFilter !== "todos") {
+         query = query.eq("tipo_negocio", negocioFilter);
+      }
+
+      // --- Demais Filtros ---
       if (searchTerm) {
         query = query.or(`titulo.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,bairro.ilike.%${searchTerm}%`);
       }
@@ -100,13 +118,30 @@ export default function Imoveis() {
       if (areaMin !== "") query = query.gte("area_m2", Number(areaMin));
       if (areaMax !== "") query = query.lte("area_m2", Number(areaMax));
 
+      // --- Ordenação ---
+      switch (orderBy) {
+        case "preco_asc":
+            query = query.order("preco", { ascending: true });
+            break;
+        case "preco_desc":
+            query = query.order("preco", { ascending: false });
+            break;
+        case "area_desc":
+            query = query.order("area_m2", { ascending: false });
+            break;
+        case "antigos":
+            query = query.order("created_at", { ascending: true });
+            break;
+        default: 
+            query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
+            break;
+      }
+
       // --- Paginação ---
       const from = pageNumber * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
       
-      const { data, error, count } = await query
-        .order("created_at", { ascending: false })
-        .range(from, to);
+      const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
 
@@ -127,6 +162,8 @@ export default function Imoveis() {
         tipo: item.tipo,
         imagem_url: item.imagem_url,
         origem: item.origem || 'Scraper',
+        // Mapeando o novo campo
+        tipo_negocio: item.tipo_negocio || 'venda',
         itens_lazer: item.itens_lazer,
         created_at: item.created_at
       }));
@@ -146,7 +183,8 @@ export default function Imoveis() {
     }
   };
 
-  // 3. Resetar e buscar quando os filtros mudam
+  // 3. Resetar e buscar quando filtros mudam
+  // Adicionado 'negocioFilter' nas dependências
   useEffect(() => {
     const timer = setTimeout(() => {
         setPage(0);
@@ -155,13 +193,12 @@ export default function Imoveis() {
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, bairroFilter, cidadeFilter, tipoFilter, origemFilter, quartosFilter, banheirosFilter, vagasFilter, precoMin, precoMax, areaMin, areaMax]);
+  }, [searchTerm, bairroFilter, cidadeFilter, tipoFilter, origemFilter, quartosFilter, banheirosFilter, vagasFilter, precoMin, precoMax, areaMin, areaMax, orderBy, negocioFilter]);
 
-  // 4. Observer para Infinite Scroll
+  // 4. Observer
   const lastImovelElementRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
     if (observer.current) observer.current.disconnect();
-    
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
         setPage(prevPage => {
@@ -171,7 +208,6 @@ export default function Imoveis() {
         });
       }
     });
-    
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
 
@@ -188,6 +224,8 @@ export default function Imoveis() {
     setPrecoMax("");
     setAreaMin("");
     setAreaMax("");
+    setOrderBy("recentes");
+    // Nota: Não limpamos o negocioFilter (abas) pois é uma navegação de nível superior
   };
 
   const activeFiltersCount = [
@@ -207,9 +245,20 @@ export default function Imoveis() {
 
   return (
     <div className="min-h-screen bg-background pb-10">
-      <AppHeader title="Imóveis Disponíveis" subtitle={`${imoveis.length} carregados (Role para ver mais)`} />
+      <AppHeader title="Imóveis Disponíveis" subtitle={`${imoveis.length} carregados`} />
       
       <div className="p-6 container mx-auto">
+        
+        {/* NOVO: ABAS DE TIPO DE NEGÓCIO */}
+        <div className="flex justify-center mb-6">
+            <Tabs value={negocioFilter} onValueChange={setNegocioFilter} className="w-[300px]">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="venda">Comprar</TabsTrigger>
+                    <TabsTrigger value="aluguel">Alugar</TabsTrigger>
+                </TabsList>
+            </Tabs>
+        </div>
+
         {/* === BARRA DE FILTROS === */}
         <div className="mb-6 space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
@@ -227,53 +276,32 @@ export default function Imoveis() {
               <SheetTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <SlidersHorizontal className="h-4 w-4" />
-                  Filtros Avançados
-                  {activeFiltersCount > 0 && (
-                    <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>
-                  )}
+                  Filtros
+                  {activeFiltersCount > 0 && <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>}
                 </Button>
               </SheetTrigger>
               <SheetContent className="w-full sm:max-w-md overflow-y-auto">
                 <SheetHeader>
-                  <SheetTitle className="flex items-center gap-2">
-                    <Filter className="h-5 w-5" /> Filtros Avançados
-                  </SheetTitle>
+                  <SheetTitle className="flex items-center gap-2"><Filter className="h-5 w-5" /> Filtros Avançados</SheetTitle>
                 </SheetHeader>
-                
                 <div className="mt-6 space-y-6">
-                  {/* Preço */}
+                  {/* ... CONTEÚDO DO SHEET (MANTIDO) ... */}
                   <div className="space-y-3">
-                    <Label className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Faixa de Preço</Label>
+                    <Label className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Preço</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Mínimo</Label>
-                        <Input type="number" placeholder="0" value={precoMin} onChange={(e) => setPrecoMin(e.target.value ? Number(e.target.value) : "")} />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Máximo</Label>
-                        <Input type="number" placeholder="Máx" value={precoMax} onChange={(e) => setPrecoMax(e.target.value ? Number(e.target.value) : "")} />
-                      </div>
+                      <div><Label className="text-xs text-muted-foreground">Mínimo</Label><Input type="number" placeholder="0" value={precoMin} onChange={(e) => setPrecoMin(e.target.value ? Number(e.target.value) : "")} /></div>
+                      <div><Label className="text-xs text-muted-foreground">Máximo</Label><Input type="number" placeholder="Máx" value={precoMax} onChange={(e) => setPrecoMax(e.target.value ? Number(e.target.value) : "")} /></div>
                     </div>
                   </div>
-
-                  {/* Área */}
                   <div className="space-y-3">
                     <Label className="flex items-center gap-2"><Maximize2 className="h-4 w-4" /> Área (m²)</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Mínimo</Label>
-                        <Input type="number" placeholder="0" value={areaMin} onChange={(e) => setAreaMin(e.target.value ? Number(e.target.value) : "")} />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Máximo</Label>
-                        <Input type="number" placeholder="Máx" value={areaMax} onChange={(e) => setAreaMax(e.target.value ? Number(e.target.value) : "")} />
-                      </div>
+                      <div><Label className="text-xs text-muted-foreground">Mínimo</Label><Input type="number" placeholder="0" value={areaMin} onChange={(e) => setAreaMin(e.target.value ? Number(e.target.value) : "")} /></div>
+                      <div><Label className="text-xs text-muted-foreground">Máximo</Label><Input type="number" placeholder="Máx" value={areaMax} onChange={(e) => setAreaMax(e.target.value ? Number(e.target.value) : "")} /></div>
                     </div>
                   </div>
-
-                  {/* Selects dentro do Sheet */}
                   <div className="space-y-4">
-                     <div className="space-y-2">
+                      <div className="space-y-2">
                         <Label>Origem</Label>
                         <Select value={origemFilter} onValueChange={setOrigemFilter}>
                             <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
@@ -282,8 +310,8 @@ export default function Imoveis() {
                                 {filterOptions.origens.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                     </div>
-                     <div className="space-y-2">
+                      </div>
+                      <div className="space-y-2">
                         <Label>Banheiros</Label>
                         <Select value={banheirosFilter} onValueChange={setBanheirosFilter}>
                             <SelectTrigger><SelectValue placeholder="Qualquer" /></SelectTrigger>
@@ -292,8 +320,8 @@ export default function Imoveis() {
                                 {[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}+</SelectItem>)}
                             </SelectContent>
                         </Select>
-                     </div>
-                     <div className="space-y-2">
+                      </div>
+                      <div className="space-y-2">
                         <Label>Vagas</Label>
                         <Select value={vagasFilter} onValueChange={setVagasFilter}>
                             <SelectTrigger><SelectValue placeholder="Qualquer" /></SelectTrigger>
@@ -302,18 +330,28 @@ export default function Imoveis() {
                                 {[1,2,3,4].map(n => <SelectItem key={n} value={String(n)}>{n}+</SelectItem>)}
                             </SelectContent>
                         </Select>
-                     </div>
+                      </div>
                   </div>
-
-                  <Button variant="outline" className="w-full" onClick={limparFiltros}>
-                    <X className="h-4 w-4 mr-2" /> Limpar filtros
-                  </Button>
+                  <Button variant="outline" className="w-full" onClick={limparFiltros}><X className="h-4 w-4 mr-2" /> Limpar filtros</Button>
                 </div>
               </SheetContent>
             </Sheet>
+
+            <Select value={orderBy} onValueChange={setOrderBy}>
+                <SelectTrigger className="w-[180px]">
+                    <ArrowUpDown className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="recentes">Mais Recentes</SelectItem>
+                    <SelectItem value="antigos">Mais Antigos</SelectItem>
+                    <SelectItem value="preco_asc">Menor Preço</SelectItem>
+                    <SelectItem value="preco_desc">Maior Preço</SelectItem>
+                    <SelectItem value="area_desc">Maior Área</SelectItem>
+                </SelectContent>
+            </Select>
           </div>
 
-          {/* Filtros Rápidos */}
           <div className="flex flex-wrap gap-2">
             <Select value={bairroFilter} onValueChange={setBairroFilter}>
               <SelectTrigger className="w-[160px]"><SelectValue placeholder="Bairro" /></SelectTrigger>
@@ -352,7 +390,6 @@ export default function Imoveis() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {imoveis.map((imovel, index) => {
-                // Se for o último elemento, anexamos o ref do observer
                 if (imoveis.length === index + 1) {
                     return (
                         <div ref={lastImovelElementRef} key={imovel.id}>
@@ -366,7 +403,6 @@ export default function Imoveis() {
           </div>
         )}
 
-        {/* Spinner de Carregando Mais */}
         {loading && (
             <div className="flex justify-center py-8">
                 <Loader2 className="animate-spin h-8 w-8 text-primary" />
@@ -381,7 +417,6 @@ export default function Imoveis() {
   );
 }
 
-// Componente separado para o Card
 const ImovelCardItem = ({ imovel }: { imovel: ImovelUnico }) => (
     <Card className="group overflow-hidden hover:shadow-xl transition-all border-border h-full flex flex-col">
     <div className="relative h-56 bg-muted">
@@ -395,7 +430,16 @@ const ImovelCardItem = ({ imovel }: { imovel: ImovelUnico }) => (
         ) : (
         <div className="flex items-center justify-center h-full text-muted-foreground"><Building2 size={40} /></div>
         )}
-        <Badge className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm capitalize">{imovel.origem}</Badge>
+        
+        <div className="absolute top-3 left-3 flex gap-2">
+            {/* Badge de Origem */}
+            <Badge className="bg-black/70 backdrop-blur-sm capitalize">{imovel.origem}</Badge>
+            {/* NOVO: Badge de Venda/Aluguel */}
+            <Badge variant={imovel.tipo_negocio === 'aluguel' ? "secondary" : "default"} className="backdrop-blur-sm capitalize border border-white/20">
+                {imovel.tipo_negocio === 'venda' ? 'Venda' : 'Aluguel'}
+            </Badge>
+        </div>
+
         <div className="absolute bottom-3 right-3 bg-background/95 px-3 py-1 rounded-md font-bold text-sm shadow-lg text-foreground">
         {imovel.preco ? `R$ ${imovel.preco.toLocaleString('pt-BR')}` : 'Sob Consulta'}
         </div>
