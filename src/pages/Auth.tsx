@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Lock, Mail, Loader2 } from "lucide-react";
+import { Building2, Lock, Mail, Loader2, Shield, Zap, Users } from "lucide-react";
+import heroBuilding from "@/assets/hero-building.jpg";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -98,66 +99,183 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-blue-600">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-            <Building2 className="w-6 h-6 text-blue-600" />
+    <div className="min-h-screen flex">
+      {/* Left Side - Hero Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img 
+          src={heroBuilding} 
+          alt="Modern Building" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a5f]/90 via-[#1e3a5f]/80 to-[#0f1f33]/95" />
+        
+        {/* Content over image */}
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
+              <Building2 className="w-7 h-7 text-white" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight">FlyImob</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-800">
-            {isSignUp ? "Criar Conta ImobFlow" : "Acessar Painel"}
-          </CardTitle>
-          <CardDescription>
-            {isSignUp ? "Cadastre sua imobiliária e centralize seus leads." : "Entre com suas credenciais."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
+          
+          {/* Main Content */}
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl xl:text-5xl font-bold leading-tight">
+                Blindagem de Lead.<br />
+                <span className="text-blue-300">Comissão Protegida.</span>
+              </h1>
+              <p className="text-lg text-white/70 max-w-md">
+                O sistema que transforma corretores em máquinas de fechamento com IA e Inventário Infinito.
+              </p>
+            </div>
             
-            {isSignUp && (
-              <>
-                <div className="space-y-1">
-                  <Input 
-                    placeholder="Nome da Imobiliária" 
-                    value={nomeEmpresa} 
-                    onChange={(e) => setNomeEmpresa(e.target.value)} 
-                    required 
-                    className="h-11"
-                  />
+            {/* Features */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-white/90">
+                <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                  <Shield className="w-5 h-5" />
                 </div>
-                <div className="space-y-1">
-                  <Input 
-                    placeholder="WhatsApp (ex: 11999999999)" 
-                    value={whatsapp} 
-                    onChange={(e) => setWhatsapp(e.target.value)} 
-                    className="h-11"
-                  />
+                <span>Leads 100% blindados</span>
+              </div>
+              <div className="flex items-center gap-4 text-white/90">
+                <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                  <Zap className="w-5 h-5" />
                 </div>
-              </>
-            )}
-
-            <div className="relative">
-              <Mail className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
-              <Input className="pl-10 h-11" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <span>IA atendendo 24/7</span>
+              </div>
+              <div className="flex items-center gap-4 text-white/90">
+                <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                  <Users className="w-5 h-5" />
+                </div>
+                <span>40.000+ imóveis mapeados</span>
+              </div>
             </div>
-
-            <div className="relative">
-              <Lock className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
-              <Input className="pl-10 h-11" type="password" placeholder="Sua senha" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-
-            <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-semibold" disabled={loading}>
-              {loading ? <Loader2 className="animate-spin" /> : (isSignUp ? "Criar Conta" : "Entrar")}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Button variant="link" className="text-blue-600 font-semibold" onClick={() => setIsSignUp(!isSignUp)}>
-              {isSignUp ? "Já tenho conta" : "Criar conta agora"}
-            </Button>
           </div>
-        </CardContent>
-      </Card>
+          
+          {/* Footer */}
+          <p className="text-white/50 text-sm">
+            © 2025 FlyImob. A revolução da inteligência imobiliária.
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-[#1e3a5f] rounded-xl flex items-center justify-center">
+              <Building2 className="w-7 h-7 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-[#1e3a5f]">FlyImob</span>
+          </div>
+
+          <Card className="border-0 shadow-2xl shadow-slate-200/50">
+            <CardHeader className="text-center space-y-3 pb-8">
+              <div className="mx-auto w-14 h-14 bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8a] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1e3a5f]/30">
+                <Building2 className="w-7 h-7 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-slate-800">
+                {isSignUp ? "Criar Conta" : "Bem-vindo de volta"}
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                {isSignUp 
+                  ? "Cadastre sua imobiliária e proteja suas comissões." 
+                  : "Entre para acessar seu painel de controle."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleAuth} className="space-y-4">
+                
+                {isSignUp && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Nome da Imobiliária</label>
+                      <Input 
+                        placeholder="Ex: Imobiliária Premium" 
+                        value={nomeEmpresa} 
+                        onChange={(e) => setNomeEmpresa(e.target.value)} 
+                        required 
+                        className="h-12 bg-slate-50 border-slate-200 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">WhatsApp</label>
+                      <Input 
+                        placeholder="Ex: 11999999999" 
+                        value={whatsapp} 
+                        onChange={(e) => setWhatsapp(e.target.value)} 
+                        className="h-12 bg-slate-50 border-slate-200 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20 transition-all"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">E-mail</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-4 h-4 w-4 text-slate-400" />
+                    <Input 
+                      className="pl-11 h-12 bg-slate-50 border-slate-200 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20 transition-all" 
+                      type="email" 
+                      placeholder="seu@email.com" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Senha</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-4 h-4 w-4 text-slate-400" />
+                    <Input 
+                      className="pl-11 h-12 bg-slate-50 border-slate-200 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20 transition-all" 
+                      type="password" 
+                      placeholder="••••••••" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 bg-gradient-to-r from-[#1e3a5f] to-[#2d5a8a] hover:from-[#2d5a8a] hover:to-[#1e3a5f] text-white font-semibold shadow-lg shadow-[#1e3a5f]/30 transition-all duration-300" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin h-5 w-5" />
+                  ) : (
+                    isSignUp ? "Criar Conta" : "Entrar"
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+                <p className="text-sm text-slate-500 mb-2">
+                  {isSignUp ? "Já tem uma conta?" : "Ainda não tem conta?"}
+                </p>
+                <Button 
+                  variant="ghost" 
+                  className="text-[#1e3a5f] hover:text-[#2d5a8a] hover:bg-[#1e3a5f]/5 font-semibold" 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                >
+                  {isSignUp ? "Fazer Login" : "Criar Conta Grátis"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-xs text-slate-400 mt-6">
+            Ao continuar, você concorda com nossos Termos de Uso e Política de Privacidade.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
