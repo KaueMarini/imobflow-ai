@@ -1,33 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Building2, 
-  Shield, 
-  Bot, 
-  LayoutDashboard, 
-  MessageCircle, 
-  Settings, 
-  Zap,
-  Check,
   ArrowRight,
-  Instagram,
-  Linkedin,
-  Mail,
-  MapPin,
-  Phone,
-  Brain,
-  Eye,
-  EyeOff,
-  Handshake,
-  AlertTriangle,
-  TrendingUp,
-  Lock,
-  Users,
-  Pause,
-  Mic,
-  Star
+  Bot,
+  Shield,
+  LayoutDashboard,
+  Check,
+  Sparkles,
+  ChevronDown
 } from "lucide-react";
 
 const Index = () => {
@@ -40,712 +22,425 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background dark">
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">FlyImob</span>
+      {/* Minimal Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="container mx-auto flex h-16 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-semibold text-foreground tracking-tight">FlyImob</span>
           </div>
           
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-8">
             <button 
-              onClick={() => scrollToSection("problema")} 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => scrollToSection("solucao")} 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              O Problema
+              Solução
             </button>
             <button 
-              onClick={() => scrollToSection("triade")} 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => scrollToSection("recursos")} 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              A Solução
-            </button>
-            <button 
-              onClick={() => scrollToSection("como-funciona")} 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Como Funciona
+              Recursos
             </button>
             <button 
               onClick={() => scrollToSection("precos")} 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Planos
             </button>
           </nav>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild>
+            <Button variant="ghost" size="sm" asChild>
               <Link to="/auth">Entrar</Link>
             </Button>
-            <Button asChild>
-              <Link to="/auth">Começar Agora</Link>
+            <Button size="sm" asChild>
+              <Link to="/auth">Começar</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section - O Oceano Azul */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        {/* Background gradient effect */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
-        
-        <div className="container mx-auto text-center max-w-5xl relative">
-          <Badge variant="secondary" className="mb-6 px-4 py-1.5 bg-destructive/10 text-destructive border-destructive/20">
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            O mercado imobiliário tradicional está quebrado
+      {/* Hero Section - Ultra Minimal */}
+      <section className="min-h-screen flex items-center justify-center px-6 pt-16 relative overflow-hidden">
+        {/* Abstract geometric background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -right-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 -left-32 w-80 h-80 bg-primary/3 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-border/20 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-border/10 rounded-full" />
+        </div>
+
+        <div className="container mx-auto max-w-4xl text-center relative z-10">
+          <Badge variant="outline" className="mb-8 px-4 py-1.5 border-primary/30 text-primary">
+            <Sparkles className="h-3 w-3 mr-2" />
+            Tecnologia imobiliária de ponta
           </Badge>
           
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Pare de perder vendas por{" "}
-            <span className="text-destructive">"não ter o imóvel"</span>
+          <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6 leading-[1.1] tracking-tight">
+            O futuro do
+            <br />
+            <span className="text-primary">mercado imobiliário</span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto">
-            O <span className="text-primary font-semibold">Inventário Infinito</span> dá a você o poder de ter{" "}
-            <span className="text-foreground font-bold">40.000 imóveis</span> na palma da mão.
-          </p>
-
-          <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Não vendemos "bot". Vendemos <span className="text-primary font-semibold">Blindagem de Lead</span> e{" "}
-            <span className="text-primary font-semibold">Retenção de Comissão</span>.
+          <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
+            IA que atende, qualifica e recomenda imóveis automaticamente.
+            <br className="hidden md:block" />
+            <span className="text-foreground font-medium">40.000 imóveis</span> na palma da sua mão.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90" asChild>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <Button size="lg" className="h-12 px-8 text-base" asChild>
               <Link to="/auth">
-                Blindar Meus Leads
-                <Shield className="ml-2 h-5 w-5" />
+                Começar Gratuitamente
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6" asChild>
-              <Link to="/auth">Já tenho conta</Link>
+            <Button size="lg" variant="outline" className="h-12 px-8 text-base" onClick={() => scrollToSection("solucao")}>
+              Saiba Mais
             </Button>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 pt-8 border-t border-border">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary">40k+</div>
-              <div className="text-sm text-muted-foreground">Imóveis Mapeados</div>
+          {/* Floating stats */}
+          <div className="flex flex-wrap items-center justify-center gap-12 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-muted-foreground">IA ativa 24/7</span>
             </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary">24/7</div>
-              <div className="text-sm text-muted-foreground">IA Atendendo</div>
+            <div className="flex items-center gap-2">
+              <span className="text-foreground font-semibold">40k+</span>
+              <span className="text-muted-foreground">imóveis mapeados</span>
             </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary">100%</div>
-              <div className="text-sm text-muted-foreground">Leads Blindados</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary">50/50</div>
-              <div className="text-sm text-muted-foreground">Parceria Garantida</div>
+            <div className="flex items-center gap-2">
+              <span className="text-foreground font-semibold">100%</span>
+              <span className="text-muted-foreground">leads protegidos</span>
             </div>
           </div>
+
+          {/* Scroll indicator */}
+          <button 
+            onClick={() => scrollToSection("solucao")}
+            className="absolute bottom-12 left-1/2 -translate-x-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronDown className="h-6 w-6 animate-bounce" />
+          </button>
         </div>
       </section>
 
-      {/* O Problema Section */}
-      <section id="problema" className="py-20 px-4 bg-destructive/5 border-y border-destructive/10">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4 border-destructive/30 text-destructive">
-              <AlertTriangle className="h-3 w-3 mr-1" />
-              O Problema
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              O corretor gasta <span className="text-destructive">80% do tempo</span> respondendo curiosos
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              E perde vendas porque não tem o imóvel que o cliente quer.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="bg-background border-destructive/20">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-destructive/10 flex items-center justify-center mb-4">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
-                </div>
-                <CardTitle className="text-lg text-destructive">"Não tenho esse imóvel"</CardTitle>
-                <CardDescription className="text-base">
-                  Esta frase é o <strong>fim da comissão</strong>. O cliente foge para os portais e o corretor vira figurante.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="bg-background border-primary">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Brain className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-lg text-primary">A Solução Fly</CardTitle>
-                <CardDescription className="text-base">
-                  Um <strong>Cérebro Digital</strong> que dá ao corretor o poder de ter 40.000 imóveis na palma da mão.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* A Tríade de Poder */}
-      <section id="triade" className="py-20 px-4">
+      {/* Solution Section - Clean Grid */}
+      <section id="solucao" className="py-32 px-6 border-t border-border/50">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">O Produto</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              A Tríade de Poder
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              O sistema opera em três frentes simultâneas que garantem a conversão
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Motor de IA */}
-            <Card className="bg-card border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5">
-              <CardHeader className="pb-4">
-                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 border border-primary/20">
-                  <Bot className="h-7 w-7 text-primary" />
-                </div>
-                <Badge variant="outline" className="w-fit mb-2">Motor de IA</Badge>
-                <CardTitle className="text-xl">O Concierge</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Brain className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-foreground">IA Semântica</strong> que entende o desejo real do cliente 
-                    <span className="text-primary italic"> (ex: "quero algo perto da balsa, com sol da manhã")</span>
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Zap className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-foreground">Resposta instantânea</strong> no WhatsApp (24/7), eliminando o tempo de espera que mata a venda
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Mic className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-foreground">Tom de voz configurável:</strong> Formal, descontraído ou agressivo
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Inventário Infinito */}
-            <Card className="bg-card border-primary relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-              <CardHeader className="pb-4 relative">
-                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
-                  <Building2 className="h-7 w-7 text-primary-foreground" />
-                </div>
-                <Badge className="w-fit mb-2 bg-primary">Principal</Badge>
-                <CardTitle className="text-xl">Inventário Infinito</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 relative">
-                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Eye className="h-4 w-4 text-primary" />
-                    <span className="font-semibold text-sm text-primary">Status VIP</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Imóveis da sua imobiliária ou parceiros diretos. Aparecem com <strong>fotos, links e CTA direto</strong>.
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/50 border border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-semibold text-sm">Status Background</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    40.000 imóveis varridos da região. Aparecem apenas como <strong>texto descritivo</strong>.
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Handshake className="h-4 w-4 text-green-500" />
-                    <span className="font-semibold text-sm text-green-500">O Pulo do Gato</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Cliente fica curioso → Você recebe o link no dashboard → Faz o <strong>Fifty (50/50)</strong>. Cliente nunca pula você!
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Dashboard de Controle */}
-            <Card className="bg-card border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5">
-              <CardHeader className="pb-4">
-                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 border border-primary/20">
-                  <LayoutDashboard className="h-7 w-7 text-primary" />
-                </div>
-                <Badge variant="outline" className="w-fit mb-2">Dashboard</Badge>
-                <CardTitle className="text-xl">O Leme</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Mic className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-foreground">Tom de voz:</strong> Configure se quer formal, descontraído ou agressivo
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Star className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-foreground">Gestão de Prioridades:</strong> Defina quem é VIP e quem é Background
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Eye className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-foreground">Monitoramento Real-Time:</strong> Veja o que a IA está falando
-                  </p>
-                </div>
-                <div className="flex items-start gap-3 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
-                  <Pause className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-destructive">Botão de Pânico:</strong> Pause o robô para fechar a venda pessoalmente
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Blindagem de Leads - Explicação */}
-      <section className="py-20 px-4 bg-card">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <Badge variant="secondary" className="mb-4">
-              <Shield className="h-3 w-3 mr-1" />
-              O Diferencial
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Blindagem de Lead = <span className="text-primary">Retenção de Comissão</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-                  <span className="text-destructive font-bold">1</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">Cliente pede um imóvel específico</h3>
-                  <p className="text-sm text-muted-foreground">
-                    "Quero um 3 quartos no Gonzaga com vista pro mar"
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-primary font-bold">2</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">IA encontra no Inventário Background</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Envia descrição detalhada <strong>sem o link do concorrente</strong>
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                  <span className="text-green-500 font-bold">3</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">Cliente fica interessado</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Você recebe a fonte no dashboard e faz o <strong>Fifty 50/50</strong>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <Card className="bg-background border-primary p-6">
-              <div className="text-center">
-                <Lock className="h-16 w-16 text-primary mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-foreground mb-2">Lead Blindado</h3>
-                <p className="text-muted-foreground mb-4">
-                  O cliente <strong>nunca pula o corretor</strong>. Sua comissão está garantida.
-                </p>
-                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                  <p className="text-sm text-primary font-medium">
-                    "Nós não vendemos bot. Vendemos proteção da sua comissão."
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="como-funciona" className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Simples e Rápido</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Como Funciona
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Em apenas 3 passos você já está blindando seus leads
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="relative">
-              <div className="flex flex-col items-center text-center">
-                <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-2xl font-bold text-primary-foreground mb-4">
-                  1
-                </div>
-                <div className="h-12 w-12 rounded-lg bg-card flex items-center justify-center mb-4 border border-border">
-                  <MessageCircle className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">Conecte seu WhatsApp</h3>
-                <p className="text-muted-foreground">
-                  Integração simples e segura com seu número profissional em poucos cliques
-                </p>
-              </div>
-              <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-border" />
-            </div>
-
-            <div className="relative">
-              <div className="flex flex-col items-center text-center">
-                <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-2xl font-bold text-primary-foreground mb-4">
-                  2
-                </div>
-                <div className="h-12 w-12 rounded-lg bg-card flex items-center justify-center mb-4 border border-border">
-                  <Settings className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">Configure VIP e Background</h3>
-                <p className="text-muted-foreground">
-                  Defina suas fontes prioritárias (VIP) e o tom de voz da sua IA
-                </p>
-              </div>
-              <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-border" />
-            </div>
-
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <div className="flex flex-col items-center text-center">
-                <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-2xl font-bold text-primary-foreground mb-4">
-                  3
+              <Badge variant="secondary" className="mb-6">O Problema</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 leading-tight">
+                Corretores perdem vendas por não ter o imóvel certo
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                O cliente pede algo específico, você não tem, ele vai para os portais e sua comissão desaparece. 
+                Com o FlyImob, isso nunca mais acontece.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Check className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground mb-1">Inventário Infinito</h3>
+                    <p className="text-sm text-muted-foreground">Acesso a 40.000 imóveis da região, sempre tem o que o cliente quer</p>
+                  </div>
                 </div>
-                <div className="h-12 w-12 rounded-lg bg-card flex items-center justify-center mb-4 border border-border">
-                  <Shield className="h-6 w-6 text-primary" />
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Check className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground mb-1">Lead Blindado</h3>
+                    <p className="text-sm text-muted-foreground">Cliente nunca pula você, sua comissão está garantida</p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">Leads Blindados 24h</h3>
-                <p className="text-muted-foreground">
-                  A IA atende, qualifica e recomenda os imóveis certos. Você só fecha!
-                </p>
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Check className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground mb-1">Parceria Fifty 50/50</h3>
+                    <p className="text-sm text-muted-foreground">Quando a IA encontra imóvel de terceiro, você faz a parceria</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual element */}
+            <div className="relative hidden lg:block">
+              <div className="aspect-square bg-gradient-to-br from-primary/5 to-transparent rounded-3xl border border-border/50 p-12 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_70%)]" />
+                <div className="relative h-full flex flex-col items-center justify-center gap-8">
+                  <div className="text-8xl font-bold text-primary/20">40k</div>
+                  <div className="text-center">
+                    <div className="text-xl font-semibold text-foreground mb-2">Imóveis Mapeados</div>
+                    <div className="text-sm text-muted-foreground">Baixada Santista</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="precos" className="py-20 px-4 bg-card">
+      {/* Features Section - Minimal Cards */}
+      <section id="recursos" className="py-32 px-6 bg-card/50 border-y border-border/50">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Modelo SaaS</Badge>
+          <div className="text-center mb-20">
+            <Badge variant="secondary" className="mb-6">Recursos</Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Planos baseados em <span className="text-primary">Leads Únicos</span>
+              Três pilares da revolução
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              Tecnologia simples que transforma a forma como você vende imóveis
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Feature 1 */}
+            <div className="group p-8 rounded-2xl bg-background border border-border/50 hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <Bot className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-3">IA Concierge</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Atende no WhatsApp 24/7, entende o desejo real do cliente e recomenda os imóveis certos automaticamente.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="group p-8 rounded-2xl bg-background border border-primary/30 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center mb-6 relative">
+                <Building2 className="h-7 w-7 text-primary-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-3 relative">Inventário Infinito</h3>
+              <p className="text-muted-foreground leading-relaxed relative">
+                Acesso a 40.000 imóveis. Seus imóveis VIP aparecem com destaque, os demais em modo background.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="group p-8 rounded-2xl bg-background border border-border/50 hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <LayoutDashboard className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-3">Dashboard de Controle</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Monitore conversas, configure prioridades e pause o robô quando quiser fechar a venda pessoalmente.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section - Clean */}
+      <section id="precos" className="py-32 px-6">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-center mb-20">
+            <Badge variant="secondary" className="mb-6">Planos</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Escolha seu plano
             </h2>
             <p className="text-lg text-muted-foreground">
-              Escala e recorrência para proteger sua margem
+              Baseado em leads únicos mensais. Escale conforme cresce.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Start Plan */}
-            <Card className="bg-background border-border relative">
-              <CardHeader className="pb-4">
-                <Badge variant="outline" className="w-fit mb-2">Autônomos</Badge>
-                <CardTitle className="text-xl">Start</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold text-foreground">R$ 250</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-foreground font-semibold">100 leads únicos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">IA Concierge 24/7</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Inventário Infinito</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Dashboard básico</span>
-                  </li>
-                </ul>
-                <div className="pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground text-center">
-                    + Taxa de implementação: <strong>R$ 1.000</strong>
-                  </p>
-                </div>
-                <Button className="w-full" variant="outline" asChild>
-                  <Link to="/auth">Começar</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Pro Plan */}
-            <Card className="bg-background border-primary relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground">Mais Popular</Badge>
+            {/* Start */}
+            <div className="p-6 rounded-2xl border border-border/50 bg-background">
+              <div className="mb-6">
+                <div className="text-sm text-muted-foreground mb-2">Autônomos</div>
+                <div className="text-2xl font-bold text-foreground">Start</div>
               </div>
-              <CardHeader className="pb-4">
-                <Badge variant="outline" className="w-fit mb-2 border-primary/50 text-primary">High Performers</Badge>
-                <CardTitle className="text-xl">Pro</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold text-foreground">R$ 500</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-foreground font-semibold">250 leads únicos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">IA Concierge 24/7</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Inventário completo</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Dashboard avançado</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Suporte prioritário</span>
-                  </li>
-                </ul>
-                <div className="pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground text-center">
-                    + Taxa de implementação: <strong>R$ 1.000</strong>
-                  </p>
-                </div>
-                <Button className="w-full" asChild>
-                  <Link to="/auth">Começar Agora</Link>
-                </Button>
-              </CardContent>
-            </Card>
+              <div className="mb-6">
+                <span className="text-4xl font-bold text-foreground">R$ 250</span>
+                <span className="text-muted-foreground">/mês</span>
+              </div>
+              <ul className="space-y-3 mb-6 text-sm">
+                <li className="flex items-center gap-2 text-foreground font-medium">
+                  <Check className="h-4 w-4 text-primary" />
+                  100 leads únicos
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  IA Concierge 24/7
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Inventário Infinito
+                </li>
+              </ul>
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/auth">Começar</Link>
+              </Button>
+            </div>
 
-            {/* Elite Plan */}
-            <Card className="bg-background border-border relative">
-              <CardHeader className="pb-4">
-                <Badge variant="outline" className="w-fit mb-2">Pequenas Equipes</Badge>
-                <CardTitle className="text-xl">Elite</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold text-foreground">R$ 800</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-foreground font-semibold">500 leads únicos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">IA Concierge 24/7</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Inventário premium</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Dashboard completo</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Suporte VIP</span>
-                  </li>
-                </ul>
-                <div className="pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground text-center">
-                    + Taxa de implementação: <strong>R$ 1.000</strong>
-                  </p>
-                </div>
-                <Button className="w-full" variant="outline" asChild>
-                  <Link to="/auth">Começar</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Pro */}
+            <div className="p-6 rounded-2xl border-2 border-primary bg-background relative">
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">Popular</Badge>
+              <div className="mb-6">
+                <div className="text-sm text-primary mb-2">High Performers</div>
+                <div className="text-2xl font-bold text-foreground">Pro</div>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-bold text-foreground">R$ 500</span>
+                <span className="text-muted-foreground">/mês</span>
+              </div>
+              <ul className="space-y-3 mb-6 text-sm">
+                <li className="flex items-center gap-2 text-foreground font-medium">
+                  <Check className="h-4 w-4 text-primary" />
+                  250 leads únicos
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  IA Concierge 24/7
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Dashboard avançado
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Suporte prioritário
+                </li>
+              </ul>
+              <Button className="w-full" asChild>
+                <Link to="/auth">Começar</Link>
+              </Button>
+            </div>
 
-            {/* Enterprise Plan */}
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 relative">
-              <CardHeader className="pb-4">
-                <Badge variant="outline" className="w-fit mb-2 border-primary/50 text-primary">Grandes Imobiliárias</Badge>
-                <CardTitle className="text-xl">Enterprise</CardTitle>
-                <div className="mt-4">
-                  <span className="text-2xl font-bold text-foreground">Sob Consulta</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-foreground font-semibold">Volume personalizado</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Múltiplos corretores</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">API personalizada</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Gerente de sucesso</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">SLA garantido</span>
-                  </li>
-                </ul>
-                <div className="pt-4 border-t border-primary/20">
-                  <p className="text-xs text-muted-foreground text-center">
-                    Implementação personalizada
-                  </p>
-                </div>
-                <Button className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30" variant="outline" asChild>
-                  <Link to="/auth">Falar com Consultor</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Elite */}
+            <div className="p-6 rounded-2xl border border-border/50 bg-background">
+              <div className="mb-6">
+                <div className="text-sm text-muted-foreground mb-2">Pequenas Equipes</div>
+                <div className="text-2xl font-bold text-foreground">Elite</div>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-bold text-foreground">R$ 800</span>
+                <span className="text-muted-foreground">/mês</span>
+              </div>
+              <ul className="space-y-3 mb-6 text-sm">
+                <li className="flex items-center gap-2 text-foreground font-medium">
+                  <Check className="h-4 w-4 text-primary" />
+                  500 leads únicos
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  IA Concierge 24/7
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Dashboard completo
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Suporte VIP
+                </li>
+              </ul>
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/auth">Começar</Link>
+              </Button>
+            </div>
+
+            {/* Enterprise */}
+            <div className="p-6 rounded-2xl border border-primary/30 bg-primary/5">
+              <div className="mb-6">
+                <div className="text-sm text-primary mb-2">Imobiliárias</div>
+                <div className="text-2xl font-bold text-foreground">Enterprise</div>
+              </div>
+              <div className="mb-6">
+                <span className="text-xl font-bold text-foreground">Sob Consulta</span>
+              </div>
+              <ul className="space-y-3 mb-6 text-sm">
+                <li className="flex items-center gap-2 text-foreground font-medium">
+                  <Check className="h-4 w-4 text-primary" />
+                  Volume personalizado
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Múltiplos corretores
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  API personalizada
+                </li>
+                <li className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Gerente de sucesso
+                </li>
+              </ul>
+              <Button variant="outline" className="w-full border-primary/30 hover:bg-primary/10" asChild>
+                <Link to="/auth">Falar com Consultor</Link>
+              </Button>
+            </div>
           </div>
 
-          {/* Upsell */}
-          <div className="mt-12 text-center">
-            <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20 max-w-2xl mx-auto">
-              <CardContent className="py-6">
-                <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    <span className="font-semibold text-foreground">Academia Fly</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Curso "Como vender com IA" disponível no dashboard por apenas <strong className="text-primary">R$ 29,90</strong>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            Todos os planos incluem taxa de implementação de R$ 1.000
+          </p>
         </div>
       </section>
 
-      {/* CTA Final */}
-      <section className="py-20 px-4 bg-primary">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
+      {/* CTA Section - Minimal */}
+      <section className="py-32 px-6 border-t border-border/50">
+        <div className="container mx-auto max-w-2xl text-center">
+          <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-8">
+            <Shield className="h-8 w-8 text-primary-foreground" />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Pronto para blindar seus leads?
           </h2>
-          <p className="text-lg text-primary-foreground/80 mb-8">
-            Junte-se aos corretores que já estão usando o poder do Inventário Infinito
+          <p className="text-lg text-muted-foreground mb-8">
+            Comece agora e transforme a forma como você vende imóveis
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
-              <Link to="/auth">
-                Começar Agora
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
+          <Button size="lg" className="h-12 px-8 text-base" asChild>
+            <Link to="/auth">
+              Começar Agora
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-4 border-t border-border">
+      {/* Footer - Ultra Minimal */}
+      <footer className="py-8 px-6 border-t border-border/50">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="h-8 w-8 text-primary" />
-                <span className="text-xl font-bold text-foreground">FlyImob</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <Building2 className="h-4 w-4 text-primary-foreground" />
               </div>
-              <p className="text-muted-foreground mb-4 max-w-md">
-                A revolução da inteligência imobiliária. Inventário Infinito para corretores da Baixada Santista.
-              </p>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span>Baixada Santista, SP - Brasil</span>
-              </div>
+              <span className="text-sm font-medium text-foreground">FlyImob</span>
             </div>
             
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Links</h4>
-              <ul className="space-y-2">
-                <li>
-                  <button onClick={() => scrollToSection("triade")} className="text-muted-foreground hover:text-foreground transition-colors">
-                    Funcionalidades
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => scrollToSection("precos")} className="text-muted-foreground hover:text-foreground transition-colors">
-                    Preços
-                  </button>
-                </li>
-                <li>
-                  <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Login
-                  </Link>
-                </li>
-              </ul>
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <button onClick={() => scrollToSection("solucao")} className="hover:text-foreground transition-colors">
+                Solução
+              </button>
+              <button onClick={() => scrollToSection("recursos")} className="hover:text-foreground transition-colors">
+                Recursos
+              </button>
+              <button onClick={() => scrollToSection("precos")} className="hover:text-foreground transition-colors">
+                Planos
+              </button>
+              <Link to="/auth" className="hover:text-foreground transition-colors">
+                Login
+              </Link>
             </div>
-            
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Contato</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a href="mailto:contato@flyimob.com.br" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    contato@flyimob.com.br
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                    <Instagram className="h-4 w-4" />
-                    @flyimob
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                    <Linkedin className="h-4 w-4" />
-                    FlyImob
-                  </a>
-                </li>
-              </ul>
+
+            <div className="text-sm text-muted-foreground">
+              © 2025 FlyImob. Baixada Santista, SP
             </div>
-          </div>
-          
-          <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>© 2026 FlyImob. Todos os direitos reservados.</p>
-            <p className="mt-1">Feito com ❤️ para corretores da Baixada Santista</p>
           </div>
         </div>
       </footer>
