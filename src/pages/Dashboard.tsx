@@ -163,7 +163,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background pb-10">
 
-      <AppHeader title="ImobFlow AI" />
+      <AppHeader title="FlyImob" />
 
       <div className="px-6 pt-8 pb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
