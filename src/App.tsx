@@ -20,7 +20,8 @@ import NotFound from "./pages/NotFound";
 import Upgrade from "./pages/Upgrade";
 import Agenda from "./pages/Agenda";
 import Integracoes from "./pages/Integracoes";
-import Captacao from "./pages/Captacao"; // <--- NOVO IMPORT
+import Captacao from "./pages/Captacao";
+import Avaliacao from "./pages/Avaliacao"; // <--- NOVO IMPORT
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const App = () => (
               <Route path="/robo" element={<RoboConfig />} />
               <Route path="/fontes" element={<FontesConfig />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/avaliacao" element={<Avaliacao />} />
             </Route>
 
             {/* Rota de Erro */}

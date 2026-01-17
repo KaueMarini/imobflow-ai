@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { FileText } from "lucide-react";
 
 interface NavItem {
   title: string;
@@ -32,6 +33,7 @@ const mainNavItems: NavItem[] = [
   { title: "Imóveis", href: "/imoveis", icon: Building2 },
   { title: "Radar Captação", href: "/captacao", icon: Satellite }, // <--- NOVO ITEM
   { title: "Integrações XML", href: "/integracoes", icon: Plug },
+  { title: "Gerador de Avaliação", href: "/avaliacao", icon: FileText },
 ];
 
 const configNavItems: NavItem[] = [
