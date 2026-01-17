@@ -32,13 +32,13 @@ const mainNavItems: NavItem[] = [
   { title: "CRM de Leads", href: "/crm", icon: Users },
   { title: "Imóveis", href: "/imoveis", icon: Building2 },
   { title: "Radar Captação", href: "/captacao", icon: Satellite }, // <--- NOVO ITEM
-  { title: "Integrações XML", href: "/integracoes", icon: Plug },
   { title: "Gerador de Avaliação", href: "/avaliacao", icon: FileText },
 ];
 
 const configNavItems: NavItem[] = [
   { title: "Configurar Robô", href: "/robo", icon: Bot },
   { title: "Regras de Fontes", href: "/fontes", icon: Layers },
+  { title: "Integrações XML", href: "/integracoes", icon: Plug },
   { title: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
