@@ -192,9 +192,9 @@ export default function Auth() {
                 {isSignUp && (
                   <>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">Nome da Imobiliária</label>
+                      <label className="text-sm font-medium text-slate-700">Nome do Corretor</label>
                       <Input 
-                        placeholder="Ex: Imobiliária Premium" 
+                        placeholder="Ex: João Silva" 
                         value={nomeEmpresa} 
                         onChange={(e) => setNomeEmpresa(e.target.value)} 
                         required 
@@ -204,9 +204,18 @@ export default function Auth() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700">WhatsApp</label>
                       <Input 
-                        placeholder="Ex: 11999999999" 
+                        placeholder="(11) 99999-9999" 
                         value={whatsapp} 
-                        onChange={(e) => setWhatsapp(e.target.value)} 
+                        onChange={(e) => {
+                          // Aplica máscara de telefone
+                          let value = e.target.value.replace(/\D/g, '');
+                          if (value.length <= 11) {
+                            value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+                            value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                          }
+                          setWhatsapp(value);
+                        }}
+                        maxLength={15}
                         className="h-12 bg-slate-50 border-slate-200 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20 transition-all"
                       />
                     </div>
