@@ -1,10 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Bot,
@@ -15,7 +14,12 @@ import {
   MessageSquare,
   Building2,
   Save,
-  Loader2
+  Loader2,
+  Settings,
+  Wifi,
+  Clock,
+  AlertTriangle,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -53,12 +57,45 @@ export default function RoboConfig() {
   // Estados do QR Code
   const [showQR, setShowQR] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Estados do Timer
+  const [timeRemaining, setTimeRemaining] = useState(300); // 5 minutos em segundos
+  const [timerActive, setTimerActive] = useState(false);
 
   // Estados do Formulário
   const [companyName, setCompanyName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [greetingMessage, setGreetingMessage] = useState("");
   const [personality, setPersonality] = useState<Personality>("professional");
+
+  // Timer countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (timerActive && timeRemaining > 0) {
+      interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setTimerActive(false);
+            setShowQR(false);
+            toast.warning("QR Code expirado. Clique em 'Atualizar' para gerar um novo.");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [timerActive, timeRemaining]);
+
+  // Formata o tempo restante
+  const formatTime = useCallback((seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }, []);
 
   // Busca os dados do Supabase ao carregar
   useEffect(() => {
@@ -67,8 +104,6 @@ export default function RoboConfig() {
       try {
         setLoadingData(true);
         
-        // --- 2. O TRUQUE DO CASTING (as any) E DEPOIS TIPAGEM MANUAL ---
-        // Dizemos pro TS ignorar a busca, mas tratamos o resultado como nossa interface manual
         const { data: rawData, error } = await supabase
           .from('clientes_saas' as any)
           .select('*')
@@ -77,14 +112,12 @@ export default function RoboConfig() {
 
         if (error) throw error;
 
-        // Aqui convertemos o dado "bruto" para nossa interface
         const data = rawData as unknown as ClienteSaasManual | null;
 
         if (data) {
           setCompanyName(data.evolution_instance_name || "");
           setGreetingMessage(data.mensagem_saudacao || "");
           
-          // Verifica se a tonalidade salva é válida
           const savedPersonality = data.tonalidade as Personality;
           if (savedPersonality && personalities.some(p => p.id === savedPersonality)) {
             setPersonality(savedPersonality);
@@ -124,7 +157,7 @@ export default function RoboConfig() {
 
     setIsSaving(true);
     try {
-      const response = await fetch("https://webhook.saveautomatik.shop/webhook/d186bd57-3a34-4aa7-9067-50294c88bd3e", {
+      const response = await fetch("https://webhook.saveautomatik.shop/webhook/criarInstancia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,12 +171,10 @@ export default function RoboConfig() {
       const dataWebhook = await response.json();
       
       if (user) {
-         // Atualiza no banco
          const { error: dbError } = await supabase
           .from('clientes_saas' as any)
           .update({
             evolution_instance_name: companyName,
-            // evolution_instance_id: dataWebhook.instanceId, // Se o webhook retornar ID, descomente
             mensagem_saudacao: greetingMessage,
             tonalidade: personality,
             updated_at: new Date().toISOString()
@@ -153,9 +184,14 @@ export default function RoboConfig() {
          if (dbError) throw dbError;
       }
 
-      if (dataWebhook.url) {
-        setQrCodeUrl(dataWebhook.url);
+      // O webhook retorna diretamente a URL como string ou em um campo
+      const qrUrl = typeof dataWebhook === 'string' ? dataWebhook : (dataWebhook.url || dataWebhook);
+      
+      if (qrUrl) {
+        setQrCodeUrl(qrUrl);
         setShowQR(true);
+        setTimeRemaining(300); // Reset para 5 minutos
+        setTimerActive(true);
         toast.success("QR Code gerado! Conecte seu WhatsApp.");
       } else {
         toast.warning("Instância criada, mas sem QR Code retornado.");
@@ -166,6 +202,39 @@ export default function RoboConfig() {
       toast.error("Erro ao criar agente: " + error.message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleRefreshQRCode = async () => {
+    setIsRefreshing(true);
+    try {
+      const response = await fetch("https://webhook.saveautomatik.shop/webhook/recarregarInstancia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          empresa: companyName,
+          telefone: whatsappNumber,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erro ao recarregar QR Code");
+
+      const dataWebhook = await response.json();
+      const qrUrl = typeof dataWebhook === 'string' ? dataWebhook : (dataWebhook.url || dataWebhook);
+
+      if (qrUrl) {
+        setQrCodeUrl(qrUrl);
+        setTimeRemaining(300); // Reset para 5 minutos
+        setTimerActive(true);
+        toast.success("QR Code atualizado!");
+      } else {
+        toast.error("Não foi possível obter novo QR Code.");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Erro ao atualizar QR Code: " + error.message);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -195,6 +264,15 @@ export default function RoboConfig() {
   const handleConfirmConnection = () => {
     setIsConnected(true);
     setShowQR(false);
+    setTimerActive(false);
+    toast.success("WhatsApp conectado com sucesso!");
+  };
+
+  const handleCancelConnection = () => {
+    setShowQR(false);
+    setTimerActive(false);
+    setQrCodeUrl(null);
+    setTimeRemaining(300);
   };
 
   if (loadingData) {
@@ -242,7 +320,7 @@ export default function RoboConfig() {
                 <Input 
                   value={companyName} 
                   onChange={e => setCompanyName(e.target.value)} 
-                  disabled={isConnected} 
+                  disabled={isConnected || showQR} 
                   placeholder="Ex: João Silva"
                 />
               </div>
@@ -251,7 +329,7 @@ export default function RoboConfig() {
                 <Input 
                   value={whatsappNumber} 
                   onChange={e => setWhatsappNumber(e.target.value)} 
-                  disabled={isConnected} 
+                  disabled={isConnected || showQR} 
                   placeholder="Ex: 5511999999999"
                 />
               </div>
@@ -288,41 +366,149 @@ export default function RoboConfig() {
           </Card>
 
           <div className="flex justify-end gap-3">
-            {!isConnected ? (
+            {!isConnected && !showQR ? (
               <Button onClick={handleCreateAgent} disabled={isSaving} size="lg" className="w-full md:w-auto bg-green-600 hover:bg-green-700">
                 {isSaving ? <Loader2 className="animate-spin mr-2"/> : <QrCode className="mr-2 h-5 w-5"/>}
                 Gerar QR Code e Conectar
               </Button>
-            ) : (
+            ) : isConnected ? (
               <Button onClick={handleUpdateConfig} disabled={isSaving} size="lg" className="w-full md:w-auto">
                 {isSaving ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-5 w-5"/>}
                 Salvar Alterações
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
 
+        {/* Coluna Lateral: QR Code e Instruções */}
         <div className="space-y-6">
           {showQR && !isConnected && (
-            <Card className="border-dashed border-2 border-green-400">
-              <CardHeader className="pb-2 text-center">
-                <CardTitle className="text-lg">Escaneie no WhatsApp</CardTitle>
+            <Card className="border-2 border-green-400 bg-gradient-to-b from-green-50/50 to-background">
+              <CardHeader className="pb-3 text-center border-b">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Smartphone className="h-5 w-5 text-green-600" />
+                  <CardTitle className="text-lg text-green-700">Conectar WhatsApp</CardTitle>
+                </div>
+                <CardDescription>
+                  Siga os passos abaixo para vincular seu número à plataforma Fly.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col items-center gap-4">
-                {qrCodeUrl ? (
-                  <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48 border rounded-lg" />
-                ) : (
-                  <div className="w-48 h-48 bg-slate-100 flex items-center justify-center rounded-lg text-slate-400">
-                    <Loader2 className="animate-spin h-8 w-8" />
+              
+              <CardContent className="pt-4 space-y-4">
+                {/* Aviso Importante */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-800">ATENÇÃO:</p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        Mantenha o WhatsApp aberto em seu celular até que a conexão seja 100% concluída. 
+                        Não feche o aplicativo ou bloqueie a tela durante o processo.
+                      </p>
+                    </div>
                   </div>
-                )}
-                <Button variant="outline" size="sm" onClick={handleConfirmConnection} className="w-full">
-                  Já Escaneiei
-                </Button>
+                </div>
+
+                {/* Instruções Passo a Passo */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm text-muted-foreground">Instruções:</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
+                      <span className="text-sm">Abra o WhatsApp no seu celular</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">2</span>
+                      <span className="text-sm">Vá em Configurações {">"} Aparelhos conectados</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">3</span>
+                      <span className="text-sm">Toque em Conectar um aparelho</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">4</span>
+                      <span className="text-sm">Aponte para o QR Code abaixo</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* QR Code */}
+                <div className="flex flex-col items-center py-4">
+                  {qrCodeUrl ? (
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="QR Code" 
+                      className="w-48 h-48 border-2 border-gray-200 rounded-lg shadow-sm bg-white p-2" 
+                    />
+                  ) : (
+                    <div className="w-48 h-48 bg-slate-100 flex items-center justify-center rounded-lg text-slate-400">
+                      <Loader2 className="animate-spin h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Timer e Status */}
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Clock className={cn(
+                      "h-5 w-5",
+                      timeRemaining <= 60 ? "text-red-500" : "text-blue-500"
+                    )} />
+                    <span className={cn(
+                      "text-xl font-mono font-bold",
+                      timeRemaining <= 60 ? "text-red-500" : "text-foreground"
+                    )}>
+                      {formatTime(timeRemaining)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Wifi className="h-4 w-4 text-green-500" />
+                    <span className="text-xs text-muted-foreground">Servidor Online</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  O QR Code expira em 5 minutos por segurança.
+                </p>
+
+                {/* Botões de Ação */}
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button 
+                    onClick={handleConfirmConnection} 
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Tudo pronto! Já conectei
+                  </Button>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleRefreshQRCode}
+                      disabled={isRefreshing}
+                      className="flex-1"
+                    >
+                      {isRefreshing ? (
+                        <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                      ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                      )}
+                      Atualizar
+                    </Button>
+                    
+                    <Button 
+                      variant="ghost" 
+                      onClick={handleCancelConnection}
+                      className="flex-1 text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
-
         </div>
 
       </div>
