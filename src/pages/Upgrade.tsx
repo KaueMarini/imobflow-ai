@@ -38,7 +38,7 @@ export default function Upgrade() {
       buttonText: "Assinar Pro",
       popular: true,
       icon: Crown,
-      accentColor: "from-primary via-purple-500 to-pink-500",
+      accentColor: "from-blue-500 via-primary to-blue-600",
       bgGlow: "bg-primary/30",
     },
     {
@@ -46,11 +46,11 @@ export default function Upgrade() {
       name: "Elite",
       price: "800",
       description: "Ideal para pequenas equipes",
-      features: ["500 Leads únicos/mês", "IA Concierge 24/7", "Inventário Infinito", "Multi-usuários", "Gerente de Conta"],
+      features: ["500 Leads únicos/mês", "IA Concierge 24/7", "Inventário Infinito", "Prioridade Máxima", "Gerente de Conta"],
       buttonText: "Assinar Elite",
       popular: false,
       icon: Rocket,
-      accentColor: "from-orange-500 to-amber-500",
+      accentColor: "from-blue-400 to-cyan-500",
       bgGlow: "bg-orange-500/20",
     },
     {
@@ -139,16 +139,16 @@ export default function Upgrade() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-primary/5" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       
       <div className="relative z-10 flex flex-col items-center py-16 px-4 md:px-8">
         {/* Header */}
         <div className="text-center mb-20 space-y-6 animate-fade-in max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 backdrop-blur-sm">
-            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-            <span className="text-sm font-semibold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-500/20 to-primary/20 border border-blue-500/30 backdrop-blur-sm">
+            <Sparkles className="h-4 w-4 text-blue-400 animate-pulse" />
+            <span className="text-sm font-semibold bg-gradient-to-r from-blue-400 to-primary bg-clip-text text-transparent">
               Potencialize seus resultados
             </span>
           </div>
@@ -156,7 +156,7 @@ export default function Upgrade() {
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight">
             <span className="text-foreground">Escolha o plano</span>
             <br />
-            <span className="bg-gradient-to-r from-primary via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 via-primary to-cyan-400 bg-clip-text text-transparent">
               perfeito para você
             </span>
           </h1>
