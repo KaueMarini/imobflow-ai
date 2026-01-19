@@ -459,7 +459,7 @@ const Index = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
             {[
-              { name: "Start", price: "250", leads: "100", label: "Autônomos" },
+              { name: "Start", price: "294", leads: "100", label: "Autônomos" },
               { name: "Pro", price: "500", leads: "250", label: "High Performers", featured: true },
               { name: "Elite", price: "800", leads: "500", label: "Pequenas Equipes" },
               { name: "Enterprise", price: null, leads: "∞", label: "Imobiliárias" }

@@ -1,20 +1,23 @@
-import { Check, Zap, Crown, Rocket, Building2, Shield, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Check, Zap, Crown, Rocket, Building2, Shield, Sparkles, Loader2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Upgrade() {
   const { clienteSaas } = useAuth();
   const planoAtual = clienteSaas?.plano || "free";
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const plans = [
     {
       id: "start",
       name: "Start",
-      price: "R$ 250",
+      price: "R$ 294",
       description: "Perfeito para corretores autônomos que querem blindar seus leads.",
       features: ["Até 100 Leads únicos/mês", "IA Concierge 24/7", "Inventário Infinito", "Dashboard de Controle", "Suporte por Email"],
       buttonText: "Começar Agora",
@@ -61,12 +64,55 @@ export default function Upgrade() {
     },
   ];
 
-  const handleSolicitarPlano = (planId: string, planName: string) => {
+  const handleSolicitarPlano = async (planId: string, planName: string) => {
     if (planId === planoAtual) {
       toast.info("Você já está neste plano!");
       return;
     }
-    toast.success(`Solicitação do plano ${planName} enviada! Entraremos em contato.`);
+
+    if (planId === "enterprise") {
+      toast.success("Solicitação do plano Enterprise enviada! Entraremos em contato.");
+      return;
+    }
+
+    setLoadingPlan(planId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          planId,
+          includeImplementationFee: !clienteSaas?.status_pagamento || clienteSaas.status_pagamento !== "ativo"
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error("URL de checkout não encontrada");
+      }
+    } catch (error: any) {
+      console.error("Erro ao criar checkout:", error);
+      toast.error("Erro ao processar pagamento. Tente novamente.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      console.error("Erro ao abrir portal:", error);
+      toast.error("Erro ao abrir portal de assinatura.");
+    }
   };
 
   const getPlanoLabel = (plano: string) => {
@@ -194,9 +240,12 @@ export default function Upgrade() {
                   }`}
                   variant={isCurrentPlan ? "secondary" : (plan.popular ? "default" : "outline")}
                   size="lg"
-                  disabled={isCurrentPlan}
+                  disabled={isCurrentPlan || loadingPlan === plan.id}
                   onClick={() => handleSolicitarPlano(plan.id, plan.name)}
                 >
+                  {loadingPlan === plan.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
                   {isCurrentPlan ? "✓ Plano Atual" : plan.buttonText}
                 </Button>
               </CardFooter>
@@ -272,6 +321,20 @@ export default function Upgrade() {
           </AccordionItem>
         </Accordion>
       </div>
+
+      {/* Manage Subscription Button */}
+      {clienteSaas?.status_pagamento === "ativo" && (
+        <div className="mt-8 animate-fade-in" style={{ animationDelay: "450ms" }}>
+          <Button 
+            variant="outline" 
+            onClick={handleManageSubscription}
+            className="gap-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            Gerenciar Assinatura
+          </Button>
+        </div>
+      )}
 
       {/* Footer Info */}
       <div className="mt-16 text-center space-y-3 animate-fade-in" style={{ animationDelay: "500ms" }}>
