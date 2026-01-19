@@ -20,9 +20,10 @@ serve(async (req) => {
     const body = await req.text();
     // Usa Async para evitar erro de ambiente Deno
     event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret);
-  } catch (err) {
-    console.error(`❌ Erro de assinatura: ${err.message}`);
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error(`❌ Erro de assinatura: ${errorMessage}`);
+    return new Response(`Webhook Error: ${errorMessage}`, { status: 400 });
   }
 
   const supabaseAdmin = createClient(
@@ -78,9 +79,10 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (err) {
-    console.error(`❌ Erro no processamento: ${err.message}`);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error(`❌ Erro no processamento: ${errorMessage}`);
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
   }
 });
 
