@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -7,83 +7,94 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Mapeamento de planos para price IDs do Stripe
+// SEUS IDS DO MODO DE TESTE (Certifique-se que estão corretos)
 const PLAN_PRICES = {
-  start: "price_1SrBrVFZLHvlHqJMQz7zHvh0",
+  start: "price_1SrBrVFZLHvlHqJMQz7zHvh0", 
   pro: "price_1SrBrhFZLHvlHqJM8Ix286c3",
-  elite: "price_1SrBrtFZLHvlHqJMc5H277hh",
+  elite: "price_1SrBrtFZLHvlHqJMc5H277hh", 
 };
 
-const IMPLEMENTATION_FEE_PRICE = "price_1SrBr1FZLHvlHqJMqYz3Rrv0";
-
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
-};
+const IMPLEMENTATION_FEE_PRICE = "price_1SrBr1FZLHvlHqJMqYz3Rrv0"; 
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
   try {
-    logStep("Function started");
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("Chave do Stripe não configurada.");
 
-    const { planId, includeImplementationFee = true } = await req.json();
-    logStep("Request body parsed", { planId, includeImplementationFee });
-
-    if (!planId || !PLAN_PRICES[planId as keyof typeof PLAN_PRICES]) {
-      throw new Error("Invalid plan ID");
-    }
-
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
-
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: "2023-10-16",
+      httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // Check if customer already exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Usuário não autenticado.");
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+
+    if (authError || !user || !user.email) throw new Error("Sessão inválida.");
+
+    const { planId, includeImplementationFee = true } = await req.json();
+    console.log(`[Checkout] User: ${user.email} | Plano: ${planId} | Taxa: ${includeImplementationFee}`);
+
+    const priceId = PLAN_PRICES[planId as keyof typeof PLAN_PRICES];
+    if (!priceId) throw new Error(`Plano não encontrado: ${planId}`);
+
+    // Busca ou cria cliente
     let customerId;
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
+    } else {
+      const newCustomer = await stripe.customers.create({
+        email: user.email,
+        metadata: { supabase_uid: user.id }
+      });
+      customerId = newCustomer.id;
     }
 
-    // Build line items
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    const lineItems = [];
+    
+    // Configuração dos dados da assinatura
+    const subscriptionData: any = {
+      metadata: {
+        user_id: user.id,
+        plan_id: planId,
+      },
+    };
 
-    // Add implementation fee if requested and this is a new customer
+    // LÓGICA MÁGICA AQUI:
+    // Se tiver taxa de implementação, adicionamos ela como item avulso
+    // E damos 30 dias de trial na assinatura mensal.
     if (includeImplementationFee) {
+      // 1. Adiciona a taxa (será cobrada HOJE)
       lineItems.push({
         price: IMPLEMENTATION_FEE_PRICE,
         quantity: 1,
       });
-      logStep("Added implementation fee");
+
+      // 2. Define que a mensalidade só começa daqui a 30 dias
+      subscriptionData.trial_period_days = 30;
     }
 
-    // Add subscription plan
+    // Adiciona o Plano Mensal (será cobrado R$ 0 hoje se tiver trial, ou valor cheio se não tiver)
     lineItems.push({
-      price: PLAN_PRICES[planId as keyof typeof PLAN_PRICES],
+      price: priceId,
       quantity: 1,
     });
-    logStep("Added subscription plan", { planId });
 
-    // Create checkout session
-    // If we have both one-time and subscription items, we need to use subscription mode
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
       line_items: lineItems,
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/dashboard?payment=success`,
@@ -92,26 +103,19 @@ serve(async (req) => {
         user_id: user.id,
         plan_id: planId,
       },
-      subscription_data: {
-        metadata: {
-          user_id: user.id,
-          plan_id: planId,
-        },
-      },
+      subscription_data: subscriptionData, // Passamos a config com o trial aqui
     });
-
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+
+  } catch (error: any) {
+    console.error("Erro no Checkout:", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 400,
     });
   }
 });
