@@ -76,67 +76,79 @@ const Index = () => {
       {/* HERO SECTION */}
       <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
           style={{ backgroundImage: `url(${heroBuilding})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a5f]/85 via-[#1e3a5f]/75 to-[#1e3a5f]/90" />
-        <div className="absolute inset-0 opacity-10" style={{
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1929]/95 via-[#1e3a5f]/85 to-[#1e3a5f]/95" />
+        <div className="absolute inset-0 opacity-5" style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
+          backgroundSize: '60px 60px'
         }} />
+        
+        {/* Animated gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse-soft" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: "1s" }} />
 
         <div className="container mx-auto max-w-5xl text-center relative z-10 px-6 pt-20">
           <div className="animate-fade-in">
-            <Badge variant="outline" className="mb-8 px-5 py-2 border-red-400/50 text-red-300 font-medium rounded-full bg-red-500/10 backdrop-blur-sm">
-              O mercado imobiliário tradicional quebrou.
+            <Badge variant="outline" className="mb-8 px-6 py-2.5 border-red-400/40 text-red-300 font-medium rounded-full bg-red-500/10 backdrop-blur-md text-sm">
+              ⚠️ A lentidão custa dinheiro. O mercado não perdoa.
             </Badge>
           </div>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight animate-slide-up">
             Quem não controla o lead,
             <br />
-            <span className="text-white/60">perde a comissão.</span>
+            <span className="bg-gradient-to-r from-white/60 via-white/40 to-white/60 bg-clip-text text-transparent">perde a comissão.</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-white/80 mb-6 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: "100ms" }}>
+          <p className="text-lg md:text-xl text-white/80 mb-4 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: "100ms" }}>
             O FlyImob entrega o <span className="text-white font-semibold">Inventário Infinito</span>:
             <br />
             <span className="text-white font-bold">40.000 imóveis</span> na palma da sua mão — sem perder o cliente para portais ou concorrentes.
           </p>
 
-          <p className="text-base text-white/60 mb-10 animate-slide-up" style={{ animationDelay: "150ms" }}>
+          {/* Motivational phrase with icon */}
+          <div className="flex items-center justify-center gap-2 mb-8 animate-slide-up" style={{ animationDelay: "120ms" }}>
+            <Zap className="h-4 w-4 text-emerald-400" />
+            <p className="text-base text-emerald-300 font-medium">
+              Este sistema é a tecnologia que faltava para você se destacar.
+            </p>
+          </div>
+
+          <p className="text-base text-white/50 mb-10 animate-slide-up" style={{ animationDelay: "150ms" }}>
             Não vendemos bot. Vendemos <span className="text-white font-medium">blindagem de lead</span> e <span className="text-white font-medium">retenção de comissão</span>.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <Button size="lg" className="h-14 px-10 text-base bg-white text-[#1e3a5f] hover:bg-white/90 rounded-full font-semibold" asChild>
+            <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-white to-slate-100 text-[#1e3a5f] hover:from-slate-100 hover:to-white rounded-full font-bold shadow-2xl shadow-white/20 transition-all duration-300 hover:scale-105" asChild>
               <Link to="/auth">
-                <Shield className="mr-2 h-5 w-5" />
+                <Shield className="mr-3 h-6 w-6" />
                 Blindar Meus Leads
               </Link>
             </Button>
-            <Button size="lg" variant="ghost" className="h-14 px-10 text-base text-white/80 hover:text-white hover:bg-white/10 rounded-full" asChild>
+            <Button size="lg" variant="ghost" className="h-16 px-10 text-lg text-white/80 hover:text-white hover:bg-white/10 rounded-full border border-white/20 backdrop-blur-sm" asChild>
               <Link to="/auth">Já tenho conta</Link>
             </Button>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 animate-fade-in" style={{ animationDelay: "400ms" }}>
-            <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-              <div className="text-3xl font-bold text-white mb-1">40k+</div>
+          {/* Stats with better styling */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 animate-fade-in" style={{ animationDelay: "400ms" }}>
+            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
+              <div className="text-4xl font-bold text-white mb-1">40k+</div>
               <div className="text-xs text-white/50 uppercase tracking-wider">imóveis mapeados</div>
             </div>
-            <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-              <div className="text-3xl font-bold text-white mb-1">24/7</div>
+            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
+              <div className="text-4xl font-bold text-white mb-1">24/7</div>
               <div className="text-xs text-white/50 uppercase tracking-wider">IA atendendo</div>
             </div>
-            <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-              <div className="text-3xl font-bold text-white mb-1">100%</div>
+            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
+              <div className="text-4xl font-bold text-emerald-400 mb-1">100%</div>
               <div className="text-xs text-white/50 uppercase tracking-wider">leads blindados</div>
             </div>
-            <div className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-              <div className="text-3xl font-bold text-white mb-1">50/50</div>
+            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
+              <div className="text-4xl font-bold text-white mb-1">50/50</div>
               <div className="text-xs text-white/50 uppercase tracking-wider">parceria garantida</div>
             </div>
           </div>
@@ -151,15 +163,24 @@ const Index = () => {
       </section>
 
       {/* O PROBLEMA */}
-      <section id="problema" className="py-32 px-6 bg-slate-50">
-        <div className="container mx-auto max-w-4xl">
+      <section id="problema" className="py-32 px-6 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-200 to-transparent" />
+        
+        <div className="container mx-auto max-w-4xl relative z-10">
           <div className="text-center mb-16 animate-slide-up">
-            <div className="text-sm text-red-500 uppercase tracking-widest mb-4 font-medium">O Problema</div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-100 text-red-600 text-sm font-medium mb-6">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              O Problema
+            </div>
             <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-6 leading-tight">
               O corretor trabalha muito.
               <br />
               <span className="text-slate-400">E vende pouco.</span>
             </h2>
+            <p className="text-lg text-slate-500 max-w-xl mx-auto">
+              Sua concorrência já está avançando. E você?
+            </p>
           </div>
 
           <div className="max-w-2xl mx-auto space-y-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
@@ -169,18 +190,27 @@ const Index = () => {
             <p className="text-xl text-slate-600 leading-relaxed">
               E quando o cliente pede algo específico…
             </p>
-            <div className="p-8 rounded-2xl bg-red-50 border border-red-100">
+            <div className="p-10 rounded-3xl bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200 shadow-lg shadow-red-100/50">
               <p className="text-2xl md:text-3xl font-bold text-red-600 text-center">
                 "Não tenho esse imóvel."
               </p>
+              <p className="text-sm text-red-500/70 text-center mt-4">
+                Essa frase custa milhares em comissão perdida.
+              </p>
             </div>
-            <p className="text-xl text-slate-600 leading-relaxed text-center">
-              Essa frase encerra a conversa.
-              <br />
-              O cliente vai para o portal.
-              <br />
-              <span className="text-[#1e3a5f] font-semibold">E sua comissão morre ali.</span>
-            </p>
+            <div className="text-center space-y-3">
+              <p className="text-xl text-slate-600 leading-relaxed">
+                Essa frase encerra a conversa.
+                <br />
+                O cliente vai para o portal.
+              </p>
+              <p className="text-2xl text-[#1e3a5f] font-bold">
+                E sua comissão morre ali.
+              </p>
+              <p className="text-sm text-slate-400 mt-4">
+                Não perca mais negócios por falta de ferramentas.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -496,22 +526,44 @@ const Index = () => {
       </section>
 
       {/* CTA FINAL */}
-      <section className="py-32 px-6 bg-[#1e3a5f]">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 animate-slide-up">
+      <section className="py-32 px-6 bg-gradient-to-br from-[#1e3a5f] via-[#1e3a5f] to-[#0a1929] relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: `radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                           radial-gradient(circle at 80% 50%, rgba(255,255,255,0.05) 0%, transparent 50%)`
+        }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto max-w-3xl text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-emerald-300 text-sm font-medium mb-8 animate-slide-up">
+            <Zap className="w-4 h-4" />
+            O avanço da tecnologia é um caminho sem volta
+          </div>
+          
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 animate-slide-up">
             Pronto para parar de
             <br />
-            <span className="text-white/60">perder comissão?</span>
+            <span className="bg-gradient-to-r from-white/60 to-white/40 bg-clip-text text-transparent">perder comissão?</span>
           </h2>
-          <p className="text-lg text-white/60 mb-12 animate-slide-up" style={{ animationDelay: "100ms" }}>
+          
+          <p className="text-lg text-white/60 mb-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
             O Inventário Infinito já está mudando o jogo na Baixada Santista.
           </p>
-          <Button size="lg" className="h-14 px-12 text-base bg-white text-[#1e3a5f] hover:bg-white/90 rounded-full font-semibold animate-slide-up" style={{ animationDelay: "200ms" }} asChild>
+          
+          <p className="text-xl text-emerald-300 font-semibold mb-12 animate-slide-up" style={{ animationDelay: "150ms" }}>
+            Seja pioneiro, não ultrapassado.
+          </p>
+          
+          <Button size="lg" className="h-16 px-14 text-lg bg-gradient-to-r from-white to-slate-100 text-[#1e3a5f] hover:from-slate-100 hover:to-white rounded-full font-bold shadow-2xl shadow-white/20 transition-all duration-300 hover:scale-105 animate-slide-up" style={{ animationDelay: "200ms" }} asChild>
             <Link to="/auth">
               Começar Agora
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-3 h-5 w-5" />
             </Link>
           </Button>
+          
+          <p className="text-sm text-white/40 mt-8 animate-slide-up" style={{ animationDelay: "250ms" }}>
+            Quem não inova, fica obsoleto.
+          </p>
         </div>
       </section>
 
