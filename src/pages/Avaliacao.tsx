@@ -16,7 +16,7 @@ export default function Avaliacao() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [analisePronta, setAnalisePronta] = useState(false);
-  const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [mapCoords, setMapCoords] = useState<{lat: string; lon: string} | null>(null);
   const [loadingMap, setLoadingMap] = useState(false);
 
   // Formulário
@@ -59,8 +59,8 @@ export default function Avaliacao() {
     return dado;
   };
 
-  // Função para buscar coordenadas e gerar URL do mapa
-  const fetchMapUrl = async (cidade: string, bairro: string, estado: string) => {
+  // Função para buscar coordenadas do mapa
+  const fetchMapCoords = async (cidade: string, bairro: string, estado: string) => {
     try {
       setLoadingMap(true);
       // Geocodificar usando Nominatim (OpenStreetMap)
@@ -77,18 +77,14 @@ export default function Avaliacao() {
       
       if (geoData && geoData.length > 0) {
         const { lat, lon } = geoData[0];
-        // Gerar URL do mapa estático usando OpenStreetMap Static Maps
-        // Usando api.mapbox.com/styles/v1/mapbox/streets-v12/static alternativo gratuito
-        // Ou usar o serviço staticmap.openstreetmap.de
-        const staticMapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=15&size=400x200&markers=${lat},${lon},red-pushpin`;
-        setMapUrl(staticMapUrl);
+        setMapCoords({ lat, lon });
       } else {
         console.warn("Não foi possível geocodificar o endereço");
-        setMapUrl(null);
+        setMapCoords(null);
       }
     } catch (error) {
       console.error("Erro ao buscar mapa:", error);
-      setMapUrl(null);
+      setMapCoords(null);
     } finally {
       setLoadingMap(false);
     }
@@ -101,7 +97,7 @@ export default function Avaliacao() {
     }
 
     setLoading(true);
-    setMapUrl(null);
+    setMapCoords(null);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -111,8 +107,8 @@ export default function Avaliacao() {
         return;
       }
 
-      // Buscar mapa em paralelo
-      fetchMapUrl(formData.cidade, formData.bairro, formData.estado);
+      // Buscar coordenadas do mapa em paralelo
+      fetchMapCoords(formData.cidade, formData.bairro, formData.estado);
 
       // ⚠️ URL DO WEBHOOK
       const WEBHOOK_URL = "https://webhook.saveautomatik.shop/webhook/avalicao-imoveis"; 
@@ -407,12 +403,12 @@ export default function Avaliacao() {
                                         <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
                                             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                                         </div>
-                                    ) : mapUrl ? (
-                                        <img 
-                                            src={mapUrl} 
-                                            alt={`Mapa de ${formData.bairro}, ${formData.cidade}`}
-                                            className="w-full h-full object-cover"
-                                            crossOrigin="anonymous"
+                                    ) : mapCoords ? (
+                                        <iframe 
+                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(mapCoords.lon) - 0.01},${parseFloat(mapCoords.lat) - 0.005},${parseFloat(mapCoords.lon) + 0.01},${parseFloat(mapCoords.lat) + 0.005}&layer=mapnik&marker=${mapCoords.lat},${mapCoords.lon}`}
+                                            title={`Mapa de ${formData.bairro}, ${formData.cidade}`}
+                                            className="w-full h-full border-0"
+                                            style={{ pointerEvents: 'none' }}
                                         />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400">
