@@ -97,10 +97,6 @@ export default function RoboConfig() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // Dados do banco de dados (para enviar aos webhooks)
-  const [dbCompanyName, setDbCompanyName] = useState("");
-  const [dbWhatsapp, setDbWhatsapp] = useState("");
-
   // Busca os dados do Supabase ao carregar
   useEffect(() => {
     async function loadConfig() {
@@ -119,11 +115,6 @@ export default function RoboConfig() {
         const data = rawData as any;
 
         if (data) {
-          // Dados do banco para exibição e webhooks
-          setDbCompanyName(data.nome_empresa || "");
-          setDbWhatsapp(data.whatsapp || "");
-          setCompanyName(data.nome_empresa || "");
-          setWhatsappNumber(data.whatsapp || "");
           setGreetingMessage(data.mensagem_saudacao || "");
           
           const savedPersonality = data.tonalidade as Personality;
@@ -158,9 +149,9 @@ export default function RoboConfig() {
   }, [personality, companyName, greetingMessage]);
 
   const handleCreateAgent = async () => {
-    // Usa dados do banco de dados
-    if (!dbCompanyName || !dbWhatsapp) {
-      toast.error("Dados da empresa não encontrados no cadastro.");
+    // Usa dados do formulário preenchidos pelo usuário
+    if (!companyName || !whatsappNumber) {
+      toast.error("Preencha o Nome e o WhatsApp.");
       return;
     }
 
@@ -170,8 +161,8 @@ export default function RoboConfig() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empresa: dbCompanyName,
-          telefone: dbWhatsapp,
+          empresa: companyName,
+          telefone: whatsappNumber,
         }),
       });
 
@@ -183,7 +174,7 @@ export default function RoboConfig() {
          const { error: dbError } = await supabase
           .from('clientes_saas' as any)
           .update({
-            evolution_instance_name: dbCompanyName,
+            evolution_instance_name: companyName,
             tonalidade: personality,
             updated_at: new Date().toISOString()
           })
@@ -220,8 +211,8 @@ export default function RoboConfig() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empresa: dbCompanyName,
-          telefone: dbWhatsapp,
+          empresa: companyName,
+          telefone: whatsappNumber,
         }),
       });
 
