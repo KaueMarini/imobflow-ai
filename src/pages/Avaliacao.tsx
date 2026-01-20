@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Download, TrendingUp, Calculator, CheckCircle2, MapPin, Building2, AlertCircle, Sparkles } from "lucide-react";
+import { Loader2, Download, TrendingUp, Calculator, CheckCircle2, MapPin, Building2, AlertCircle, Sparkles, Map } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 // @ts-ignore
@@ -16,6 +16,8 @@ export default function Avaliacao() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [analisePronta, setAnalisePronta] = useState(false);
+  const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [loadingMap, setLoadingMap] = useState(false);
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -57,6 +59,41 @@ export default function Avaliacao() {
     return dado;
   };
 
+  // Função para buscar coordenadas e gerar URL do mapa
+  const fetchMapUrl = async (cidade: string, bairro: string, estado: string) => {
+    try {
+      setLoadingMap(true);
+      // Geocodificar usando Nominatim (OpenStreetMap)
+      const query = encodeURIComponent(`${bairro}, ${cidade}, ${estado}, Brasil`);
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
+      
+      const geoResponse = await fetch(nominatimUrl, {
+        headers: {
+          'User-Agent': 'FlyImob/1.0 (contact@flyimob.com.br)'
+        }
+      });
+      
+      const geoData = await geoResponse.json();
+      
+      if (geoData && geoData.length > 0) {
+        const { lat, lon } = geoData[0];
+        // Gerar URL do mapa estático usando OpenStreetMap Static Maps
+        // Usando api.mapbox.com/styles/v1/mapbox/streets-v12/static alternativo gratuito
+        // Ou usar o serviço staticmap.openstreetmap.de
+        const staticMapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=15&size=400x200&markers=${lat},${lon},red-pushpin`;
+        setMapUrl(staticMapUrl);
+      } else {
+        console.warn("Não foi possível geocodificar o endereço");
+        setMapUrl(null);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar mapa:", error);
+      setMapUrl(null);
+    } finally {
+      setLoadingMap(false);
+    }
+  };
+
   const gerarAnalise = async () => {
     if (!formData.cidade || !formData.bairro || formData.area <= 0) {
       toast({ title: "Dados incompletos", description: "Cidade, Bairro e Área são obrigatórios.", variant: "destructive" });
@@ -64,6 +101,7 @@ export default function Avaliacao() {
     }
 
     setLoading(true);
+    setMapUrl(null);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -72,6 +110,9 @@ export default function Avaliacao() {
         toast({ title: "Erro de Sessão", description: "Faça login novamente.", variant: "destructive" });
         return;
       }
+
+      // Buscar mapa em paralelo
+      fetchMapUrl(formData.cidade, formData.bairro, formData.estado);
 
       // ⚠️ URL DO WEBHOOK
       const WEBHOOK_URL = "https://webhook.saveautomatik.shop/webhook/avalicao-imoveis"; 
@@ -338,7 +379,7 @@ export default function Avaliacao() {
                             </div>
                          </div>
 
-                         {/* Coluna Direita: Destaques e Specs Extras */}
+                         {/* Coluna Direita: Destaques, Mapa e Specs Extras */}
                          <div className="space-y-4">
                              <div className="bg-green-50 p-4 rounded border border-green-100">
                                 <h3 className="font-bold text-[10px] text-green-800 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -352,6 +393,36 @@ export default function Avaliacao() {
                                         </li>
                                     ))}
                                 </ul>
+                             </div>
+
+                             {/* Mapa da Região */}
+                             <div className="bg-slate-50 border border-slate-200 rounded overflow-hidden">
+                                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200">
+                                    <h3 className="font-bold text-[10px] text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                                        <Map className="h-3 w-3 text-primary" /> Localização
+                                    </h3>
+                                </div>
+                                <div className="h-[100px] relative">
+                                    {loadingMap ? (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+                                            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                                        </div>
+                                    ) : mapUrl ? (
+                                        <img 
+                                            src={mapUrl} 
+                                            alt={`Mapa de ${formData.bairro}, ${formData.cidade}`}
+                                            className="w-full h-full object-cover"
+                                            crossOrigin="anonymous"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400">
+                                            <div className="text-center">
+                                                <MapPin className="h-5 w-5 mx-auto mb-1 opacity-50" />
+                                                <p className="text-[9px]">Mapa indisponível</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                              </div>
 
                              {/* Specs Extras */}
