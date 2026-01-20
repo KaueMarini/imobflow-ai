@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Download, TrendingUp, Calculator, CheckCircle2, MapPin, Building2, AlertCircle, Sparkles, Map } from "lucide-react";
+import { Loader2, Download, TrendingUp, Calculator, CheckCircle2, MapPin, Building2, AlertCircle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { LocationMapCard } from "@/components/avaliacao/LocationMapCard";
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
@@ -391,34 +392,20 @@ export default function Avaliacao() {
                                 </ul>
                              </div>
 
-                             {/* Mapa da Região */}
-                             <div className="bg-slate-50 border border-slate-200 rounded overflow-hidden">
-                                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200">
-                                    <h3 className="font-bold text-[10px] text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                                        <Map className="h-3 w-3 text-primary" /> Localização
-                                    </h3>
-                                </div>
-                                <div className="h-[100px] relative">
-                                    {loadingMap ? (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-                                            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                                        </div>
-                                    ) : mapCoords ? (
-                                        <iframe 
-                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(mapCoords.lon) - 0.01},${parseFloat(mapCoords.lat) - 0.005},${parseFloat(mapCoords.lon) + 0.01},${parseFloat(mapCoords.lat) + 0.005}&layer=mapnik&marker=${mapCoords.lat},${mapCoords.lon}`}
-                                            title={`Mapa de ${formData.bairro}, ${formData.cidade}`}
-                                            className="w-full h-full border-0"
-                                            style={{ pointerEvents: 'none' }}
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400">
-                                            <div className="text-center">
-                                                <MapPin className="h-5 w-5 mx-auto mb-1 opacity-50" />
-                                                <p className="text-[9px]">Mapa indisponível</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                             {/* Mapa da Região - Estilizado */}
+                             <div className="rounded-lg overflow-hidden shadow-sm">
+                                {loadingMap ? (
+                                    <div className="h-[120px] flex items-center justify-center bg-slate-100">
+                                        <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                                    </div>
+                                ) : (
+                                    <LocationMapCard 
+                                        bairro={formData.bairro}
+                                        cidade={formData.cidade}
+                                        estado={formData.estado}
+                                        coords={mapCoords}
+                                    />
+                                )}
                              </div>
 
                              {/* Specs Extras */}
