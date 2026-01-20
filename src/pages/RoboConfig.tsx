@@ -97,6 +97,10 @@ export default function RoboConfig() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
+  // Dados do banco de dados (para enviar aos webhooks)
+  const [dbCompanyName, setDbCompanyName] = useState("");
+  const [dbWhatsapp, setDbWhatsapp] = useState("");
+
   // Busca os dados do Supabase ao carregar
   useEffect(() => {
     async function loadConfig() {
@@ -112,10 +116,14 @@ export default function RoboConfig() {
 
         if (error) throw error;
 
-        const data = rawData as unknown as ClienteSaasManual | null;
+        const data = rawData as any;
 
         if (data) {
-          setCompanyName(data.evolution_instance_name || "");
+          // Dados do banco para exibição e webhooks
+          setDbCompanyName(data.nome_empresa || "");
+          setDbWhatsapp(data.whatsapp || "");
+          setCompanyName(data.nome_empresa || "");
+          setWhatsappNumber(data.whatsapp || "");
           setGreetingMessage(data.mensagem_saudacao || "");
           
           const savedPersonality = data.tonalidade as Personality;
@@ -123,7 +131,7 @@ export default function RoboConfig() {
             setPersonality(savedPersonality);
           }
           
-          if (data.evolution_instance_id) {
+          if (data.evolution_instance_id || data.evolution_status === "online") {
             setIsConnected(true);
           }
         }
@@ -150,8 +158,9 @@ export default function RoboConfig() {
   }, [personality, companyName, greetingMessage]);
 
   const handleCreateAgent = async () => {
-    if (!companyName || !whatsappNumber) {
-      toast.error("Preencha o Nome e o WhatsApp.");
+    // Usa dados do banco de dados
+    if (!dbCompanyName || !dbWhatsapp) {
+      toast.error("Dados da empresa não encontrados no cadastro.");
       return;
     }
 
@@ -161,8 +170,8 @@ export default function RoboConfig() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empresa: companyName,
-          telefone: whatsappNumber,
+          empresa: dbCompanyName,
+          telefone: dbWhatsapp,
         }),
       });
 
@@ -174,8 +183,7 @@ export default function RoboConfig() {
          const { error: dbError } = await supabase
           .from('clientes_saas' as any)
           .update({
-            evolution_instance_name: companyName,
-            mensagem_saudacao: greetingMessage,
+            evolution_instance_name: dbCompanyName,
             tonalidade: personality,
             updated_at: new Date().toISOString()
           })
@@ -184,8 +192,8 @@ export default function RoboConfig() {
          if (dbError) throw dbError;
       }
 
-      // O webhook retorna diretamente a URL como string ou em um campo
-      const qrUrl = typeof dataWebhook === 'string' ? dataWebhook : (dataWebhook.url || dataWebhook);
+      // O webhook retorna a URL no campo "message"
+      const qrUrl = dataWebhook?.message || (typeof dataWebhook === 'string' ? dataWebhook : dataWebhook.url);
       
       if (qrUrl) {
         setQrCodeUrl(qrUrl);
@@ -212,15 +220,15 @@ export default function RoboConfig() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empresa: companyName,
-          telefone: whatsappNumber,
+          empresa: dbCompanyName,
+          telefone: dbWhatsapp,
         }),
       });
 
       if (!response.ok) throw new Error("Erro ao recarregar QR Code");
 
       const dataWebhook = await response.json();
-      const qrUrl = typeof dataWebhook === 'string' ? dataWebhook : (dataWebhook.url || dataWebhook);
+      const qrUrl = dataWebhook?.message || (typeof dataWebhook === 'string' ? dataWebhook : dataWebhook.url);
 
       if (qrUrl) {
         setQrCodeUrl(qrUrl);
