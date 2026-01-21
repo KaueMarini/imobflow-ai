@@ -12,13 +12,14 @@ import {
   LogOut,
   CalendarDays,
   Plug,
-  Satellite // <--- NOVO ÍCONE (Radar)
+  Satellite,
+  Scale, // <--- ADICIONE ESTE IMPORT
+  FileText 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { FileText } from "lucide-react";
 
 interface NavItem {
   title: string;
@@ -31,8 +32,9 @@ const mainNavItems: NavItem[] = [
   { title: "Agenda de Visitas", href: "/agenda", icon: CalendarDays },
   { title: "CRM de Leads", href: "/crm", icon: Users },
   { title: "Imóveis", href: "/imoveis", icon: Building2 },
-  { title: "Radar Captação", href: "/captacao", icon: Satellite }, // <--- NOVO ITEM
+  { title: "Radar Captação", href: "/captacao", icon: Satellite },
   { title: "Gerador de Avaliação", href: "/avaliacao", icon: FileText },
+  { title: "Parceiros Jurídicos", href: "/parceiros", icon: Scale }, // <--- NOVO ITEM AQUI
 ];
 
 const configNavItems: NavItem[] = [
@@ -42,12 +44,14 @@ const configNavItems: NavItem[] = [
   { title: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
+// ... (O resto do componente AppSidebar continua exatamente igual)
 export function AppSidebar() {
+  // ... mantenha o resto do código inalterado ...
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, clienteSaas, signOut } = useAuth();
-
+  
   const isActive = (href: string) => {
     if (href === "/") {
       return location.pathname === "/" || location.pathname === "/dashboard";
@@ -63,7 +67,6 @@ export function AppSidebar() {
   // Dados reais do usuário
   const nomeEmpresa = clienteSaas?.nome_empresa || user?.user_metadata?.nome_empresa || "Minha Empresa";
   const plano = clienteSaas?.plano || "starter";
-  // Pega as duas primeiras letras do nome da empresa para o avatar
   const iniciais = nomeEmpresa.substring(0, 2).toUpperCase();
 
   const planoLabel = {

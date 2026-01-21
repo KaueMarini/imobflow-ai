@@ -21,7 +21,8 @@ import Upgrade from "./pages/Upgrade";
 import Agenda from "./pages/Agenda";
 import Integracoes from "./pages/Integracoes";
 import Captacao from "./pages/Captacao";
-import Avaliacao from "./pages/Avaliacao"; // <--- NOVO IMPORT
+import Avaliacao from "./pages/Avaliacao";
+import Parceiros from "./pages/Parceiros"; // <--- NOVO IMPORT
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,7 @@ const App = () => (
               <Route path="/fontes" element={<FontesConfig />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="/avaliacao" element={<Avaliacao />} />
+              <Route path="/parceiros" element={<Parceiros />} /> {/* <--- NOVA ROTA AQUI */}
             </Route>
 
             {/* Rota de Erro */}
