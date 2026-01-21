@@ -49,20 +49,23 @@ export function VideoAdminPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<VideoForm>(initialFormState);
 
-  // Check if user is admin
+  // Check if user is admin using clientes_saas.is_admin column
   const { data: isAdmin } = useQuery({
     queryKey: ["user-is-admin", user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
-      const { data, error } = await supabase.rpc("has_role", {
-        _user_id: user.id,
-        _role: "admin",
-      });
+      // Using any to bypass type issues with external Supabase schema
+      const { data, error } = await (supabase as any)
+        .from("clientes_saas")
+        .select("is_admin")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
       if (error) {
-        console.error("Error checking admin role:", error);
+        console.error("Error checking admin status:", error);
         return false;
       }
-      return data;
+      return data?.is_admin === true;
     },
     enabled: !!user?.id,
   });
@@ -71,7 +74,7 @@ export function VideoAdminPanel() {
   const { data: videos, isLoading } = useQuery({
     queryKey: ["academia-videos-admin"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("academia_videos")
         .select("*")
         .order("order_index", { ascending: true });
@@ -83,7 +86,7 @@ export function VideoAdminPanel() {
 
   const createMutation = useMutation({
     mutationFn: async (video: VideoForm) => {
-      const { error } = await supabase.from("academia_videos").insert([video]);
+      const { error } = await (supabase as any).from("academia_videos").insert([video]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -100,7 +103,7 @@ export function VideoAdminPanel() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, video }: { id: string; video: VideoForm }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("academia_videos")
         .update(video)
         .eq("id", id);
@@ -120,7 +123,7 @@ export function VideoAdminPanel() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("academia_videos")
         .delete()
         .eq("id", id);
