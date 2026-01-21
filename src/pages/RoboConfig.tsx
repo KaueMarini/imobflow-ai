@@ -371,10 +371,22 @@ export default function RoboConfig() {
                 Gerar QR Code e Conectar
               </Button>
             ) : isConnected ? (
-              <Button onClick={handleUpdateConfig} disabled={isSaving} size="lg" className="w-full md:w-auto">
-                {isSaving ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-5 w-5"/>}
-                Salvar Alterações
-              </Button>
+              <>
+                <Button 
+                  onClick={handleRefreshQRCode} 
+                  disabled={isRefreshing} 
+                  size="lg" 
+                  variant="outline"
+                  className="w-full md:w-auto"
+                >
+                  {isRefreshing ? <Loader2 className="animate-spin mr-2"/> : <RefreshCw className="mr-2 h-5 w-5"/>}
+                  Atualizar QR Code
+                </Button>
+                <Button onClick={handleUpdateConfig} disabled={isSaving} size="lg" className="w-full md:w-auto">
+                  {isSaving ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-5 w-5"/>}
+                  Salvar Alterações
+                </Button>
+              </>
             ) : null}
           </div>
         </div>
