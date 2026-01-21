@@ -2,13 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; 
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AuthProvider, useAuth } from "./contexts/AuthContext"; 
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 // Páginas
-import Index from "./pages/Index"; 
+import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Imoveis from "./pages/Imoveis";
 import CRM from "./pages/CRM";
@@ -22,15 +22,16 @@ import Agenda from "./pages/Agenda";
 import Integracoes from "./pages/Integracoes";
 import Captacao from "./pages/Captacao";
 import Avaliacao from "./pages/Avaliacao";
-import Parceiros from "./pages/Parceiros"; // <--- NOVO IMPORT
+import Parceiros from "./pages/Parceiros";
 import AcademiaFly from "./pages/AcademiaFly";
+import Welcome from "./pages/Welcome"; // <--- Import da página de boas-vindas
 
 const queryClient = new QueryClient();
 
 // Componente auxiliar para redirecionar se já estiver logado
 const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
-  
+
   if (!loading && session) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -45,24 +46,36 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Rota Raiz (Landing Page) */}
-            <Route 
-              path="/" 
+            {/* Rota Raiz (Landing Page) - Apenas público */}
+            <Route
+              path="/"
               element={
                 <PublicOnlyRoute>
                   <Index />
                 </PublicOnlyRoute>
-              } 
+              }
             />
 
             {/* Rota Pública (Login) */}
-            <Route 
-              path="/auth" 
+            <Route
+              path="/auth"
               element={
                 <PublicOnlyRoute>
                   <Auth />
                 </PublicOnlyRoute>
-              } 
+              }
+            />
+
+            {/* --- ROTAS ESPECIAIS (SEM SIDEBAR) --- */}
+            
+            {/* Rota de Boas Vindas (Onboarding) */}
+            <Route
+              path="/welcome"
+              element={
+                <ProtectedRoute>
+                  <Welcome />
+                </ProtectedRoute>
+              }
             />
 
             {/* Rota de Upgrade */}
@@ -75,7 +88,7 @@ const App = () => (
               }
             />
 
-            {/* Rotas Protegidas (Dashboard e Sistema) */}
+            {/* --- ROTAS DO SISTEMA (COM SIDEBAR) --- */}
             <Route
               element={
                 <ProtectedRoute>
@@ -83,17 +96,17 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/dashboard" element={<Dashboard />} /> 
-              <Route path="/agenda" element={<Agenda />} /> 
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/agenda" element={<Agenda />} />
               <Route path="/imoveis" element={<Imoveis />} />
-              <Route path="/captacao" element={<Captacao />} /> {/* <--- NOVA ROTA */}
+              <Route path="/captacao" element={<Captacao />} />
               <Route path="/integracoes" element={<Integracoes />} />
               <Route path="/crm" element={<CRM />} />
               <Route path="/robo" element={<RoboConfig />} />
               <Route path="/fontes" element={<FontesConfig />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="/avaliacao" element={<Avaliacao />} />
-              <Route path="/parceiros" element={<Parceiros />} /> {/* <--- NOVA ROTA AQUI */}
+              <Route path="/parceiros" element={<Parceiros />} />
               <Route path="/academia" element={<AcademiaFly />} />
             </Route>
 

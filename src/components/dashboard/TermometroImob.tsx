@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -14,11 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   Thermometer,
-  Home,
   MapPin,
   Car,
   Bed,
@@ -31,6 +29,19 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// --- Interfaces ---
+interface LeadMercado {
+  quartos: string | null;
+  vagas: string | null;
+  interesse_bairro: string | null;
+  cidade: string | null;
+  orcamento_max: number | null;
+}
+
+interface CidadeResult {
+  cidade: string;
+}
 
 interface TermometroData {
   totalLeads: number;
@@ -61,52 +72,47 @@ export function TermometroImob() {
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
   const [data, setData] = useState<TermometroData | null>(null);
 
-  // Buscar cidades disponíveis
+  // 1. Buscar lista de cidades (AGORA USA A FUNÇÃO CORRETA E COMPLETA)
   useEffect(() => {
     async function fetchCidades() {
       try {
-        const { data: leads, error } = await (supabase as any)
-          .from("leads")
-          .select("cidade")
-          .not("cidade", "is", null)
-          .neq("cidade", "");
+        // CORREÇÃO: Usamos get_cidades_unicas para olhar o banco todo (só nomes)
+        // Isso garante que cidades com poucos leads apareçam na lista
+        const { data, error } = await (supabase.rpc as any)('get_cidades_unicas');
 
         if (error) throw error;
 
-        const cidadesUnicas = [
-          ...new Set(
-            leads
-              .map((l: any) => l.cidade?.trim())
-              .filter((c: string) => c && c.length > 0)
-          ),
-        ].sort() as string[];
+        const cidades = data as CidadeResult[];
 
-        setCidadesDisponiveis(cidadesUnicas);
+        if (cidades) {
+          const listaCidades = cidades
+            .map((c) => c.cidade)
+            .filter((c): c is string => !!c && c.length > 0);
+            
+          setCidadesDisponiveis(listaCidades);
+        }
       } catch (error) {
-        console.error("Erro ao buscar cidades:", error);
+        console.error("Erro ao buscar lista de cidades:", error);
       }
     }
-
     fetchCidades();
   }, []);
 
-  // Buscar dados do termômetro
+  // 2. Buscar dados do termômetro (Filtra e depois Limita)
   useEffect(() => {
     async function fetchTermometroData() {
       try {
         setLoading(true);
 
-        let query = (supabase as any)
-          .from("leads")
-          .select("quartos, vagas, interesse_bairro, cidade, orcamento_max");
-
-        if (cidadeSelecionada !== "todas") {
-          query = query.ilike("cidade", cidadeSelecionada);
-        }
-
-        const { data: leads, error } = await query;
+        // O SQL aplica o filtro de cidade ANTES de aplicar o LIMIT 3000.
+        // Então se escolher "Itanhaém", ele pega os últimos 3000 DE ITANHAÉM.
+        const { data, error } = await (supabase.rpc as any)('get_dados_mercado', { 
+            cidade_filtro: cidadeSelecionada 
+        });
 
         if (error) throw error;
+
+        const leads = data as LeadMercado[];
 
         if (!leads || leads.length === 0) {
           setData(null);
@@ -117,8 +123,8 @@ export function TermometroImob() {
 
         // Distribuição de quartos
         const quartosMap = new Map<number, number>();
-        leads.forEach((l: any) => {
-          const q = parseInt(l.quartos) || 0;
+        leads.forEach((l) => {
+          const q = parseInt(l.quartos || "0") || 0;
           if (q > 0 && q <= 5) {
             quartosMap.set(q, (quartosMap.get(q) || 0) + 1);
           }
@@ -133,8 +139,8 @@ export function TermometroImob() {
 
         // Distribuição de vagas
         const vagasMap = new Map<number, number>();
-        leads.forEach((l: any) => {
-          const v = parseInt(l.vagas) || 0;
+        leads.forEach((l) => {
+          const v = parseInt(l.vagas || "0") || 0;
           if (v >= 0 && v <= 4) {
             vagasMap.set(v, (vagasMap.get(v) || 0) + 1);
           }
@@ -149,7 +155,7 @@ export function TermometroImob() {
 
         // Top bairros
         const bairrosMap = new Map<string, number>();
-        leads.forEach((l: any) => {
+        leads.forEach((l) => {
           const bairro = l.interesse_bairro?.trim();
           if (bairro && bairro.length > 0) {
             bairrosMap.set(bairro, (bairrosMap.get(bairro) || 0) + 1);
@@ -166,7 +172,7 @@ export function TermometroImob() {
 
         // Faixas de preço
         const faixasPreco = FAIXAS_PRECO.map((faixa) => {
-          const count = leads.filter((l: any) => {
+          const count = leads.filter((l) => {
             const orc = l.orcamento_max || 0;
             if (faixa.max === null) return orc >= faixa.min;
             return orc >= faixa.min && orc < faixa.max;
@@ -187,7 +193,7 @@ export function TermometroImob() {
         );
 
         const orcamentoMedio =
-          leads.reduce((acc: number, l: any) => acc + (l.orcamento_max || 0), 0) /
+          leads.reduce((acc, l) => acc + (l.orcamento_max || 0), 0) /
           totalLeads;
 
         setData({
@@ -221,19 +227,11 @@ export function TermometroImob() {
       maximumFractionDigits: 0,
     }).format(val);
 
-  // Cores para o gradiente de "temperatura"
   const getTemperatureColor = (percent: number) => {
     if (percent >= 30) return "bg-red-500";
     if (percent >= 20) return "bg-orange-500";
     if (percent >= 10) return "bg-yellow-500";
     return "bg-blue-400";
-  };
-
-  const getTemperatureGlow = (percent: number) => {
-    if (percent >= 30) return "shadow-red-500/30";
-    if (percent >= 20) return "shadow-orange-500/30";
-    if (percent >= 10) return "shadow-yellow-500/30";
-    return "shadow-blue-400/30";
   };
 
   if (loading) {
@@ -252,7 +250,7 @@ export function TermometroImob() {
         <CardContent className="flex flex-col items-center justify-center h-64 text-center">
           <Thermometer className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            Nenhum lead encontrado {cidadeSelecionada !== "todas" ? `em ${cidadeSelecionada}` : ""}.
+            Nenhum dado de mercado disponível {cidadeSelecionada !== "todas" ? `para ${cidadeSelecionada}` : ""}.
           </p>
         </CardContent>
       </Card>
@@ -274,7 +272,7 @@ export function TermometroImob() {
             </h3>
             <p className="text-muted-foreground text-sm">
               Inteligência de mercado baseada em{" "}
-              <span className="font-semibold text-foreground">{data.totalLeads.toLocaleString()}</span> leads
+              <span className="font-semibold text-foreground">{data.totalLeads.toLocaleString()}</span> intenções de compra
             </p>
           </div>
         </div>
