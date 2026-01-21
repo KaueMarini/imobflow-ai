@@ -205,6 +205,11 @@ export default function RoboConfig() {
   };
 
   const handleRefreshQRCode = async () => {
+    if (!companyName || !whatsappNumber) {
+      toast.error("Preencha o Nome e o WhatsApp.");
+      return;
+    }
+    
     setIsRefreshing(true);
     try {
       const response = await fetch("https://webhook.saveautomatik.shop/webhook/recarregarInstancia", {
@@ -223,6 +228,7 @@ export default function RoboConfig() {
 
       if (qrUrl) {
         setQrCodeUrl(qrUrl);
+        setShowQR(true);
         setTimeRemaining(300); // Reset para 5 minutos
         setTimerActive(true);
         toast.success("QR Code atualizado!");
@@ -393,7 +399,7 @@ export default function RoboConfig() {
 
         {/* Coluna Lateral: QR Code e Instruções */}
         <div className="space-y-6">
-          {showQR && !isConnected && (
+          {showQR && (
             <Card className="border-2 border-green-400 bg-gradient-to-b from-green-50/50 to-background">
               <CardHeader className="pb-3 text-center border-b">
                 <div className="flex items-center justify-center gap-2 mb-2">
