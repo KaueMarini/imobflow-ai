@@ -4,16 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Play, Search, Clock, GraduationCap, Megaphone, Users, Building2, MessageSquare } from "lucide-react";
-
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  category: string;
-  thumbnail?: string;
-  videoUrl?: string;
-}
+import { VideoPlayerModal } from "@/components/academia/VideoPlayerModal";
+import { VideoAdminPanel } from "@/components/academia/VideoAdminPanel";
+import { useAcademiaVideos, AcademiaVideo } from "@/hooks/useAcademiaVideos";
 
 const categories = [
   { id: "all", label: "Todos", icon: GraduationCap },
@@ -23,58 +16,28 @@ const categories = [
   { id: "fechamento", label: "Fechamento", icon: Users },
 ];
 
-// Vídeos de exemplo - serão substituídos por vídeos reais
-const videos: Video[] = [
-  {
-    id: "1",
-    title: "Como criar anúncios patrocinados no Facebook",
-    description: "Aprenda a criar campanhas eficientes para captar leads qualificados no Facebook Ads.",
-    duration: "12:45",
-    category: "patrocinado",
-  },
-  {
-    id: "2",
-    title: "Configurando seu primeiro anúncio no Instagram",
-    description: "Passo a passo completo para criar anúncios que convertem no Instagram.",
-    duration: "15:30",
-    category: "patrocinado",
-  },
-  {
-    id: "3",
-    title: "Técnicas de captação de imóveis",
-    description: "Estratégias comprovadas para captar mais imóveis exclusivos.",
-    duration: "20:00",
-    category: "captacao",
-  },
-  {
-    id: "4",
-    title: "Script de atendimento via WhatsApp",
-    description: "Como atender leads de forma profissional e aumentar suas conversões.",
-    duration: "18:20",
-    category: "atendimento",
-  },
-  {
-    id: "5",
-    title: "Fechando mais negócios: técnicas avançadas",
-    description: "Aprenda as melhores técnicas de fechamento usadas por top corretores.",
-    duration: "25:00",
-    category: "fechamento",
-  },
-];
-
 export default function AcademiaFly() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedVideo, setSelectedVideo] = useState<AcademiaVideo | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { data: videos = [], isLoading } = useAcademiaVideos();
 
   const filteredVideos = videos.filter((video) => {
     const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      video.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (video.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
     const matchesCategory = selectedCategory === "all" || video.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const getCategoryLabel = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.label || categoryId;
+  };
+
+  const handleVideoClick = (video: AcademiaVideo) => {
+    setSelectedVideo(video);
+    setIsModalOpen(true);
   };
 
   return (
@@ -85,6 +48,9 @@ export default function AcademiaFly() {
       />
 
       <div className="p-6 space-y-6">
+        {/* Admin Panel - only visible for admins */}
+        <VideoAdminPanel />
+
         {/* Header com busca */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="flex items-center gap-3">
@@ -127,18 +93,45 @@ export default function AcademiaFly() {
         </div>
 
         {/* Grid de vídeos */}
-        {filteredVideos.length > 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <div className="aspect-video bg-muted" />
+                <CardHeader className="pb-2">
+                  <div className="h-4 bg-muted rounded w-1/4 mb-2" />
+                  <div className="h-5 bg-muted rounded w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-4 bg-muted rounded w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredVideos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVideos.map((video) => (
-              <Card key={video.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden">
-                {/* Thumbnail placeholder */}
-                <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all">
+              <Card 
+                key={video.id} 
+                className="group cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+                onClick={() => handleVideoClick(video)}
+              >
+                {/* Thumbnail */}
+                <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                  {video.thumbnail_url ? (
+                    <img 
+                      src={video.thumbnail_url} 
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <GraduationCap className="h-12 w-12 text-primary/30" />
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all">
                       <Play className="h-8 w-8 text-primary-foreground ml-1" />
                     </div>
                   </div>
-                  <GraduationCap className="h-12 w-12 text-primary/30" />
                 </div>
 
                 <CardHeader className="pb-2">
@@ -146,10 +139,12 @@ export default function AcademiaFly() {
                     <Badge variant="secondary" className="text-xs">
                       {getCategoryLabel(video.category)}
                     </Badge>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {video.duration}
-                    </span>
+                    {video.duration && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {video.duration}
+                      </span>
+                    )}
                   </div>
                   <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors">
                     {video.title}
@@ -158,7 +153,7 @@ export default function AcademiaFly() {
 
                 <CardContent>
                   <CardDescription className="line-clamp-2">
-                    {video.description}
+                    {video.description || "Clique para assistir"}
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -173,7 +168,10 @@ export default function AcademiaFly() {
               <div>
                 <h3 className="font-semibold text-foreground">Nenhum vídeo encontrado</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Tente buscar por outro termo ou categoria
+                  {videos.length === 0 
+                    ? "Novos conteúdos serão adicionados em breve!"
+                    : "Tente buscar por outro termo ou categoria"
+                  }
                 </p>
               </div>
             </div>
@@ -195,6 +193,13 @@ export default function AcademiaFly() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        video={selectedVideo}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+      />
     </div>
   );
 }
