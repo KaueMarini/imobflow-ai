@@ -98,15 +98,15 @@ const Index = () => {
           </div>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight animate-slide-up">
-            Quem não controla o lead,
+            FlyImob transforma interesse
             <br />
-            <span className="bg-gradient-to-r from-white/60 via-white/40 to-white/60 bg-clip-text text-transparent">perde a comissão.</span>
+            <span className="bg-gradient-to-r from-white/60 via-white/40 to-white/60 bg-clip-text text-transparent">em negócio fechado.</span>
           </h1>
           
           <p className="text-lg md:text-xl text-white/80 mb-4 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: "100ms" }}>
             O FlyImob entrega o <span className="text-white font-semibold">Inventário Infinito</span>:
             <br />
-            <span className="text-white font-bold">40.000 imóveis</span> na palma da sua mão — sem perder o cliente para portais ou concorrentes.
+            <span className="text-white font-bold">40.000 imóveis</span> na palma da sua mão — do primeiro contato ao fechamento.
           </p>
 
           {/* Motivational phrase with icon */}
@@ -118,14 +118,14 @@ const Index = () => {
           </div>
 
           <p className="text-base text-white/50 mb-10 animate-slide-up" style={{ animationDelay: "150ms" }}>
-            Não vendemos bot. Vendemos <span className="text-white font-medium">blindagem de lead</span> e <span className="text-white font-medium">retenção de comissão</span>.
+            Não vendemos bot. Vendemos <span className="text-white font-medium">tecnologia que ajuda o corretor a fechar mais</span>.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
             <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-white to-slate-100 text-[#1e3a5f] hover:from-slate-100 hover:to-white rounded-full font-bold shadow-2xl shadow-white/20 transition-all duration-300 hover:scale-105" asChild>
               <Link to="/auth">
-                <Shield className="mr-3 h-6 w-6" />
-                Blindar Meus Leads
+                <Zap className="mr-3 h-6 w-6" />
+                Ativar o FlyImob
               </Link>
             </Button>
             <Button size="lg" variant="ghost" className="h-16 px-10 text-lg text-white/80 hover:text-white hover:bg-white/10 rounded-full border border-white/20 backdrop-blur-sm" asChild>
@@ -145,7 +145,7 @@ const Index = () => {
             </div>
             <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
               <div className="text-4xl font-bold text-emerald-400 mb-1">100%</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider">leads blindados</div>
+              <div className="text-xs text-white/50 uppercase tracking-wider">atendimento contínuo</div>
             </div>
             <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
               <div className="text-4xl font-bold text-white mb-1">50/50</div>
@@ -243,9 +243,9 @@ const Index = () => {
               <p className="text-slate-500 text-sm">40.000 opções na palma da mão</p>
             </div>
             <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100">
-              <Lock className="h-10 w-10 text-[#1e3a5f] mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[#1e3a5f] mb-2">Manter o cliente sob controle</h3>
-              <p className="text-slate-500 text-sm">Sem entregar o lead para ninguém</p>
+              <Handshake className="h-10 w-10 text-[#1e3a5f] mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[#1e3a5f] mb-2">Continuidade do atendimento</h3>
+              <p className="text-slate-500 text-sm">Do primeiro contato ao fechamento</p>
             </div>
           </div>
         </div>
@@ -364,42 +364,42 @@ const Index = () => {
         </div>
       </section>
 
-      {/* O DIFERENCIAL - BLINDAGEM */}
+      {/* O DIFERENCIAL */}
       <section className="py-32 px-6 bg-white">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-16 animate-slide-up">
             <div className="text-sm text-[#1e3a5f]/60 uppercase tracking-widest mb-4">O Diferencial</div>
             <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-4">
-              Blindagem de Lead = <span className="text-green-600">Retenção de Comissão</span>
+              Atendimento contínuo gera <span className="text-green-600">mais fechamentos</span>
             </h2>
           </div>
 
           <div className="grid md:grid-cols-4 gap-4 mb-12 animate-slide-up" style={{ animationDelay: "100ms" }}>
             <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100">
               <div className="h-12 w-12 rounded-full bg-[#1e3a5f] text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">1</div>
-              <p className="text-sm text-slate-600">Cliente pede um imóvel específico</p>
+              <p className="text-sm text-slate-600">Cliente pede um imóvel</p>
             </div>
             <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100">
               <div className="h-12 w-12 rounded-full bg-[#1e3a5f] text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">2</div>
-              <p className="text-sm text-slate-600">IA encontra no Background</p>
+              <p className="text-sm text-slate-600">A IA encontra opções compatíveis</p>
             </div>
             <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100">
               <div className="h-12 w-12 rounded-full bg-[#1e3a5f] text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">3</div>
-              <p className="text-sm text-slate-600">Cliente se interessa</p>
+              <p className="text-sm text-slate-600">O interesse cresce</p>
             </div>
             <div className="text-center p-6 rounded-2xl bg-green-50 border border-green-200">
               <div className="h-12 w-12 rounded-full bg-green-600 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">4</div>
-              <p className="text-sm text-green-700 font-medium">Você entra e fecha</p>
+              <p className="text-sm text-green-700 font-medium">Você entra para fechar</p>
             </div>
           </div>
 
           <div className="text-center p-8 rounded-3xl bg-[#1e3a5f] animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <Lock className="h-12 w-12 text-white mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-white mb-4">O cliente nunca pula você.</h3>
+            <Handshake className="h-12 w-12 text-white mx-auto mb-4" />
+            <h3 className="text-2xl font-bold text-white mb-4">Quando a conversa não quebra, o negócio acontece.</h3>
             <p className="text-white/60 text-lg">
-              "Não vendemos bot.
+              Não é automação genérica.
               <br />
-              <span className="text-white font-medium">Vendemos proteção da sua comissão."</span>
+              <span className="text-white font-medium">É tecnologia pensada para o mercado imobiliário real.</span>
             </p>
           </div>
         </div>
@@ -411,7 +411,7 @@ const Index = () => {
           <div className="text-center mb-16 animate-slide-up">
             <div className="text-sm text-[#1e3a5f]/60 uppercase tracking-widest mb-4">Como Funciona</div>
             <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-4">
-              Em 3 passos seus leads estão blindados
+              Em 3 passos simples você começa a fechar mais
             </h2>
           </div>
 
@@ -434,11 +434,11 @@ const Index = () => {
             </div>
             <div className="text-center">
               <div className="h-20 w-20 rounded-3xl bg-green-600 flex items-center justify-center mx-auto mb-6">
-                <Shield className="h-10 w-10 text-white" />
+                <Zap className="h-10 w-10 text-white" />
               </div>
               <div className="text-4xl font-bold text-[#1e3a5f] mb-2">3</div>
               <h3 className="text-xl font-semibold text-[#1e3a5f] mb-2">A IA atende. Você fecha.</h3>
-              <p className="text-slate-500">Leads blindados 24/7</p>
+              <p className="text-slate-500">Atendimento contínuo 24/7</p>
             </div>
           </div>
         </div>
@@ -578,7 +578,7 @@ const Index = () => {
           </div>
           <p className="text-slate-500 mb-2">A revolução da inteligência imobiliária.</p>
           <p className="text-[#1e3a5f] font-medium">
-            Inventário Infinito. Leads Blindados. Comissão protegida.
+            Inventário Infinito. Atendimento contínuo. Mais fechamentos.
           </p>
           <div className="flex items-center justify-center gap-8 mt-8 text-sm text-slate-400">
             <button onClick={() => scrollToSection("problema")} className="hover:text-[#1e3a5f] transition-colors">
