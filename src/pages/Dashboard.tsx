@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { KPICard } from "@/components/dashboard/KPICard";
-import { LeadsChart } from "@/components/dashboard/LeadsChart"; // Usando o gráfico de área bonito
+import { LeadsChart } from "@/components/dashboard/LeadsChart";
 import { RecentLeads } from "@/components/dashboard/RecentLeads";
+import { TermometroImob } from "@/components/dashboard/TermometroImob";
 import {
   Users, Flame, Wallet, DollarSign, Loader2, MapPin, TrendingUp, Calendar
 } from "lucide-react";
@@ -284,6 +285,11 @@ export default function Dashboard() {
           </div>
 
           <RecentLeads />
+
+          {/* Termômetro Imob - Inteligência de Mercado Global */}
+          <div className="pt-6 border-t border-border">
+            <TermometroImob />
+          </div>
         </div>
       )}
     </div>

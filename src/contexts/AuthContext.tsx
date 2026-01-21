@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 // --- Interfaces (Mantidas iguais) ---
-export interface clientesSaas {
+export interface ClienteSaas {
   id: string;
   created_at: string;
   user_id: string | null;
