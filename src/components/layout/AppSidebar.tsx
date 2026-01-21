@@ -14,7 +14,8 @@ import {
   Plug,
   Satellite,
   Scale, // <--- ADICIONE ESTE IMPORT
-  FileText 
+  FileText,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const mainNavItems: NavItem[] = [
   { title: "Radar Captação", href: "/captacao", icon: Satellite },
   { title: "Gerador de Avaliação", href: "/avaliacao", icon: FileText },
   { title: "Parceiros Jurídicos", href: "/parceiros", icon: Scale }, // <--- NOVO ITEM AQUI
+  { title: "Academia Fly", href: "/academia", icon: GraduationCap },
 ];
 
 const configNavItems: NavItem[] = [

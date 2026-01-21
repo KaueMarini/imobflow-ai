@@ -23,6 +23,7 @@ import Integracoes from "./pages/Integracoes";
 import Captacao from "./pages/Captacao";
 import Avaliacao from "./pages/Avaliacao";
 import Parceiros from "./pages/Parceiros"; // <--- NOVO IMPORT
+import AcademiaFly from "./pages/AcademiaFly";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => (
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="/avaliacao" element={<Avaliacao />} />
               <Route path="/parceiros" element={<Parceiros />} /> {/* <--- NOVA ROTA AQUI */}
+              <Route path="/academia" element={<AcademiaFly />} />
             </Route>
 
             {/* Rota de Erro */}
