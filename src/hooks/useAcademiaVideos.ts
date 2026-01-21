@@ -18,7 +18,8 @@ export function useAcademiaVideos() {
   return useQuery({
     queryKey: ["academia-videos"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Using any to bypass type issues with external Supabase schema
+      const { data, error } = await (supabase as any)
         .from("academia_videos")
         .select("*")
         .eq("is_active", true)
