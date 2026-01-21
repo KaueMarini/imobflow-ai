@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { LeadsChart } from "@/components/dashboard/LeadsChart";
 import { RecentLeads } from "@/components/dashboard/RecentLeads";
@@ -166,7 +167,17 @@ export default function Dashboard() {
 
       <AppHeader title="FlyImob" />
 
-      <div className="px-6 pt-8 pb-4">
+      {/* Seção de Boas-Vindas */}
+      <div className="px-6 pt-8">
+        <WelcomeSection />
+      </div>
+
+      {/* Divisor visual */}
+      <div className="px-6 py-8">
+        <div className="border-t border-border" />
+      </div>
+
+      <div className="px-6 pb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Dashboard Estratégico</h2>
