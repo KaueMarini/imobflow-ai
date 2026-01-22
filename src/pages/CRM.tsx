@@ -337,8 +337,9 @@ export default function CRM() {
     e.stopPropagation(); 
     setPausingId(lead.id);
     try {
-      const response = await fetch("https://webhook.saveautomatik.shop/webhook/bloqueiaIAFLY", {
+      await fetch("https://webhook.saveautomatik.shop/webhook/bloqueiaIAFLY", {
         method: "POST",
+        mode: "no-cors",
         headers: {
           "Content-Type": "application/json",
         },
@@ -347,10 +348,6 @@ export default function CRM() {
           nome: lead.nome,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Falha na requisição");
-      }
 
       toast({
         title: "⛔ Robô Pausado",
