@@ -47,6 +47,7 @@ import {
   Star, 
   Sparkles, 
   CirclePause, 
+  CirclePlay,
   Bot, 
   Filter, 
   X, 
@@ -114,6 +115,7 @@ interface Lead {
   banheiros: string | null; 
   vagas: string | null;
   itens_lazer: string | null;
+  ia_pause: string | null;
   
   imoveis_recomendados: (string | number)[] | null; 
   
@@ -350,6 +352,9 @@ export default function CRM() {
         body: new URLSearchParams({ telefone, nome, email }).toString(),
       });
 
+      // Atualiza o lead na lista local para refletir a mudança
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, ia_pause: "sim" } as Lead : l));
+
       toast({
         title: "⛔ Robô Pausado",
         description: `Automação interrompida para ${lead.nome}.`,
@@ -358,6 +363,38 @@ export default function CRM() {
     } catch (error) {
       console.error("Erro ao pausar robô:", error);
       toast({ title: "Erro", description: "Falha ao pausar.", variant: "destructive" });
+    } finally {
+      setPausingId(null);
+    }
+  };
+
+  const handleUnpauseRobot = async (lead: Lead, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPausingId(lead.id);
+    try {
+      const telefone = lead.whatsapp ?? "";
+      const nome = lead.nome ?? "";
+      const email = user?.email ?? "";
+
+      await fetch("https://webhook.saveautomatik.shop/webhook/desbloqueiaIAFLY", {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+        body: new URLSearchParams({ telefone, nome, email }).toString(),
+      });
+
+      // Atualiza o lead na lista local para refletir a mudança
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, ia_pause: null } as Lead : l));
+
+      toast({
+        title: "✅ Robô Reativado",
+        description: `Automação retomada para ${lead.nome}.`,
+      });
+    } catch (error) {
+      console.error("Erro ao reativar robô:", error);
+      toast({ title: "Erro", description: "Falha ao reativar.", variant: "destructive" });
     } finally {
       setPausingId(null);
     }
@@ -606,19 +643,37 @@ export default function CRM() {
                                 <Eye className="h-4 w-4 mr-2" /> Abrir CRM
                              </Button>
                              
-                             <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-8 text-muted-foreground hover:text-destructive"
-                                onClick={(e) => handlePauseRobot(lead, e)}
-                                disabled={pausingId === lead.id}
-                             >
-                                {pausingId === lead.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <CirclePause className="h-4 w-4" />
-                                )}
-                             </Button>
+                             {lead.ia_pause === "sim" ? (
+                               <Button 
+                                 size="sm" 
+                                 variant="ghost" 
+                                 className="h-8 text-green-600 hover:text-green-700"
+                                 onClick={(e) => handleUnpauseRobot(lead, e)}
+                                 disabled={pausingId === lead.id}
+                                 title="Reativar Robô"
+                               >
+                                 {pausingId === lead.id ? (
+                                   <Loader2 className="h-4 w-4 animate-spin" />
+                                 ) : (
+                                   <CirclePlay className="h-4 w-4" />
+                                 )}
+                               </Button>
+                             ) : (
+                               <Button 
+                                 size="sm" 
+                                 variant="ghost" 
+                                 className="h-8 text-muted-foreground hover:text-destructive"
+                                 onClick={(e) => handlePauseRobot(lead, e)}
+                                 disabled={pausingId === lead.id}
+                                 title="Pausar Robô"
+                               >
+                                 {pausingId === lead.id ? (
+                                   <Loader2 className="h-4 w-4 animate-spin" />
+                                 ) : (
+                                   <CirclePause className="h-4 w-4" />
+                                 )}
+                               </Button>
+                             )}
                          </div>
                       </TableCell>
                     </TableRow>
