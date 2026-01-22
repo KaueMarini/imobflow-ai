@@ -337,13 +337,28 @@ export default function CRM() {
     e.stopPropagation(); 
     setPausingId(lead.id);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulação
+      const response = await fetch("https://webhook.saveautomatik.shop/webhook/bloqueiaIAFLY", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          telefone: lead.whatsapp,
+          nome: lead.nome,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha na requisição");
+      }
+
       toast({
         title: "⛔ Robô Pausado",
         description: `Automação interrompida para ${lead.nome}.`,
         variant: "destructive",
       });
     } catch (error) {
+      console.error("Erro ao pausar robô:", error);
       toast({ title: "Erro", description: "Falha ao pausar.", variant: "destructive" });
     } finally {
       setPausingId(null);
