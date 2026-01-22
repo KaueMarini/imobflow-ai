@@ -337,16 +337,16 @@ export default function CRM() {
     e.stopPropagation(); 
     setPausingId(lead.id);
     try {
+      const telefone = lead.whatsapp ?? "";
+      const nome = lead.nome ?? "";
+
       await fetch("https://webhook.saveautomatik.shop/webhook/bloqueiaIAFLY", {
         method: "POST",
         mode: "no-cors",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
         },
-        body: JSON.stringify({
-          telefone: lead.whatsapp,
-          nome: lead.nome,
-        }),
+        body: new URLSearchParams({ telefone, nome }).toString(),
       });
 
       toast({
