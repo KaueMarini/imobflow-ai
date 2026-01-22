@@ -334,11 +334,12 @@ export default function CRM() {
 
 
   const handlePauseRobot = async (lead: Lead, e: React.MouseEvent) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     setPausingId(lead.id);
     try {
       const telefone = lead.whatsapp ?? "";
       const nome = lead.nome ?? "";
+      const email = user?.email ?? "";
 
       await fetch("https://webhook.saveautomatik.shop/webhook/bloqueiaIAFLY", {
         method: "POST",
@@ -346,7 +347,7 @@ export default function CRM() {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
         },
-        body: new URLSearchParams({ telefone, nome }).toString(),
+        body: new URLSearchParams({ telefone, nome, email }).toString(),
       });
 
       toast({
