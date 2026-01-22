@@ -161,7 +161,7 @@ export default function RoboConfig() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empresa: companyName,
+          empresa: user?.email ?? "",
           telefone: whatsappNumber,
         }),
       });
@@ -216,7 +216,7 @@ export default function RoboConfig() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empresa: companyName,
+          empresa: user?.email ?? "",
           telefone: whatsappNumber,
         }),
       });
