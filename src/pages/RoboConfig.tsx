@@ -273,7 +273,21 @@ export default function RoboConfig() {
     toast.success("WhatsApp conectado com sucesso!");
   };
 
-  const handleCancelConnection = () => {
+  const handleCancelConnection = async () => {
+    try {
+      // Chama o webhook para excluir a instância
+      await fetch("https://webhook.saveautomatik.shop/webhook/excluirInstancia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          empresa: user?.email ?? "",
+          telefone: whatsappNumber,
+        }),
+      });
+    } catch (error) {
+      console.error("Erro ao excluir instância:", error);
+    }
+    
     setShowQR(false);
     setTimerActive(false);
     setQrCodeUrl(null);
