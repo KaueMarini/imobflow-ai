@@ -24,7 +24,8 @@ import Captacao from "./pages/Captacao";
 import Avaliacao from "./pages/Avaliacao";
 import Parceiros from "./pages/Parceiros";
 import AcademiaFly from "./pages/AcademiaFly";
-import Welcome from "./pages/Welcome"; // <--- Import da página de boas-vindas
+import Welcome from "./pages/Welcome";
+import Home from "./pages/Home";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
+              <Route path="/home" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/imoveis" element={<Imoveis />} />
