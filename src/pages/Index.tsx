@@ -6,7 +6,21 @@ import {
   ArrowRight,
   Sparkles,
   ChevronDown,
-  Check
+  Check,
+  Users,
+  BarChart3,
+  MessageSquare,
+  Radar,
+  Calculator,
+  Home,
+  FileText,
+  Scale,
+  Gavel,
+  GraduationCap,
+  Camera,
+  Target,
+  Handshake,
+  Crown
 } from "lucide-react";
 
 const Index = () => {
@@ -195,11 +209,11 @@ const Index = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="p-12 rounded-3xl bg-gradient-to-b from-red-50/50 to-white border border-red-100/50">
-              <p className="text-[clamp(1.5rem,4vw,2.5rem)] font-medium text-red-500/80 leading-tight">
+            <div className="p-12 rounded-3xl bg-gradient-to-b from-[#1e3a5f]/5 to-white border border-[#1e3a5f]/10">
+              <p className="text-[clamp(1.5rem,4vw,2.5rem)] font-medium text-[#1e3a5f]/60 leading-tight">
                 "Não tenho esse imóvel."
               </p>
-              <p className="text-[14px] text-red-400/60 mt-4 font-light">
+              <p className="text-[14px] text-[#1e3a5f]/40 mt-4 font-light">
                 Essa frase custa milhares em comissão perdida.
               </p>
             </div>
@@ -309,9 +323,290 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Ecosystem Section */}
+      <section id="ecossistema" className="py-32 px-6 bg-[#fafafa]">
+        <div className="max-w-screen-xl mx-auto">
+          <motion.div 
+            className="text-center mb-20"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
+              O Ecossistema FlyImob
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-6">
+              Tudo o que uma operação imobiliária
+              <br />
+              <span className="text-[#1e3a5f]/30">moderna precisa. Em um só lugar.</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/50 max-w-2xl mx-auto font-light leading-relaxed">
+              O FlyImob não é apenas uma ferramenta de atendimento. É um ecossistema integrado que conecta 
+              leads, imóveis, inteligência, jurídico e capacitação em uma única plataforma.
+            </motion.p>
+          </motion.div>
+
+          {/* Module: Operação Comercial */}
+          <motion.div 
+            className="mb-16"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
+              <div className="h-10 w-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-[#1e3a5f]">Operação Comercial</h3>
+                <p className="text-[13px] text-[#1e3a5f]/50">Controle total da jornada do lead</p>
+              </div>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { 
+                  icon: BarChart3,
+                  title: "CRM Imobiliário Unificado", 
+                  desc: "Todos os leads centralizados em um único painel, com histórico completo de interações, origem, interesse e estágio da negociação."
+                },
+                { 
+                  icon: Radar,
+                  title: "Termômetro de Demanda", 
+                  desc: "Visualize, em tempo real, quais imóveis, regiões e perfis estão sendo mais buscados. Dados reais de intenção — não achismo."
+                },
+                { 
+                  icon: MessageSquare,
+                  title: "Atendimento Contínuo com IA", 
+                  desc: "A IA mantém a conversa ativa, qualifica o interesse e entrega o lead pronto para o corretor fechar."
+                }
+              ].map((item, i) => (
+                <motion.div 
+                  key={i}
+                  variants={fadeUp}
+                  className="p-6 rounded-2xl bg-white border border-black/[0.04] hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5"
+                >
+                  <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mb-4" />
+                  <h4 className="text-lg font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
+                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Module: Inteligência de Mercado */}
+          <motion.div 
+            className="mb-16"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
+              <div className="h-10 w-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                <Target className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-[#1e3a5f]">Inteligência de Mercado</h3>
+                <p className="text-[13px] text-[#1e3a5f]/50">Decisão baseada em dados, não em sensação</p>
+              </div>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                { 
+                  icon: Radar,
+                  title: "Radar de Captação de Imóveis", 
+                  desc: "Identifique oportunidades de captação com base em demanda real do mercado e comportamento dos leads."
+                },
+                { 
+                  icon: Calculator,
+                  title: "Avaliação de Imóveis com IA", 
+                  desc: "Estimativas inteligentes de valor, considerando região, padrão, liquidez e comportamento de busca — uma base sólida para negociação."
+                }
+              ].map((item, i) => (
+                <motion.div 
+                  key={i}
+                  variants={fadeUp}
+                  className="p-6 rounded-2xl bg-white border border-black/[0.04] hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5"
+                >
+                  <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mb-4" />
+                  <h4 className="text-lg font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
+                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Module: Ativos & Inventário */}
+          <motion.div 
+            className="mb-16"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
+              <div className="h-10 w-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                <Home className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-[#1e3a5f]">Ativos & Inventário</h3>
+                <p className="text-[13px] text-[#1e3a5f]/50">Liberdade para definir de onde vêm seus imóveis</p>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              variants={fadeUp}
+              className="p-8 rounded-2xl bg-white border border-black/[0.04]"
+            >
+              <h4 className="text-lg font-semibold text-[#1e3a5f] mb-4">Inventário Unificado e Personalizável</h4>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  {[
+                    "Integração XML com portais e CRMs",
+                    "Definição das fontes de imóveis preferidas",
+                    "Controle sobre imóveis próprios e de parceiros"
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-5 w-5 rounded-full bg-[#1e3a5f]/10 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3 w-3 text-[#1e3a5f]" />
+                      </div>
+                      <span className="text-[14px] text-[#1e3a5f]/60">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center">
+                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">
+                    Tudo organizado para garantir continuidade no atendimento — sem direcionar o cliente para portais concorrentes.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Module: Governança Jurídica */}
+          <motion.div 
+            className="mb-16"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
+              <div className="h-10 w-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                <Scale className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-[#1e3a5f]">Governança Jurídica Imobiliária</h3>
+                <p className="text-[13px] text-[#1e3a5f]/50">Segurança para fechar negócios com tranquilidade</p>
+              </div>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { 
+                  icon: FileText,
+                  title: "Central Jurídica Imobiliária", 
+                  desc: "Uma área dedicada a dúvidas, contratos e procedimentos do mercado imobiliário."
+                },
+                { 
+                  icon: MessageSquare,
+                  title: "IA Jurídica Integrada", 
+                  desc: "Respostas rápidas e contextualizadas para dúvidas jurídicas do dia a dia do corretor."
+                },
+                { 
+                  icon: Gavel,
+                  title: "Advogada Parceira Especialista", 
+                  desc: "Acesso a uma profissional especializada no ramo imobiliário para suporte técnico e orientações."
+                }
+              ].map((item, i) => (
+                <motion.div 
+                  key={i}
+                  variants={fadeUp}
+                  className="p-6 rounded-2xl bg-white border border-black/[0.04] hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5"
+                >
+                  <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mb-4" />
+                  <h4 className="text-lg font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
+                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+            <motion.p 
+              variants={fadeUp}
+              className="text-center text-[15px] text-[#1e3a5f]/60 mt-8 font-light"
+            >
+              Menos insegurança. Mais confiança na tomada de decisão.
+            </motion.p>
+          </motion.div>
+
+          {/* Module: Formação & Performance */}
+          <motion.div 
+            className="mb-16"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
+              <div className="h-10 w-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                <GraduationCap className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-[#1e3a5f]">Formação & Performance</h3>
+                <p className="text-[13px] text-[#1e3a5f]/50">Tecnologia não substitui preparo. Ela potencializa.</p>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              variants={fadeUp}
+              className="p-8 rounded-2xl bg-white border border-black/[0.04]"
+            >
+              <h4 className="text-lg font-semibold text-[#1e3a5f] mb-4">Academia Fly</h4>
+              <p className="text-[14px] text-[#1e3a5f]/50 font-light mb-6">
+                Conteúdos e treinamentos práticos para elevar o nível do corretor:
+              </p>
+              <div className="grid md:grid-cols-4 gap-4">
+                {[
+                  { icon: Camera, label: "Fotografia imobiliária profissional" },
+                  { icon: Target, label: "Tráfego pago para imóveis" },
+                  { icon: Handshake, label: "Atendimento e qualificação" },
+                  { icon: Crown, label: "Postura comercial e fechamento" }
+                ].map((item, i) => (
+                  <div key={i} className="p-4 rounded-xl bg-[#1e3a5f]/5 text-center">
+                    <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mx-auto mb-2" />
+                    <p className="text-[13px] text-[#1e3a5f]/70 font-medium">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-[14px] text-[#1e3a5f]/50 mt-6 font-light">
+                O objetivo é simples: transformar ferramenta em resultado.
+              </p>
+            </motion.div>
+          </motion.div>
+
+          {/* Closing Statement */}
+          <motion.div 
+            className="text-center pt-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <p className="text-[clamp(1.1rem,3vw,1.5rem)] text-[#1e3a5f]/70 font-light leading-relaxed max-w-2xl mx-auto">
+              O FlyImob não resolve apenas um ponto da operação.
+              <br />
+              <span className="text-[#1e3a5f] font-medium">Ele organiza toda a estrutura para que o corretor e a imobiliária operem em outro nível.</span>
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Pricing */}
-      <section id="planos" className="py-32 px-6 bg-[#fafafa]">
-        <div className="max-w-screen-lg mx-auto">
+      <section id="planos" className="py-32 px-6">
+        <div className="max-w-screen-xl mx-auto">
           <motion.div 
             className="text-center mb-20"
             initial="initial"
@@ -331,37 +626,49 @@ const Index = () => {
           </motion.div>
 
           <motion.div 
-            className="grid md:grid-cols-3 gap-6"
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
           >
             {[
-              { name: "Start", price: "294", leads: "100", features: ["IA 24/7", "Inventário Infinito", "Dashboard básico"] },
-              { name: "Pro", price: "500", leads: "250", features: ["Tudo do Start", "Prioridade VIP", "Suporte dedicado"], featured: true },
-              { name: "Elite", price: "800", leads: "500", features: ["Tudo do Pro", "Multi-corretores", "API personalizada"] }
+              { name: "Start", price: "294", leads: "100", features: ["IA 24/7", "Inventário Infinito", "Dashboard básico", "Suporte por email"] },
+              { name: "Pro", price: "500", leads: "250", features: ["Tudo do Start", "Prioridade VIP", "Suporte dedicado", "Termômetro de demanda"], featured: true },
+              { name: "Elite", price: "800", leads: "500", features: ["Tudo do Pro", "Prioridade máxima", "Gerente de conta", "Academia Fly completa"] },
+              { name: "Enterprise", price: "Consulte", leads: "Ilimitados", features: ["Tudo do Elite", "IA personalizada", "API dedicada", "Suporte VIP 24/7"], enterprise: true }
             ].map((plan, i) => (
               <motion.div 
                 key={i}
                 variants={fadeUp}
                 className={`p-8 rounded-2xl transition-all duration-500 ${
                   plan.featured 
-                    ? "bg-[#1e3a5f] text-white ring-1 ring-[#1e3a5f] scale-[1.02]" 
-                    : "bg-white border border-black/[0.04]"
+                    ? "bg-[#1e3a5f] text-white ring-1 ring-[#1e3a5f] lg:scale-[1.02]" 
+                    : plan.enterprise
+                      ? "bg-gradient-to-b from-[#1e3a5f]/5 to-white border border-[#1e3a5f]/20"
+                      : "bg-white border border-black/[0.04]"
                 }`}
               >
                 {plan.featured && (
                   <p className="text-[11px] text-white/40 uppercase tracking-[0.15em] mb-6">Recomendado</p>
                 )}
+                {plan.enterprise && (
+                  <p className="text-[11px] text-[#1e3a5f]/50 uppercase tracking-[0.15em] mb-6">Para grandes operações</p>
+                )}
                 <h3 className={`text-2xl font-semibold mb-2 ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
                   {plan.name}
                 </h3>
                 <div className="mb-6">
-                  <span className={`text-4xl font-semibold ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
-                    R$ {plan.price}
-                  </span>
-                  <span className={plan.featured ? "text-white/40" : "text-[#1e3a5f]/40"}>/mês</span>
+                  {plan.price === "Consulte" ? (
+                    <span className="text-3xl font-semibold text-[#1e3a5f]">Sob Consulta</span>
+                  ) : (
+                    <>
+                      <span className={`text-4xl font-semibold ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
+                        R$ {plan.price}
+                      </span>
+                      <span className={plan.featured ? "text-white/40" : "text-[#1e3a5f]/40"}>/mês</span>
+                    </>
+                  )}
                 </div>
                 <p className={`text-[13px] mb-8 ${plan.featured ? "text-white/50" : "text-[#1e3a5f]/50"}`}>
                   {plan.leads} leads únicos/mês
@@ -369,7 +676,7 @@ const Index = () => {
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, j) => (
                     <li key={j} className={`flex items-center gap-2 text-[14px] ${plan.featured ? "text-white/70" : "text-[#1e3a5f]/60"}`}>
-                      <Check className={`h-4 w-4 ${plan.featured ? "text-white/50" : "text-[#1e3a5f]/30"}`} />
+                      <Check className={`h-4 w-4 flex-shrink-0 ${plan.featured ? "text-white/50" : "text-[#1e3a5f]/30"}`} />
                       {feature}
                     </li>
                   ))}
@@ -382,7 +689,7 @@ const Index = () => {
                   }`}
                   asChild
                 >
-                  <Link to="/auth">Começar</Link>
+                  <Link to="/auth">{plan.enterprise ? "Falar com vendas" : "Começar"}</Link>
                 </Button>
               </motion.div>
             ))}
