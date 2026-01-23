@@ -39,7 +39,7 @@ const Bird = ({ delay, duration, startX, startY, size }: BirdProps) => {
         height={size}
         viewBox="0 0 32 32"
         fill="none"
-        className="text-white/60"
+        className="text-[#1e3a5f]"
       >
         {/* Left wing */}
         <motion.path
