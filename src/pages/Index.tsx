@@ -1,25 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 import { 
   Building2, 
   ArrowRight,
-  Bot,
-  Shield,
-  LayoutDashboard,
+  Sparkles,
   ChevronDown,
-  MessageCircle,
-  Settings,
-  Lock,
-  Eye,
-  EyeOff,
-  Handshake,
-  Brain,
-  Zap,
-  Mic,
-  Pause
+  Check
 } from "lucide-react";
-import heroBuilding from "@/assets/hero-building.jpg";
 
 const Index = () => {
   const scrollToSection = (id: string) => {
@@ -29,572 +17,452 @@ const Index = () => {
     }
   };
 
+  const fadeUp = {
+    initial: { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }
+  };
+
+  const stagger = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100">
-        <div className="container mx-auto flex h-20 items-center justify-between px-6 lg:px-12">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-white" />
+    <div className="min-h-screen bg-white selection:bg-[#1e3a5f]/10 selection:text-[#1e3a5f]">
+      {/* Header - Ultra minimal */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl">
+        <div className="max-w-screen-xl mx-auto flex h-14 items-center justify-between px-6">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="h-8 w-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <Building2 className="h-4 w-4 text-white" />
             </div>
-            <span className="text-xl font-semibold text-[#1e3a5f] tracking-tight">FlyImob</span>
-          </div>
+            <span className="text-[15px] font-semibold text-[#1e3a5f] tracking-tight">FlyImob</span>
+          </Link>
           
-          <nav className="hidden md:flex items-center gap-10">
-            <button 
-              onClick={() => scrollToSection("problema")} 
-              className="text-sm text-slate-500 hover:text-[#1e3a5f] transition-colors duration-300"
-            >
-              O Problema
-            </button>
-            <button 
-              onClick={() => scrollToSection("produto")} 
-              className="text-sm text-slate-500 hover:text-[#1e3a5f] transition-colors duration-300"
-            >
-              A Solução
-            </button>
-            <button 
-              onClick={() => scrollToSection("precos")} 
-              className="text-sm text-slate-500 hover:text-[#1e3a5f] transition-colors duration-300"
-            >
-              Planos
-            </button>
+          <nav className="hidden md:flex items-center gap-8">
+            {["Produto", "Recursos", "Planos"].map((item, i) => (
+              <button 
+                key={i}
+                onClick={() => scrollToSection(item.toLowerCase())} 
+                className="text-[13px] text-[#1e3a5f]/60 hover:text-[#1e3a5f] transition-colors duration-300"
+              >
+                {item}
+              </button>
+            ))}
           </nav>
 
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-[#1e3a5f]" asChild>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" className="text-[13px] text-[#1e3a5f]/70 hover:text-[#1e3a5f] hover:bg-transparent h-8 px-3" asChild>
               <Link to="/auth">Entrar</Link>
             </Button>
-            <Button size="sm" className="bg-[#1e3a5f] hover:bg-[#152c4a] text-white rounded-full px-6" asChild>
+            <Button size="sm" className="bg-[#1e3a5f] hover:bg-[#0f1f33] text-white text-[13px] h-8 px-4 rounded-full" asChild>
               <Link to="/auth">Começar</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* HERO SECTION */}
-      <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-          style={{ backgroundImage: `url(${heroBuilding})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1929]/95 via-[#1e3a5f]/85 to-[#1e3a5f]/95" />
-        <div className="absolute inset-0 opacity-5" style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                           linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
-        }} />
-        
-        {/* Animated gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: "1s" }} />
+      {/* Hero - Apple-inspired */}
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative">
+        <motion.div 
+          className="text-center max-w-4xl mx-auto"
+          initial="initial"
+          animate="animate"
+          variants={stagger}
+        >
+          <motion.div 
+            variants={fadeUp}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e3a5f]/5 mb-8"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-[#1e3a5f]" />
+            <span className="text-[12px] font-medium text-[#1e3a5f]/80 tracking-wide">Tecnologia Imobiliária</span>
+          </motion.div>
 
-        <div className="container mx-auto max-w-5xl text-center relative z-10 px-6 pt-20">
-          <div className="animate-fade-in">
-            <Badge variant="outline" className="mb-8 px-6 py-2.5 border-red-400/40 text-red-300 font-medium rounded-full bg-red-500/10 backdrop-blur-md text-sm">
-              ⚠️ A lentidão custa dinheiro. O mercado não perdoa.
-            </Badge>
-          </div>
-          
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight animate-slide-up">
-            FlyImob transforma interesse
+          <motion.h1 
+            variants={fadeUp}
+            className="text-[clamp(2.5rem,8vw,5.5rem)] font-semibold text-[#1e3a5f] leading-[0.95] tracking-[-0.03em] mb-6"
+          >
+            Interesse vira
             <br />
-            <span className="bg-gradient-to-r from-white/60 via-white/40 to-white/60 bg-clip-text text-transparent">em negócio fechado.</span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-white/80 mb-4 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: "100ms" }}>
-            O FlyImob entrega o <span className="text-white font-semibold">Inventário Infinito</span>:
+            <span className="text-[#1e3a5f]/30">negócio fechado.</span>
+          </motion.h1>
+
+          <motion.p 
+            variants={fadeUp}
+            className="text-[clamp(1rem,2vw,1.25rem)] text-[#1e3a5f]/50 max-w-xl mx-auto leading-relaxed mb-10 font-light"
+          >
+            40.000 imóveis. IA que atende 24/7.
             <br />
-            <span className="text-white font-bold">40.000 imóveis</span> na palma da sua mão — do primeiro contato ao fechamento.
-          </p>
+            Do primeiro contato ao fechamento.
+          </motion.p>
 
-          {/* Motivational phrase with icon */}
-          <div className="flex items-center justify-center gap-2 mb-8 animate-slide-up" style={{ animationDelay: "120ms" }}>
-            <Zap className="h-4 w-4 text-emerald-400" />
-            <p className="text-base text-emerald-300 font-medium">
-              Este sistema é a tecnologia que faltava para você se destacar.
-            </p>
-          </div>
-
-          <p className="text-base text-white/50 mb-10 animate-slide-up" style={{ animationDelay: "150ms" }}>
-            Não vendemos bot. Vendemos <span className="text-white font-medium">tecnologia que ajuda o corretor a fechar mais</span>.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <Button size="lg" className="h-16 px-12 text-lg bg-gradient-to-r from-white to-slate-100 text-[#1e3a5f] hover:from-slate-100 hover:to-white rounded-full font-bold shadow-2xl shadow-white/20 transition-all duration-300 hover:scale-105" asChild>
+          <motion.div 
+            variants={fadeUp}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <Button 
+              size="lg" 
+              className="h-12 px-8 text-[15px] bg-[#1e3a5f] hover:bg-[#0f1f33] text-white rounded-full font-medium transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-[#1e3a5f]/20" 
+              asChild
+            >
               <Link to="/auth">
-                <Zap className="mr-3 h-6 w-6" />
-                Ativar o FlyImob
+                Começar agora
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="ghost" className="h-16 px-10 text-lg text-white/80 hover:text-white hover:bg-white/10 rounded-full border border-white/20 backdrop-blur-sm" asChild>
-              <Link to="/auth">Já tenho conta</Link>
+            <Button 
+              size="lg" 
+              variant="ghost" 
+              className="h-12 px-8 text-[15px] text-[#1e3a5f]/70 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-full font-medium"
+              onClick={() => scrollToSection("produto")}
+            >
+              Saiba mais
             </Button>
-          </div>
+          </motion.div>
+        </motion.div>
 
-          {/* Stats with better styling */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 animate-fade-in" style={{ animationDelay: "400ms" }}>
-            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
-              <div className="text-4xl font-bold text-white mb-1">40k+</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider">imóveis mapeados</div>
-            </div>
-            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
-              <div className="text-4xl font-bold text-white mb-1">24/7</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider">IA atendendo</div>
-            </div>
-            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
-              <div className="text-4xl font-bold text-emerald-400 mb-1">100%</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider">atendimento contínuo</div>
-            </div>
-            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 hover:border-white/20">
-              <div className="text-4xl font-bold text-white mb-1">50/50</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider">parceria garantida</div>
-            </div>
-          </div>
+        <motion.button 
+          onClick={() => scrollToSection("produto")}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 text-[#1e3a5f]/30 hover:text-[#1e3a5f]/60 transition-colors duration-300"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+        >
+          <ChevronDown className="h-6 w-6 animate-bounce" />
+        </motion.button>
+      </section>
 
-          <button 
-            onClick={() => scrollToSection("problema")}
-            className="absolute bottom-12 left-1/2 -translate-x-1/2 text-white/50 hover:text-white transition-colors duration-300"
+      {/* Stats - Floating cards */}
+      <section className="py-32 px-6 bg-[#fafafa]">
+        <div className="max-w-screen-xl mx-auto">
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
           >
-            <ChevronDown className="h-8 w-8 animate-bounce" />
-          </button>
+            {[
+              { value: "40k+", label: "Imóveis" },
+              { value: "24/7", label: "Atendimento IA" },
+              { value: "100%", label: "Continuidade" },
+              { value: "50/50", label: "Parceria" }
+            ].map((stat, i) => (
+              <motion.div 
+                key={i}
+                variants={fadeUp}
+                className="text-center p-8 rounded-2xl bg-white border border-black/[0.04] hover:border-black/[0.08] transition-colors duration-500"
+              >
+                <div className="text-[clamp(2rem,4vw,3rem)] font-semibold text-[#1e3a5f] tracking-tight mb-1">{stat.value}</div>
+                <div className="text-[13px] text-[#1e3a5f]/40 font-medium tracking-wide uppercase">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
-      {/* O PROBLEMA */}
-      <section id="problema" className="py-32 px-6 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-200 to-transparent" />
-        
-        <div className="container mx-auto max-w-4xl relative z-10">
-          <div className="text-center mb-16 animate-slide-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-100 text-red-600 text-sm font-medium mb-6">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+      {/* Product Section */}
+      <section id="produto" className="py-32 px-6">
+        <div className="max-w-screen-lg mx-auto">
+          <motion.div 
+            className="text-center mb-20"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
               O Problema
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-6 leading-tight">
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3.5rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-6">
               O corretor trabalha muito.
               <br />
-              <span className="text-slate-400">E vende pouco.</span>
-            </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
-              Sua concorrência já está avançando. E você?
-            </p>
-          </div>
+              <span className="text-[#1e3a5f]/25">E vende pouco.</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/50 max-w-md mx-auto font-light">
+              Quando o cliente pede algo específico, a resposta sempre é a mesma.
+            </motion.p>
+          </motion.div>
 
-          <div className="max-w-2xl mx-auto space-y-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            <p className="text-xl text-slate-600 leading-relaxed">
-              Você passa o dia respondendo curiosos.
-            </p>
-            <p className="text-xl text-slate-600 leading-relaxed">
-              E quando o cliente pede algo específico…
-            </p>
-            <div className="p-10 rounded-3xl bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200 shadow-lg shadow-red-100/50">
-              <p className="text-2xl md:text-3xl font-bold text-red-600 text-center">
+          <motion.div 
+            className="max-w-xl mx-auto text-center mb-20"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="p-12 rounded-3xl bg-gradient-to-b from-red-50/50 to-white border border-red-100/50">
+              <p className="text-[clamp(1.5rem,4vw,2.5rem)] font-medium text-red-500/80 leading-tight">
                 "Não tenho esse imóvel."
               </p>
-              <p className="text-sm text-red-500/70 text-center mt-4">
+              <p className="text-[14px] text-red-400/60 mt-4 font-light">
                 Essa frase custa milhares em comissão perdida.
               </p>
             </div>
-            <div className="text-center space-y-3">
-              <p className="text-xl text-slate-600 leading-relaxed">
-                Essa frase encerra a conversa.
-                <br />
-                O cliente vai para o portal.
-              </p>
-              <p className="text-2xl text-[#1e3a5f] font-bold">
-                E sua comissão morre ali.
-              </p>
-              <p className="text-sm text-slate-400 mt-4">
-                Não perca mais negócios por falta de ferramentas.
-              </p>
-            </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* A SOLUÇÃO */}
-      <section className="py-32 px-6 bg-white">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="animate-slide-up">
-            <div className="text-sm text-[#1e3a5f]/60 uppercase tracking-widest mb-4">A Solução</div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-8 leading-tight">
+      {/* Solution Section */}
+      <section id="recursos" className="py-32 px-6 bg-[#1e3a5f]">
+        <div className="max-w-screen-lg mx-auto">
+          <motion.div 
+            className="text-center mb-20"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-[13px] text-white/30 uppercase tracking-[0.2em] mb-4">
+              A Solução
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3.5rem)] font-semibold text-white leading-[1.1] tracking-tight mb-6">
               Um cérebro digital que
               <br />
-              <span className="text-[#1e3a5f]">nunca diz "não tenho".</span>
-            </h2>
-          </div>
+              <span className="text-white/30">nunca diz "não tenho".</span>
+            </motion.h2>
+          </motion.div>
 
-          <p className="text-xl text-slate-500 mb-16 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            O FlyImob dá ao corretor o poder de:
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-8 animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100">
-              <Zap className="h-10 w-10 text-[#1e3a5f] mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[#1e3a5f] mb-2">Atender instantaneamente</h3>
-              <p className="text-slate-500 text-sm">Resposta em segundos, não horas</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100">
-              <Building2 className="h-10 w-10 text-[#1e3a5f] mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[#1e3a5f] mb-2">Ter milhares de imóveis</h3>
-              <p className="text-slate-500 text-sm">40.000 opções na palma da mão</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100">
-              <Handshake className="h-10 w-10 text-[#1e3a5f] mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[#1e3a5f] mb-2">Continuidade do atendimento</h3>
-              <p className="text-slate-500 text-sm">Do primeiro contato ao fechamento</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* O PRODUTO - A TRÍADE DE PODER */}
-      <section id="produto" className="py-32 px-6 bg-[#1e3a5f]">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-20 animate-slide-up">
-            <div className="text-sm text-white/40 uppercase tracking-widest mb-4">O Produto</div>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              A Tríade de Poder FlyImob
-            </h2>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Motor de IA */}
-            <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm animate-slide-up">
-              <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
-                <Brain className="h-7 w-7 text-white" />
-              </div>
-              <div className="text-xs uppercase tracking-widest text-white/40 mb-2">Motor de IA</div>
-              <h3 className="text-2xl font-bold text-white mb-4">O Concierge</h3>
-              <div className="space-y-4 text-white/70">
-                <p className="text-sm">
-                  IA semântica que entende <span className="text-white">intenção</span>, não palavras.
-                </p>
-                <p className="text-sm italic text-white/50">
-                  "Quero algo perto da balsa, com sol da manhã."
-                </p>
-                <div className="pt-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Zap className="h-4 w-4 text-white/60" />
-                    <span className="text-sm">Respostas instantâneas no WhatsApp, 24/7</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mic className="h-4 w-4 text-white/60" />
-                    <span className="text-sm">Tom configurável: formal, descontraído ou agressivo</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Inventário Infinito */}
-            <div className="p-8 rounded-3xl bg-white border border-white/20 animate-slide-up" style={{ animationDelay: "100ms" }}>
-              <div className="h-14 w-14 rounded-2xl bg-[#1e3a5f] flex items-center justify-center mb-6">
-                <Building2 className="h-7 w-7 text-white" />
-              </div>
-              <div className="text-xs uppercase tracking-widest text-[#1e3a5f]/60 mb-2">Principal</div>
-              <h3 className="text-2xl font-bold text-[#1e3a5f] mb-6">Inventário Infinito</h3>
-              
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-[#1e3a5f]/5 border border-[#1e3a5f]/10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Eye className="h-4 w-4 text-[#1e3a5f]" />
-                    <span className="font-semibold text-sm text-[#1e3a5f]">VIP</span>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    Imóveis seus ou de parceiros diretos.
-                    <br />
-                    <span className="text-[#1e3a5f]">Fotos, links e CTA direto.</span>
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <EyeOff className="h-4 w-4 text-slate-400" />
-                    <span className="font-semibold text-sm text-slate-600">Background</span>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    40.000 imóveis varridos da região.
-                    <br />
-                    <span className="text-slate-600">Apenas descrição, sem link do concorrente.</span>
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-green-50 border border-green-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Handshake className="h-4 w-4 text-green-600" />
-                    <span className="font-semibold text-sm text-green-600">O Pulo do Gato</span>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    Cliente se interessa → Você recebe a fonte → <span className="text-green-600 font-medium">Fifty 50/50</span> → Comissão protegida
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Dashboard */}
-            <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm animate-slide-up" style={{ animationDelay: "200ms" }}>
-              <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
-                <LayoutDashboard className="h-7 w-7 text-white" />
-              </div>
-              <div className="text-xs uppercase tracking-widest text-white/40 mb-2">Dashboard</div>
-              <h3 className="text-2xl font-bold text-white mb-4">O Leme</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Mic className="h-4 w-4 text-white/60 mt-1" />
-                  <span className="text-sm text-white/70">Tom de voz configurável</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Eye className="h-4 w-4 text-white/60 mt-1" />
-                  <span className="text-sm text-white/70">Definição de VIP e Background</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Zap className="h-4 w-4 text-white/60 mt-1" />
-                  <span className="text-sm text-white/70">Monitoramento em tempo real</span>
-                </div>
-                <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 mt-4">
-                  <div className="flex items-center gap-3">
-                    <Pause className="h-4 w-4 text-red-400" />
-                    <span className="text-sm text-red-300 font-medium">Botão de pânico: assuma a conversa quando quiser</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* O DIFERENCIAL */}
-      <section className="py-32 px-6 bg-white">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-16 animate-slide-up">
-            <div className="text-sm text-[#1e3a5f]/60 uppercase tracking-widest mb-4">O Diferencial</div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-4">
-              Atendimento contínuo gera <span className="text-green-600">mais fechamentos</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-4 gap-4 mb-12 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="h-12 w-12 rounded-full bg-[#1e3a5f] text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">1</div>
-              <p className="text-sm text-slate-600">Cliente pede um imóvel</p>
-            </div>
-            <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="h-12 w-12 rounded-full bg-[#1e3a5f] text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">2</div>
-              <p className="text-sm text-slate-600">A IA encontra opções compatíveis</p>
-            </div>
-            <div className="text-center p-6 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="h-12 w-12 rounded-full bg-[#1e3a5f] text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">3</div>
-              <p className="text-sm text-slate-600">O interesse cresce</p>
-            </div>
-            <div className="text-center p-6 rounded-2xl bg-green-50 border border-green-200">
-              <div className="h-12 w-12 rounded-full bg-green-600 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">4</div>
-              <p className="text-sm text-green-700 font-medium">Você entra para fechar</p>
-            </div>
-          </div>
-
-          <div className="text-center p-8 rounded-3xl bg-[#1e3a5f] animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <Handshake className="h-12 w-12 text-white mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-white mb-4">Quando a conversa não quebra, o negócio acontece.</h3>
-            <p className="text-white/60 text-lg">
-              Não é automação genérica.
-              <br />
-              <span className="text-white font-medium">É tecnologia pensada para o mercado imobiliário real.</span>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* COMO FUNCIONA */}
-      <section className="py-32 px-6 bg-slate-50">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-16 animate-slide-up">
-            <div className="text-sm text-[#1e3a5f]/60 uppercase tracking-widest mb-4">Como Funciona</div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-4">
-              Em 3 passos simples você começa a fechar mais
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            <div className="text-center">
-              <div className="h-20 w-20 rounded-3xl bg-[#1e3a5f] flex items-center justify-center mx-auto mb-6">
-                <MessageCircle className="h-10 w-10 text-white" />
-              </div>
-              <div className="text-4xl font-bold text-[#1e3a5f] mb-2">1</div>
-              <h3 className="text-xl font-semibold text-[#1e3a5f] mb-2">Conecte seu WhatsApp</h3>
-              <p className="text-slate-500">Integração simples em poucos cliques</p>
-            </div>
-            <div className="text-center">
-              <div className="h-20 w-20 rounded-3xl bg-[#1e3a5f] flex items-center justify-center mx-auto mb-6">
-                <Settings className="h-10 w-10 text-white" />
-              </div>
-              <div className="text-4xl font-bold text-[#1e3a5f] mb-2">2</div>
-              <h3 className="text-xl font-semibold text-[#1e3a5f] mb-2">Configure prioridades</h3>
-              <p className="text-slate-500">Defina VIPs e tom de voz</p>
-            </div>
-            <div className="text-center">
-              <div className="h-20 w-20 rounded-3xl bg-green-600 flex items-center justify-center mx-auto mb-6">
-                <Zap className="h-10 w-10 text-white" />
-              </div>
-              <div className="text-4xl font-bold text-[#1e3a5f] mb-2">3</div>
-              <h3 className="text-xl font-semibold text-[#1e3a5f] mb-2">A IA atende. Você fecha.</h3>
-              <p className="text-slate-500">Atendimento contínuo 24/7</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PLANOS */}
-      <section id="precos" className="py-32 px-6 bg-white">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-20 animate-slide-up">
-            <div className="text-sm text-[#1e3a5f]/60 uppercase tracking-widest mb-4">Investimento</div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1e3a5f] mb-4">
-              Modelo SaaS baseado em leads únicos
-            </h2>
-            <p className="text-lg text-slate-500">
-              Escala, previsibilidade e margem protegida
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
+          <motion.div 
+            className="grid md:grid-cols-3 gap-6"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
             {[
-              { name: "Start", price: "294", leads: "100", label: "Autônomos" },
-              { name: "Pro", price: "500", leads: "250", label: "High Performers", featured: true },
-              { name: "Elite", price: "800", leads: "500", label: "Pequenas Equipes" },
-              { name: "Enterprise", price: null, leads: "∞", label: "Imobiliárias" }
-            ].map((plan, i) => (
-              <div 
+              { 
+                title: "IA Concierge", 
+                desc: "Entende intenção, não palavras. Responde em segundos, 24 horas.",
+                highlight: "Semântica avançada"
+              },
+              { 
+                title: "Inventário Infinito", 
+                desc: "40.000 imóveis na palma da mão. VIP e Background organizados.",
+                highlight: "Nunca diga não"
+              },
+              { 
+                title: "Dashboard Leme", 
+                desc: "Controle total. Tom de voz, prioridades, botão de assumir.",
+                highlight: "Você no comando"
+              }
+            ].map((feature, i) => (
+              <motion.div 
                 key={i}
-                className={`p-8 rounded-3xl transition-all duration-500 ${
+                variants={fadeUp}
+                className="p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors duration-500"
+              >
+                <p className="text-[11px] text-white/30 uppercase tracking-[0.15em] mb-3">{feature.highlight}</p>
+                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                <p className="text-[15px] text-white/50 font-light leading-relaxed">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-32 px-6">
+        <div className="max-w-screen-lg mx-auto">
+          <motion.div 
+            className="text-center mb-20"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
+              Como Funciona
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight">
+              Três passos para começar
+            </motion.h2>
+          </motion.div>
+
+          <motion.div 
+            className="grid md:grid-cols-3 gap-12"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            {[
+              { step: "01", title: "Conecte", desc: "Integre seu WhatsApp em poucos cliques" },
+              { step: "02", title: "Configure", desc: "Defina prioridades e tom de voz" },
+              { step: "03", title: "Feche", desc: "A IA atende, você fecha negócios" }
+            ].map((item, i) => (
+              <motion.div 
+                key={i}
+                variants={fadeUp}
+                className="text-center"
+              >
+                <div className="text-[80px] font-extralight text-[#1e3a5f]/10 leading-none mb-4">{item.step}</div>
+                <h3 className="text-xl font-semibold text-[#1e3a5f] mb-2">{item.title}</h3>
+                <p className="text-[15px] text-[#1e3a5f]/50 font-light">{item.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="planos" className="py-32 px-6 bg-[#fafafa]">
+        <div className="max-w-screen-lg mx-auto">
+          <motion.div 
+            className="text-center mb-20"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
+              Planos
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-4">
+              Simples e transparente
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-[15px] text-[#1e3a5f]/50 font-light">
+              Modelo baseado em leads únicos
+            </motion.p>
+          </motion.div>
+
+          <motion.div 
+            className="grid md:grid-cols-3 gap-6"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            {[
+              { name: "Start", price: "294", leads: "100", features: ["IA 24/7", "Inventário Infinito", "Dashboard básico"] },
+              { name: "Pro", price: "500", leads: "250", features: ["Tudo do Start", "Prioridade VIP", "Suporte dedicado"], featured: true },
+              { name: "Elite", price: "800", leads: "500", features: ["Tudo do Pro", "Multi-corretores", "API personalizada"] }
+            ].map((plan, i) => (
+              <motion.div 
+                key={i}
+                variants={fadeUp}
+                className={`p-8 rounded-2xl transition-all duration-500 ${
                   plan.featured 
-                    ? "bg-[#1e3a5f] text-white scale-[1.02]" 
-                    : "bg-slate-50 border border-slate-100"
+                    ? "bg-[#1e3a5f] text-white ring-1 ring-[#1e3a5f] scale-[1.02]" 
+                    : "bg-white border border-black/[0.04]"
                 }`}
               >
                 {plan.featured && (
-                  <div className="text-xs uppercase tracking-widest text-white/60 mb-4">Recomendado</div>
+                  <p className="text-[11px] text-white/40 uppercase tracking-[0.15em] mb-6">Recomendado</p>
                 )}
-                <div className={`text-sm mb-2 ${plan.featured ? "text-white/60" : "text-slate-400"}`}>
-                  {plan.label}
-                </div>
-                <div className={`text-2xl font-bold mb-6 ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
+                <h3 className={`text-2xl font-semibold mb-2 ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
                   {plan.name}
-                </div>
+                </h3>
                 <div className="mb-6">
-                  {plan.price ? (
-                    <>
-                      <span className={`text-4xl font-bold ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
-                        R$ {plan.price}
-                      </span>
-                      <span className={plan.featured ? "text-white/60" : "text-slate-400"}>/mês</span>
-                    </>
-                  ) : (
-                    <span className={`text-xl font-semibold ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
-                      Sob Consulta
-                    </span>
-                  )}
+                  <span className={`text-4xl font-semibold ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
+                    R$ {plan.price}
+                  </span>
+                  <span className={plan.featured ? "text-white/40" : "text-[#1e3a5f]/40"}>/mês</span>
                 </div>
-                <div className={`text-sm mb-8 ${plan.featured ? "text-white/70" : "text-slate-500"}`}>
-                  <span className={`font-semibold ${plan.featured ? "text-white" : "text-[#1e3a5f]"}`}>
-                    {plan.leads}
-                  </span> leads únicos/mês
-                </div>
+                <p className={`text-[13px] mb-8 ${plan.featured ? "text-white/50" : "text-[#1e3a5f]/50"}`}>
+                  {plan.leads} leads únicos/mês
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, j) => (
+                    <li key={j} className={`flex items-center gap-2 text-[14px] ${plan.featured ? "text-white/70" : "text-[#1e3a5f]/60"}`}>
+                      <Check className={`h-4 w-4 ${plan.featured ? "text-white/50" : "text-[#1e3a5f]/30"}`} />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
                 <Button 
-                  className={`w-full rounded-full h-12 ${
+                  className={`w-full h-11 rounded-full text-[14px] font-medium transition-all duration-300 ${
                     plan.featured 
                       ? "bg-white text-[#1e3a5f] hover:bg-white/90" 
-                      : "bg-[#1e3a5f] text-white hover:bg-[#152c4a]"
+                      : "bg-[#1e3a5f] text-white hover:bg-[#0f1f33]"
                   }`}
                   asChild
                 >
-                  <Link to="/auth">{plan.price ? "Começar" : "Falar com Consultor"}</Link>
+                  <Link to="/auth">Começar</Link>
                 </Button>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-          <div className="text-center mt-12 space-y-2 animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <p className="text-sm text-slate-400">
-              Todos os planos incluem taxa única de implementação de R$ 1.000
-            </p>
-            <p className="text-lg text-[#1e3a5f] font-medium">
-              💡 Uma venda paga o sistema por meses.
-            </p>
-          </div>
+          <motion.p 
+            className="text-center text-[13px] text-[#1e3a5f]/40 mt-12"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            Taxa única de implementação: R$ 1.000
+          </motion.p>
         </div>
       </section>
 
-      {/* CTA FINAL */}
-      <section className="py-32 px-6 bg-gradient-to-br from-[#1e3a5f] via-[#1e3a5f] to-[#0a1929] relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: `radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                           radial-gradient(circle at 80% 50%, rgba(255,255,255,0.05) 0%, transparent 50%)`
-        }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-3xl" />
-        
-        <div className="container mx-auto max-w-3xl text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-emerald-300 text-sm font-medium mb-8 animate-slide-up">
-            <Zap className="w-4 h-4" />
-            O avanço da tecnologia é um caminho sem volta
-          </div>
-          
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 animate-slide-up">
-            Pronto para parar de
-            <br />
-            <span className="bg-gradient-to-r from-white/60 to-white/40 bg-clip-text text-transparent">perder comissão?</span>
-          </h2>
-          
-          <p className="text-lg text-white/60 mb-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            O Inventário Infinito já está mudando o jogo na Baixada Santista.
-          </p>
-          
-          <p className="text-xl text-emerald-300 font-semibold mb-12 animate-slide-up" style={{ animationDelay: "150ms" }}>
-            Seja pioneiro, não ultrapassado.
-          </p>
-          
-          <Button size="lg" className="h-16 px-14 text-lg bg-gradient-to-r from-white to-slate-100 text-[#1e3a5f] hover:from-slate-100 hover:to-white rounded-full font-bold shadow-2xl shadow-white/20 transition-all duration-300 hover:scale-105 animate-slide-up" style={{ animationDelay: "200ms" }} asChild>
-            <Link to="/auth">
-              Começar Agora
-              <ArrowRight className="ml-3 h-5 w-5" />
-            </Link>
-          </Button>
-          
-          <p className="text-sm text-white/40 mt-8 animate-slide-up" style={{ animationDelay: "250ms" }}>
-            Quem não inova, fica obsoleto.
-          </p>
+      {/* Final CTA */}
+      <section className="py-32 px-6">
+        <div className="max-w-screen-sm mx-auto text-center">
+          <motion.div
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={stagger}
+          >
+            <motion.h2 variants={fadeUp} className="text-[clamp(2rem,6vw,3.5rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-6">
+              Pronto para
+              <br />
+              <span className="text-[#1e3a5f]/25">fechar mais?</span>
+            </motion.h2>
+
+            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/50 mb-10 font-light">
+              O Inventário Infinito já está transformando o mercado.
+            </motion.p>
+
+            <motion.div variants={fadeUp}>
+              <Button 
+                size="lg" 
+                className="h-14 px-10 text-[15px] bg-[#1e3a5f] hover:bg-[#0f1f33] text-white rounded-full font-medium transition-all duration-300 hover:scale-[1.02] shadow-xl shadow-[#1e3a5f]/20" 
+                asChild
+              >
+                <Link to="/auth">
+                  Começar agora
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="py-16 px-6 bg-slate-50 border-t border-slate-100">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-white" />
+      {/* Footer - Minimal */}
+      <footer className="py-12 px-6 border-t border-black/[0.04]">
+        <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2.5">
+            <div className="h-7 w-7 rounded-lg bg-[#1e3a5f] flex items-center justify-center">
+              <Building2 className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="text-xl font-semibold text-[#1e3a5f]">FlyImob</span>
+            <span className="text-[14px] font-semibold text-[#1e3a5f]">FlyImob</span>
           </div>
-          <p className="text-slate-500 mb-2">A revolução da inteligência imobiliária.</p>
-          <p className="text-[#1e3a5f] font-medium">
-            Inventário Infinito. Atendimento contínuo. Mais fechamentos.
-          </p>
-          <div className="flex items-center justify-center gap-8 mt-8 text-sm text-slate-400">
-            <button onClick={() => scrollToSection("problema")} className="hover:text-[#1e3a5f] transition-colors">
-              O Problema
-            </button>
-            <button onClick={() => scrollToSection("produto")} className="hover:text-[#1e3a5f] transition-colors">
-              A Solução
-            </button>
-            <button onClick={() => scrollToSection("precos")} className="hover:text-[#1e3a5f] transition-colors">
-              Planos
-            </button>
-            <Link to="/auth" className="hover:text-[#1e3a5f] transition-colors">
+
+          <nav className="flex items-center gap-6">
+            {["Produto", "Recursos", "Planos"].map((item, i) => (
+              <button 
+                key={i}
+                onClick={() => scrollToSection(item.toLowerCase())} 
+                className="text-[13px] text-[#1e3a5f]/40 hover:text-[#1e3a5f] transition-colors duration-300"
+              >
+                {item}
+              </button>
+            ))}
+            <Link to="/auth" className="text-[13px] text-[#1e3a5f]/40 hover:text-[#1e3a5f] transition-colors duration-300">
               Login
             </Link>
-          </div>
-          <p className="text-sm text-slate-400 mt-8">© 2025 FlyImob. Baixada Santista, SP</p>
+          </nav>
+
+          <p className="text-[12px] text-[#1e3a5f]/30">
+            © 2025 FlyImob
+          </p>
         </div>
       </footer>
     </div>
