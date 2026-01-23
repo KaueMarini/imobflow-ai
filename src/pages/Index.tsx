@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { 
+  Building2, 
   ArrowRight,
   Sparkles,
   ChevronDown,
@@ -22,7 +23,6 @@ import {
   Crown
 } from "lucide-react";
 import FlyingBirds from "@/components/landing/FlyingBirds";
-import flyimobLogo from "@/assets/flyimob-logo.png";
 
 const Index = () => {
   const scrollToSection = (id: string) => {
@@ -51,12 +51,11 @@ const Index = () => {
       {/* Header - Ultra minimal */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#f0f4f8]/80 backdrop-blur-2xl border-b border-[#1e3a5f]/5">
         <div className="max-w-screen-xl mx-auto flex h-14 items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 group">
-            <img 
-              src={flyimobLogo} 
-              alt="FlyImob" 
-              className="h-10 w-auto transition-transform duration-300 group-hover:scale-105"
-            />
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="h-8 w-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <Building2 className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-[15px] font-semibold text-[#1e3a5f] tracking-tight">FlyImob</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-8">
@@ -749,12 +748,11 @@ const Index = () => {
       {/* Footer - Minimal */}
       <footer className="py-12 px-6 bg-[#1e3a5f]/5 border-t border-[#1e3a5f]/10">
         <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <img 
-              src={flyimobLogo} 
-              alt="FlyImob" 
-              className="h-8 w-auto"
-            />
+          <div className="flex items-center gap-2.5">
+            <div className="h-7 w-7 rounded-lg bg-[#1e3a5f] flex items-center justify-center">
+              <Building2 className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="text-[14px] font-semibold text-[#1e3a5f]">FlyImob</span>
           </div>
 
           <nav className="flex items-center gap-6">
