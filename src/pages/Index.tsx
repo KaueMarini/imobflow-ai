@@ -22,6 +22,7 @@ import {
   Handshake,
   Crown
 } from "lucide-react";
+import FlyingBirds from "@/components/landing/FlyingBirds";
 
 const Index = () => {
   const scrollToSection = (id: string) => {
@@ -81,7 +82,9 @@ const Index = () => {
       </header>
 
       {/* Hero - Apple-inspired */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative">
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative overflow-hidden">
+        {/* Flying Birds Animation */}
+        <FlyingBirds />
         <motion.div 
           className="text-center max-w-4xl mx-auto"
           initial="initial"
