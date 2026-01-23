@@ -47,9 +47,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white selection:bg-[#1e3a5f]/10 selection:text-[#1e3a5f]">
+    <div className="min-h-screen bg-gradient-to-b from-[#f0f4f8] to-[#e8eef4] selection:bg-[#1e3a5f]/10 selection:text-[#1e3a5f]">
       {/* Header - Ultra minimal */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#f0f4f8]/80 backdrop-blur-2xl border-b border-[#1e3a5f]/5">
         <div className="max-w-screen-xl mx-auto flex h-14 items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="h-8 w-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
@@ -63,7 +63,7 @@ const Index = () => {
               <button 
                 key={i}
                 onClick={() => scrollToSection(item.toLowerCase())} 
-                className="text-[13px] text-[#1e3a5f]/60 hover:text-[#1e3a5f] transition-colors duration-300"
+                className="text-[13px] text-[#1e3a5f]/70 hover:text-[#1e3a5f] transition-colors duration-300"
               >
                 {item}
               </button>
@@ -82,7 +82,7 @@ const Index = () => {
       </header>
 
       {/* Hero - Apple-inspired */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative overflow-hidden">
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative overflow-hidden bg-gradient-to-br from-[#e8eef4] via-[#dce5ed] to-[#d0dce8]">
         {/* Flying Birds Animation */}
         <FlyingBirds />
         <motion.div 
@@ -154,7 +154,7 @@ const Index = () => {
       </section>
 
       {/* Stats - Floating cards */}
-      <section className="py-32 px-6 bg-[#fafafa]">
+      <section className="py-32 px-6 bg-gradient-to-b from-[#1e3a5f]/[0.03] to-[#1e3a5f]/[0.08]">
         <div className="max-w-screen-xl mx-auto">
           <motion.div 
             className="grid grid-cols-2 md:grid-cols-4 gap-4"
@@ -172,10 +172,10 @@ const Index = () => {
               <motion.div 
                 key={i}
                 variants={fadeUp}
-                className="text-center p-8 rounded-2xl bg-white border border-black/[0.04] hover:border-black/[0.08] transition-colors duration-500"
+                className="text-center p-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-[#1e3a5f]/10 hover:border-[#1e3a5f]/20 hover:bg-white transition-all duration-500"
               >
                 <div className="text-[clamp(2rem,4vw,3rem)] font-semibold text-[#1e3a5f] tracking-tight mb-1">{stat.value}</div>
-                <div className="text-[13px] text-[#1e3a5f]/40 font-medium tracking-wide uppercase">{stat.label}</div>
+                <div className="text-[13px] text-[#1e3a5f]/50 font-medium tracking-wide uppercase">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -183,7 +183,7 @@ const Index = () => {
       </section>
 
       {/* Product Section */}
-      <section id="produto" className="py-32 px-6">
+      <section id="produto" className="py-32 px-6 bg-gradient-to-b from-[#e8eef4] to-[#dce5ed]">
         <div className="max-w-screen-lg mx-auto">
           <motion.div 
             className="text-center mb-20"
@@ -192,15 +192,15 @@ const Index = () => {
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
           >
-            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/60 uppercase tracking-[0.2em] mb-4">
               O Problema
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3.5rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-6">
               O corretor trabalha muito.
               <br />
-              <span className="text-[#1e3a5f]/25">E vende pouco.</span>
+              <span className="text-[#1e3a5f]/40">E vende pouco.</span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/50 max-w-md mx-auto font-light">
+            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/60 max-w-md mx-auto font-light">
               Quando o cliente pede algo específico, a resposta sempre é a mesma.
             </motion.p>
           </motion.div>
@@ -212,11 +212,11 @@ const Index = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="p-12 rounded-3xl bg-gradient-to-b from-[#1e3a5f]/5 to-white border border-[#1e3a5f]/10">
-              <p className="text-[clamp(1.5rem,4vw,2.5rem)] font-medium text-[#1e3a5f]/60 leading-tight">
+            <div className="p-12 rounded-3xl bg-gradient-to-b from-[#1e3a5f]/10 to-[#1e3a5f]/5 border border-[#1e3a5f]/15 backdrop-blur-sm">
+              <p className="text-[clamp(1.5rem,4vw,2.5rem)] font-medium text-[#1e3a5f]/70 leading-tight">
                 "Não tenho esse imóvel."
               </p>
-              <p className="text-[14px] text-[#1e3a5f]/40 mt-4 font-light">
+              <p className="text-[14px] text-[#1e3a5f]/50 mt-4 font-light">
                 Essa frase custa milhares em comissão perdida.
               </p>
             </div>
@@ -283,7 +283,7 @@ const Index = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-32 px-6">
+      <section className="py-32 px-6 bg-gradient-to-b from-[#d0dce8] to-[#c5d5e5]">
         <div className="max-w-screen-lg mx-auto">
           <motion.div 
             className="text-center mb-20"
@@ -292,7 +292,7 @@ const Index = () => {
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
           >
-            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/60 uppercase tracking-[0.2em] mb-4">
               Como Funciona
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight">
@@ -315,11 +315,11 @@ const Index = () => {
               <motion.div 
                 key={i}
                 variants={fadeUp}
-                className="text-center"
+                className="text-center p-8 rounded-2xl bg-white/40 backdrop-blur-sm border border-[#1e3a5f]/10"
               >
-                <div className="text-[80px] font-extralight text-[#1e3a5f]/10 leading-none mb-4">{item.step}</div>
+                <div className="text-[80px] font-extralight text-[#1e3a5f]/20 leading-none mb-4">{item.step}</div>
                 <h3 className="text-xl font-semibold text-[#1e3a5f] mb-2">{item.title}</h3>
-                <p className="text-[15px] text-[#1e3a5f]/50 font-light">{item.desc}</p>
+                <p className="text-[15px] text-[#1e3a5f]/60 font-light">{item.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -327,7 +327,7 @@ const Index = () => {
       </section>
 
       {/* Ecosystem Section */}
-      <section id="ecossistema" className="py-32 px-6 bg-[#fafafa]">
+      <section id="ecossistema" className="py-32 px-6 bg-gradient-to-b from-[#e0e8f0] to-[#d5e0eb]">
         <div className="max-w-screen-xl mx-auto">
           <motion.div 
             className="text-center mb-20"
@@ -336,15 +336,15 @@ const Index = () => {
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
           >
-            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/60 uppercase tracking-[0.2em] mb-4">
               O Ecossistema FlyImob
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-6">
               Tudo o que uma operação imobiliária
               <br />
-              <span className="text-[#1e3a5f]/30">moderna precisa. Em um só lugar.</span>
+              <span className="text-[#1e3a5f]/40">moderna precisa. Em um só lugar.</span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/50 max-w-2xl mx-auto font-light leading-relaxed">
+            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/60 max-w-2xl mx-auto font-light leading-relaxed">
               O FlyImob não é apenas uma ferramenta de atendimento. É um ecossistema integrado que conecta 
               leads, imóveis, inteligência, jurídico e capacitação em uma única plataforma.
             </motion.p>
@@ -389,11 +389,11 @@ const Index = () => {
                 <motion.div 
                   key={i}
                   variants={fadeUp}
-                  className="p-6 rounded-2xl bg-white border border-black/[0.04] hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5"
+                  className="p-6 rounded-2xl bg-white/70 backdrop-blur-sm border border-[#1e3a5f]/10 hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5 hover:bg-white/90"
                 >
-                  <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mb-4" />
+                  <item.icon className="h-6 w-6 text-[#1e3a5f]/70 mb-4" />
                   <h4 className="text-lg font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
-                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
+                  <p className="text-[14px] text-[#1e3a5f]/60 font-light leading-relaxed">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -433,11 +433,11 @@ const Index = () => {
                 <motion.div 
                   key={i}
                   variants={fadeUp}
-                  className="p-6 rounded-2xl bg-white border border-black/[0.04] hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5"
+                  className="p-6 rounded-2xl bg-white/70 backdrop-blur-sm border border-[#1e3a5f]/10 hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5 hover:bg-white/90"
                 >
-                  <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mb-4" />
+                  <item.icon className="h-6 w-6 text-[#1e3a5f]/70 mb-4" />
                   <h4 className="text-lg font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
-                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
+                  <p className="text-[14px] text-[#1e3a5f]/60 font-light leading-relaxed">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -463,7 +463,7 @@ const Index = () => {
 
             <motion.div 
               variants={fadeUp}
-              className="p-8 rounded-2xl bg-white border border-black/[0.04]"
+              className="p-8 rounded-2xl bg-white/70 backdrop-blur-sm border border-[#1e3a5f]/10"
             >
               <h4 className="text-lg font-semibold text-[#1e3a5f] mb-4">Inventário Unificado e Personalizável</h4>
               <div className="grid md:grid-cols-2 gap-6">
@@ -474,15 +474,15 @@ const Index = () => {
                     "Controle sobre imóveis próprios e de parceiros"
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className="h-5 w-5 rounded-full bg-[#1e3a5f]/10 flex items-center justify-center flex-shrink-0">
+                      <div className="h-5 w-5 rounded-full bg-[#1e3a5f]/15 flex items-center justify-center flex-shrink-0">
                         <Check className="h-3 w-3 text-[#1e3a5f]" />
                       </div>
-                      <span className="text-[14px] text-[#1e3a5f]/60">{item}</span>
+                      <span className="text-[14px] text-[#1e3a5f]/70">{item}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex items-center">
-                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">
+                  <p className="text-[14px] text-[#1e3a5f]/60 font-light leading-relaxed">
                     Tudo organizado para garantir continuidade no atendimento — sem direcionar o cliente para portais concorrentes.
                   </p>
                 </div>
@@ -529,17 +529,17 @@ const Index = () => {
                 <motion.div 
                   key={i}
                   variants={fadeUp}
-                  className="p-6 rounded-2xl bg-white border border-black/[0.04] hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5"
+                  className="p-6 rounded-2xl bg-white/70 backdrop-blur-sm border border-[#1e3a5f]/10 hover:border-[#1e3a5f]/20 transition-all duration-500 hover:shadow-lg hover:shadow-[#1e3a5f]/5 hover:bg-white/90"
                 >
-                  <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mb-4" />
+                  <item.icon className="h-6 w-6 text-[#1e3a5f]/70 mb-4" />
                   <h4 className="text-lg font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
-                  <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
+                  <p className="text-[14px] text-[#1e3a5f]/60 font-light leading-relaxed">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
             <motion.p 
               variants={fadeUp}
-              className="text-center text-[15px] text-[#1e3a5f]/60 mt-8 font-light"
+              className="text-center text-[15px] text-[#1e3a5f]/70 mt-8 font-light"
             >
               Menos insegurança. Mais confiança na tomada de decisão.
             </motion.p>
@@ -565,10 +565,10 @@ const Index = () => {
 
             <motion.div 
               variants={fadeUp}
-              className="p-8 rounded-2xl bg-white border border-black/[0.04]"
+              className="p-8 rounded-2xl bg-white/70 backdrop-blur-sm border border-[#1e3a5f]/10"
             >
               <h4 className="text-lg font-semibold text-[#1e3a5f] mb-4">Academia Fly</h4>
-              <p className="text-[14px] text-[#1e3a5f]/50 font-light mb-6">
+              <p className="text-[14px] text-[#1e3a5f]/60 font-light mb-6">
                 Conteúdos e treinamentos práticos para elevar o nível do corretor:
               </p>
               <div className="grid md:grid-cols-4 gap-4">
@@ -578,13 +578,13 @@ const Index = () => {
                   { icon: Handshake, label: "Atendimento e qualificação" },
                   { icon: Crown, label: "Postura comercial e fechamento" }
                 ].map((item, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-[#1e3a5f]/5 text-center">
-                    <item.icon className="h-6 w-6 text-[#1e3a5f]/60 mx-auto mb-2" />
-                    <p className="text-[13px] text-[#1e3a5f]/70 font-medium">{item.label}</p>
+                  <div key={i} className="p-4 rounded-xl bg-[#1e3a5f]/10 text-center">
+                    <item.icon className="h-6 w-6 text-[#1e3a5f]/70 mx-auto mb-2" />
+                    <p className="text-[13px] text-[#1e3a5f]/80 font-medium">{item.label}</p>
                   </div>
                 ))}
               </div>
-              <p className="text-center text-[14px] text-[#1e3a5f]/50 mt-6 font-light">
+              <p className="text-center text-[14px] text-[#1e3a5f]/60 mt-6 font-light">
                 O objetivo é simples: transformar ferramenta em resultado.
               </p>
             </motion.div>
@@ -608,7 +608,7 @@ const Index = () => {
       </section>
 
       {/* Pricing */}
-      <section id="planos" className="py-32 px-6">
+      <section id="planos" className="py-32 px-6 bg-gradient-to-b from-[#c5d5e5] to-[#b8cce0]">
         <div className="max-w-screen-xl mx-auto">
           <motion.div 
             className="text-center mb-20"
@@ -617,13 +617,13 @@ const Index = () => {
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
           >
-            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
+            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/60 uppercase tracking-[0.2em] mb-4">
               Planos
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-4">
               Simples e transparente
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-[15px] text-[#1e3a5f]/50 font-light">
+            <motion.p variants={fadeUp} className="text-[15px] text-[#1e3a5f]/60 font-light">
               Modelo baseado em leads únicos
             </motion.p>
           </motion.div>
@@ -646,10 +646,10 @@ const Index = () => {
                 variants={fadeUp}
                 className={`p-8 rounded-2xl transition-all duration-500 ${
                   plan.featured 
-                    ? "bg-[#1e3a5f] text-white ring-1 ring-[#1e3a5f] lg:scale-[1.02]" 
+                    ? "bg-[#1e3a5f] text-white ring-1 ring-[#1e3a5f] lg:scale-[1.02] shadow-xl shadow-[#1e3a5f]/30" 
                     : plan.enterprise
-                      ? "bg-gradient-to-b from-[#1e3a5f]/5 to-white border border-[#1e3a5f]/20"
-                      : "bg-white border border-black/[0.04]"
+                      ? "bg-gradient-to-b from-[#1e3a5f]/10 to-white/80 backdrop-blur-sm border border-[#1e3a5f]/20"
+                      : "bg-white/80 backdrop-blur-sm border border-[#1e3a5f]/10 hover:border-[#1e3a5f]/20"
                 }`}
               >
                 {plan.featured && (
@@ -711,7 +711,7 @@ const Index = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-32 px-6">
+      <section className="py-32 px-6 bg-gradient-to-b from-[#d0dce8] to-[#c5d5e5]">
         <div className="max-w-screen-sm mx-auto text-center">
           <motion.div
             initial="initial"
@@ -722,17 +722,17 @@ const Index = () => {
             <motion.h2 variants={fadeUp} className="text-[clamp(2rem,6vw,3.5rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-6">
               Pronto para
               <br />
-              <span className="text-[#1e3a5f]/25">fechar mais?</span>
+              <span className="text-[#1e3a5f]/40">fechar mais?</span>
             </motion.h2>
 
-            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/50 mb-10 font-light">
+            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/60 mb-10 font-light">
               O Inventário Infinito já está transformando o mercado.
             </motion.p>
 
             <motion.div variants={fadeUp}>
               <Button 
                 size="lg" 
-                className="h-14 px-10 text-[15px] bg-[#1e3a5f] hover:bg-[#0f1f33] text-white rounded-full font-medium transition-all duration-300 hover:scale-[1.02] shadow-xl shadow-[#1e3a5f]/20" 
+                className="h-14 px-10 text-[15px] bg-[#1e3a5f] hover:bg-[#0f1f33] text-white rounded-full font-medium transition-all duration-300 hover:scale-[1.02] shadow-xl shadow-[#1e3a5f]/30" 
                 asChild
               >
                 <Link to="/auth">
@@ -746,7 +746,7 @@ const Index = () => {
       </section>
 
       {/* Footer - Minimal */}
-      <footer className="py-12 px-6 border-t border-black/[0.04]">
+      <footer className="py-12 px-6 bg-[#1e3a5f]/5 border-t border-[#1e3a5f]/10">
         <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-lg bg-[#1e3a5f] flex items-center justify-center">
@@ -760,17 +760,17 @@ const Index = () => {
               <button 
                 key={i}
                 onClick={() => scrollToSection(item.toLowerCase())} 
-                className="text-[13px] text-[#1e3a5f]/40 hover:text-[#1e3a5f] transition-colors duration-300"
+                className="text-[13px] text-[#1e3a5f]/60 hover:text-[#1e3a5f] transition-colors duration-300"
               >
                 {item}
               </button>
             ))}
-            <Link to="/auth" className="text-[13px] text-[#1e3a5f]/40 hover:text-[#1e3a5f] transition-colors duration-300">
+            <Link to="/auth" className="text-[13px] text-[#1e3a5f]/60 hover:text-[#1e3a5f] transition-colors duration-300">
               Login
             </Link>
           </nav>
 
-          <p className="text-[12px] text-[#1e3a5f]/30">
+          <p className="text-[12px] text-[#1e3a5f]/50">
             © 2025 FlyImob
           </p>
         </div>
