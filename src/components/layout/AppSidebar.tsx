@@ -13,9 +13,10 @@ import {
   CalendarDays,
   Plug,
   Satellite,
-  Scale, // <--- ADICIONE ESTE IMPORT
+  Scale,
   FileText,
-  GraduationCap
+  GraduationCap,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,13 +30,14 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Início", href: "/home", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/dashboard", icon: Zap },
   { title: "Agenda de Visitas", href: "/agenda", icon: CalendarDays },
   { title: "CRM de Leads", href: "/crm", icon: Users },
   { title: "Imóveis", href: "/imoveis", icon: Building2 },
   { title: "Radar Captação", href: "/captacao", icon: Satellite },
   { title: "Gerador de Avaliação", href: "/avaliacao", icon: FileText },
-  { title: "Parceiros Jurídicos", href: "/parceiros", icon: Scale }, // <--- NOVO ITEM AQUI
+  { title: "Parceiros Jurídicos", href: "/parceiros", icon: Scale },
   { title: "Academia Fly", href: "/academia", icon: GraduationCap },
 ];
 
