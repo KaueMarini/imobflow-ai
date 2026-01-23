@@ -6,12 +6,7 @@ import {
   ArrowRight,
   Sparkles,
   ChevronDown,
-  Check,
-  Users,
-  BarChart3,
-  Home,
-  Scale,
-  GraduationCap
+  Check
 } from "lucide-react";
 
 const Index = () => {
@@ -49,17 +44,13 @@ const Index = () => {
           </Link>
           
           <nav className="hidden md:flex items-center gap-8">
-            {[
-              { label: "Produto", id: "produto" },
-              { label: "Ecossistema", id: "ecossistema" },
-              { label: "Planos", id: "planos" }
-            ].map((item, i) => (
+            {["Produto", "Recursos", "Planos"].map((item, i) => (
               <button 
                 key={i}
-                onClick={() => scrollToSection(item.id)} 
+                onClick={() => scrollToSection(item.toLowerCase())} 
                 className="text-[13px] text-[#1e3a5f]/60 hover:text-[#1e3a5f] transition-colors duration-300"
               >
-                {item.label}
+                {item}
               </button>
             ))}
           </nav>
@@ -318,295 +309,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* O Ecossistema FlyImob */}
-      <section id="ecossistema" className="py-32 px-6 bg-white">
-        <div className="max-w-screen-xl mx-auto">
-          {/* Header do Ecossistema */}
-          <motion.div 
-            className="text-center mb-24"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={stagger}
-          >
-            <motion.p variants={fadeUp} className="text-[13px] text-[#1e3a5f]/40 uppercase tracking-[0.2em] mb-4">
-              O Ecossistema
-            </motion.p>
-            <motion.h2 variants={fadeUp} className="text-[clamp(1.75rem,5vw,3.5rem)] font-semibold text-[#1e3a5f] leading-[1.1] tracking-tight mb-6">
-              Tudo o que uma operação
-              <br />
-              <span className="text-[#1e3a5f]/25">imobiliária moderna precisa.</span>
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] text-[#1e3a5f]/50 max-w-2xl mx-auto font-light leading-relaxed">
-              O FlyImob não é apenas uma ferramenta de atendimento.
-              É um ecossistema integrado que conecta leads, imóveis, inteligência, jurídico e capacitação em uma única plataforma.
-            </motion.p>
-          </motion.div>
-
-          {/* 5 Pilares */}
-          <div className="space-y-20">
-            
-            {/* Pilar 1 - Operação Comercial */}
-            <motion.div 
-              className="grid lg:grid-cols-2 gap-12 items-start"
-              initial="initial"
-              whileInView="animate"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={stagger}
-            >
-              <motion.div variants={fadeUp} className="lg:sticky lg:top-32">
-                <div className="inline-flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-2xl bg-[#1e3a5f]/5 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-[#1e3a5f]" />
-                  </div>
-                  <span className="text-[12px] text-[#1e3a5f]/40 uppercase tracking-[0.15em] font-medium">Pilar 01</span>
-                </div>
-                <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold text-[#1e3a5f] leading-tight mb-4">
-                  Operação Comercial
-                </h3>
-                <p className="text-[15px] text-[#1e3a5f]/50 font-light">
-                  Controle total da jornada do lead
-                </p>
-              </motion.div>
-
-              <motion.div variants={fadeUp} className="space-y-4">
-                {[
-                  { 
-                    title: "CRM Imobiliário Unificado", 
-                    desc: "Todos os leads centralizados em um único painel, com histórico completo de interações, origem, interesse e estágio da negociação."
-                  },
-                  { 
-                    title: "Termômetro de Demanda", 
-                    desc: "Visualize, em tempo real, quais imóveis, regiões e perfis estão sendo mais buscados. Dados reais de intenção — não achismo."
-                  },
-                  { 
-                    title: "Atendimento Contínuo com IA", 
-                    desc: "A IA mantém a conversa ativa, qualifica o interesse e entrega o lead pronto para o corretor fechar."
-                  }
-                ].map((item, i) => (
-                  <div 
-                    key={i}
-                    className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.03] hover:border-[#1e3a5f]/10 transition-colors duration-500"
-                  >
-                    <h4 className="text-[16px] font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
-                    <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
-                  </div>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            {/* Pilar 2 - Inteligência de Mercado */}
-            <motion.div 
-              className="grid lg:grid-cols-2 gap-12 items-start"
-              initial="initial"
-              whileInView="animate"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={stagger}
-            >
-              <motion.div variants={fadeUp} className="lg:sticky lg:top-32">
-                <div className="inline-flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-2xl bg-[#1e3a5f]/5 flex items-center justify-center">
-                    <BarChart3 className="h-6 w-6 text-[#1e3a5f]" />
-                  </div>
-                  <span className="text-[12px] text-[#1e3a5f]/40 uppercase tracking-[0.15em] font-medium">Pilar 02</span>
-                </div>
-                <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold text-[#1e3a5f] leading-tight mb-4">
-                  Inteligência de Mercado
-                </h3>
-                <p className="text-[15px] text-[#1e3a5f]/50 font-light">
-                  Decisão baseada em dados, não em sensação
-                </p>
-              </motion.div>
-
-              <motion.div variants={fadeUp} className="space-y-4">
-                {[
-                  { 
-                    title: "Radar de Captação de Imóveis", 
-                    desc: "Identifique oportunidades de captação com base em demanda real do mercado e comportamento dos leads."
-                  },
-                  { 
-                    title: "Avaliação de Imóveis com IA", 
-                    desc: "Estimativas inteligentes de valor, considerando região, padrão, liquidez e comportamento de busca — uma base sólida para negociação e captação."
-                  }
-                ].map((item, i) => (
-                  <div 
-                    key={i}
-                    className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.03] hover:border-[#1e3a5f]/10 transition-colors duration-500"
-                  >
-                    <h4 className="text-[16px] font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
-                    <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
-                  </div>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            {/* Pilar 3 - Ativos & Inventário */}
-            <motion.div 
-              className="grid lg:grid-cols-2 gap-12 items-start"
-              initial="initial"
-              whileInView="animate"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={stagger}
-            >
-              <motion.div variants={fadeUp} className="lg:sticky lg:top-32">
-                <div className="inline-flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-2xl bg-[#1e3a5f]/5 flex items-center justify-center">
-                    <Home className="h-6 w-6 text-[#1e3a5f]" />
-                  </div>
-                  <span className="text-[12px] text-[#1e3a5f]/40 uppercase tracking-[0.15em] font-medium">Pilar 03</span>
-                </div>
-                <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold text-[#1e3a5f] leading-tight mb-4">
-                  Ativos & Inventário
-                </h3>
-                <p className="text-[15px] text-[#1e3a5f]/50 font-light">
-                  Liberdade para definir de onde vêm seus imóveis
-                </p>
-              </motion.div>
-
-              <motion.div variants={fadeUp} className="space-y-4">
-                <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.03] hover:border-[#1e3a5f]/10 transition-colors duration-500">
-                  <h4 className="text-[16px] font-semibold text-[#1e3a5f] mb-3">Inventário Unificado e Personalizável</h4>
-                  <ul className="space-y-2">
-                    {[
-                      "Integração XML com portais e parceiros",
-                      "Definição das fontes de imóveis que o usuário deseja trabalhar",
-                      "Controle total sobre imóveis próprios, parceiros e inventário de apoio"
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-[14px] text-[#1e3a5f]/50 font-light">
-                        <Check className="h-4 w-4 text-[#1e3a5f]/30 mt-0.5 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-[13px] text-[#1e3a5f]/40 mt-4 pt-4 border-t border-black/[0.04] font-light italic">
-                    Tudo organizado para garantir continuidade no atendimento — sem direcionar o cliente para portais concorrentes.
-                  </p>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* Pilar 4 - Governança Jurídica */}
-            <motion.div 
-              className="grid lg:grid-cols-2 gap-12 items-start"
-              initial="initial"
-              whileInView="animate"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={stagger}
-            >
-              <motion.div variants={fadeUp} className="lg:sticky lg:top-32">
-                <div className="inline-flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-2xl bg-[#1e3a5f]/5 flex items-center justify-center">
-                    <Scale className="h-6 w-6 text-[#1e3a5f]" />
-                  </div>
-                  <span className="text-[12px] text-[#1e3a5f]/40 uppercase tracking-[0.15em] font-medium">Pilar 04</span>
-                </div>
-                <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold text-[#1e3a5f] leading-tight mb-4">
-                  Governança Jurídica
-                </h3>
-                <p className="text-[15px] text-[#1e3a5f]/50 font-light">
-                  Segurança para fechar negócios com tranquilidade
-                </p>
-              </motion.div>
-
-              <motion.div variants={fadeUp} className="space-y-4">
-                {[
-                  { 
-                    title: "Central Jurídica Imobiliária", 
-                    desc: "Uma área dedicada a dúvidas, contratos e procedimentos do mercado imobiliário."
-                  },
-                  { 
-                    title: "IA Jurídica Integrada", 
-                    desc: "Respostas rápidas e contextualizadas para dúvidas jurídicas do dia a dia do corretor."
-                  },
-                  { 
-                    title: "Advogada Parceira Especialista", 
-                    desc: "Acesso a uma profissional especializada no ramo imobiliário para suporte técnico e orientações estratégicas."
-                  }
-                ].map((item, i) => (
-                  <div 
-                    key={i}
-                    className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.03] hover:border-[#1e3a5f]/10 transition-colors duration-500"
-                  >
-                    <h4 className="text-[16px] font-semibold text-[#1e3a5f] mb-2">{item.title}</h4>
-                    <p className="text-[14px] text-[#1e3a5f]/50 font-light leading-relaxed">{item.desc}</p>
-                  </div>
-                ))}
-                <p className="text-[14px] text-[#1e3a5f]/60 font-medium pt-2">
-                  Menos insegurança. Mais confiança na tomada de decisão.
-                </p>
-              </motion.div>
-            </motion.div>
-
-            {/* Pilar 5 - Formação & Performance */}
-            <motion.div 
-              className="grid lg:grid-cols-2 gap-12 items-start"
-              initial="initial"
-              whileInView="animate"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={stagger}
-            >
-              <motion.div variants={fadeUp} className="lg:sticky lg:top-32">
-                <div className="inline-flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-2xl bg-[#1e3a5f]/5 flex items-center justify-center">
-                    <GraduationCap className="h-6 w-6 text-[#1e3a5f]" />
-                  </div>
-                  <span className="text-[12px] text-[#1e3a5f]/40 uppercase tracking-[0.15em] font-medium">Pilar 05</span>
-                </div>
-                <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold text-[#1e3a5f] leading-tight mb-4">
-                  Formação & Performance
-                </h3>
-                <p className="text-[15px] text-[#1e3a5f]/50 font-light">
-                  Tecnologia não substitui preparo. Ela potencializa.
-                </p>
-              </motion.div>
-
-              <motion.div variants={fadeUp} className="space-y-4">
-                <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.03] hover:border-[#1e3a5f]/10 transition-colors duration-500">
-                  <h4 className="text-[16px] font-semibold text-[#1e3a5f] mb-3">Academia Fly</h4>
-                  <p className="text-[14px] text-[#1e3a5f]/50 font-light mb-4">
-                    Conteúdos e treinamentos práticos para elevar o nível do corretor:
-                  </p>
-                  <ul className="space-y-2">
-                    {[
-                      "Fotografia imobiliária profissional",
-                      "Tráfego pago para imóveis",
-                      "Atendimento e qualificação de clientes",
-                      "Postura comercial e fechamento"
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-[14px] text-[#1e3a5f]/50 font-light">
-                        <Check className="h-4 w-4 text-[#1e3a5f]/30 mt-0.5 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-[14px] text-[#1e3a5f]/60 font-medium mt-4 pt-4 border-t border-black/[0.04]">
-                    O objetivo é simples: transformar ferramenta em resultado.
-                  </p>
-                </div>
-              </motion.div>
-            </motion.div>
-
-          </div>
-
-          {/* Frase de Amarração */}
-          <motion.div 
-            className="text-center mt-32 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <p className="text-[clamp(1.25rem,3vw,1.75rem)] font-medium text-[#1e3a5f] leading-relaxed">
-              O FlyImob não resolve apenas um ponto da operação.
-              <br />
-              <span className="text-[#1e3a5f]/40">
-                Ele organiza toda a estrutura para que o corretor e a imobiliária operem em outro nível.
-              </span>
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Pricing */}
       <section id="planos" className="py-32 px-6 bg-[#fafafa]">
         <div className="max-w-screen-lg mx-auto">
@@ -744,17 +446,13 @@ const Index = () => {
           </div>
 
           <nav className="flex items-center gap-6">
-            {[
-              { label: "Produto", id: "produto" },
-              { label: "Ecossistema", id: "ecossistema" },
-              { label: "Planos", id: "planos" }
-            ].map((item, i) => (
+            {["Produto", "Recursos", "Planos"].map((item, i) => (
               <button 
                 key={i}
-                onClick={() => scrollToSection(item.id)} 
+                onClick={() => scrollToSection(item.toLowerCase())} 
                 className="text-[13px] text-[#1e3a5f]/40 hover:text-[#1e3a5f] transition-colors duration-300"
               >
-                {item.label}
+                {item}
               </button>
             ))}
             <Link to="/auth" className="text-[13px] text-[#1e3a5f]/40 hover:text-[#1e3a5f] transition-colors duration-300">
