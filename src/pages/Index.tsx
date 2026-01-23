@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Suspense, lazy } from "react";
-import {
+import { 
   Building2, 
   ArrowRight,
   Sparkles,
@@ -23,9 +22,6 @@ import {
   Handshake,
   Crown
 } from "lucide-react";
-
-// Lazy load 3D component for performance
-const FlyCore3D = lazy(() => import("@/components/landing/FlyCore3D"));
 
 const Index = () => {
   const scrollToSection = (id: string) => {
@@ -84,60 +80,38 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero - With 3D Core */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-[#0a0f1a]">
-        {/* 3D Background */}
-        <div className="absolute inset-0 z-0">
-          <Suspense fallback={
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-32 h-32 rounded-full bg-cyan-500/10 animate-pulse" />
-            </div>
-          }>
-            <FlyCore3D />
-          </Suspense>
-        </div>
-
-        {/* Gradient overlays for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-transparent to-transparent z-10 pointer-events-none" />
-
+      {/* Hero - Apple-inspired */}
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative">
         <motion.div 
-          className="text-center max-w-4xl mx-auto relative z-20"
+          className="text-center max-w-4xl mx-auto"
           initial="initial"
           animate="animate"
           variants={stagger}
         >
           <motion.div 
             variants={fadeUp}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e3a5f]/5 mb-8"
           >
-            <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="text-[12px] font-medium text-white/70 tracking-wide">Ecossistema Imobiliário Inteligente</span>
+            <Sparkles className="h-3.5 w-3.5 text-[#1e3a5f]" />
+            <span className="text-[12px] font-medium text-[#1e3a5f]/80 tracking-wide">Tecnologia Imobiliária</span>
           </motion.div>
 
           <motion.h1 
             variants={fadeUp}
-            className="text-[clamp(2.5rem,8vw,5.5rem)] font-semibold text-white leading-[0.95] tracking-[-0.03em] mb-6"
+            className="text-[clamp(2.5rem,8vw,5.5rem)] font-semibold text-[#1e3a5f] leading-[0.95] tracking-[-0.03em] mb-6"
           >
             Interesse vira
             <br />
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">negócio fechado.</span>
+            <span className="text-[#1e3a5f]/30">negócio fechado.</span>
           </motion.h1>
 
           <motion.p 
             variants={fadeUp}
-            className="text-[clamp(1rem,2vw,1.25rem)] text-white/40 max-w-xl mx-auto leading-relaxed mb-4 font-light"
+            className="text-[clamp(1rem,2vw,1.25rem)] text-[#1e3a5f]/50 max-w-xl mx-auto leading-relaxed mb-10 font-light"
           >
             40.000 imóveis. IA que atende 24/7.
             <br />
             Do primeiro contato ao fechamento.
-          </motion.p>
-
-          <motion.p 
-            variants={fadeUp}
-            className="text-[14px] text-cyan-400/60 mb-10 font-light tracking-wide"
-          >
-            Uma plataforma viva, operando o mercado em tempo real.
           </motion.p>
 
           <motion.div 
@@ -146,7 +120,7 @@ const Index = () => {
           >
             <Button 
               size="lg" 
-              className="h-12 px-8 text-[15px] bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-full font-medium transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-cyan-500/25 border-0" 
+              className="h-12 px-8 text-[15px] bg-[#1e3a5f] hover:bg-[#0f1f33] text-white rounded-full font-medium transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-[#1e3a5f]/20" 
               asChild
             >
               <Link to="/auth">
@@ -157,7 +131,7 @@ const Index = () => {
             <Button 
               size="lg" 
               variant="ghost" 
-              className="h-12 px-8 text-[15px] text-white/60 hover:text-white hover:bg-white/5 rounded-full font-medium border border-white/10"
+              className="h-12 px-8 text-[15px] text-[#1e3a5f]/70 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-full font-medium"
               onClick={() => scrollToSection("produto")}
             >
               Saiba mais
@@ -167,7 +141,7 @@ const Index = () => {
 
         <motion.button 
           onClick={() => scrollToSection("produto")}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 text-white/30 hover:text-white/60 transition-colors duration-300 z-20"
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 text-[#1e3a5f]/30 hover:text-[#1e3a5f]/60 transition-colors duration-300"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
