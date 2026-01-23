@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Suspense, lazy } from "react";
 import { 
   Building2, 
   ArrowRight,
@@ -23,8 +22,6 @@ import {
   Handshake,
   Crown
 } from "lucide-react";
-
-const Scene3D = lazy(() => import("@/components/landing/Scene3D"));
 
 const Index = () => {
   const scrollToSection = (id: string) => {
@@ -83,28 +80,17 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero - Apple-inspired with 3D Scene */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative overflow-hidden">
-        {/* 3D Scene Background */}
-        <div className="absolute inset-0 z-0">
-          <Suspense fallback={
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="w-8 h-8 border-2 border-[#1e3a5f]/20 border-t-[#1e3a5f] rounded-full animate-spin" />
-            </div>
-          }>
-            <Scene3D />
-          </Suspense>
-        </div>
-
+      {/* Hero - Apple-inspired */}
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-14 relative">
         <motion.div 
-          className="text-center max-w-4xl mx-auto relative z-10"
+          className="text-center max-w-4xl mx-auto"
           initial="initial"
           animate="animate"
           variants={stagger}
         >
           <motion.div 
             variants={fadeUp}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#1e3a5f]/10 mb-8"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e3a5f]/5 mb-8"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#1e3a5f]" />
             <span className="text-[12px] font-medium text-[#1e3a5f]/80 tracking-wide">Tecnologia Imobiliária</span>
@@ -155,7 +141,7 @@ const Index = () => {
 
         <motion.button 
           onClick={() => scrollToSection("produto")}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 text-[#1e3a5f]/30 hover:text-[#1e3a5f]/60 transition-colors duration-300 z-10"
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 text-[#1e3a5f]/30 hover:text-[#1e3a5f]/60 transition-colors duration-300"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
