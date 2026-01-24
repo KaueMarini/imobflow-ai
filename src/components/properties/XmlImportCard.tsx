@@ -64,13 +64,13 @@ export function XmlImportCard() {
       try {
         setLoadingLinks(true);
         const { data, error } = await supabase
-          .from('link_xml' as any)
+          .from('link_xml')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
-        setExistingLinks((data as unknown as LinkXml[]) || []);
+        setExistingLinks(data || []);
       } catch (error) {
         console.error("Erro ao buscar links XML:", error);
       } finally {
@@ -98,7 +98,7 @@ export function XmlImportCard() {
       
       // Remove do banco de dados
       const { error } = await supabase
-        .from('link_xml' as any)
+        .from('link_xml')
         .delete()
         .eq('id', linkId);
       
