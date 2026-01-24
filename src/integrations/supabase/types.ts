@@ -56,6 +56,7 @@ export type Database = {
       cliente_saas: {
         Row: {
           created_at: string
+          evolution_status: string | null
           fontes_preferenciais: string[] | null
           fontes_secundarias: string[] | null
           id: string
@@ -69,6 +70,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          evolution_status?: string | null
           fontes_preferenciais?: string[] | null
           fontes_secundarias?: string[] | null
           id?: string
@@ -82,6 +84,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          evolution_status?: string | null
           fontes_preferenciais?: string[] | null
           fontes_secundarias?: string[] | null
           id?: string

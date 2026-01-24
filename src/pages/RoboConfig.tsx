@@ -122,7 +122,8 @@ export default function RoboConfig() {
             setPersonality(savedPersonality);
           }
           
-          if (data.evolution_instance_id || data.evolution_status === "online") {
+          // Verifica se evolution_status está como "conectado"
+          if (data.evolution_status === "conectado") {
             setIsConnected(true);
           }
         }

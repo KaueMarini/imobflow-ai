@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Bot, 
   Settings, 
@@ -22,12 +24,39 @@ import { Progress } from "@/components/ui/progress";
 export default function Home() {
   const { clienteSaas } = useAuth();
   const navigate = useNavigate();
+  const [evolutionStatus, setEvolutionStatus] = useState<string | null>(null);
+  const { user } = useAuth();
 
   // Pega o nome do usuário
   const firstName = clienteSaas?.nome_empresa?.split(" ")[0] || "Parceiro";
 
-  // Simulação de progresso de configuração (você pode ligar isso a dados reais depois)
-  const setupProgress = 33; 
+  // Busca o evolution_status do banco
+  useEffect(() => {
+    async function fetchEvolutionStatus() {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from('clientes_saas' as any)
+          .select('evolution_status')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (!error && data) {
+          setEvolutionStatus((data as any).evolution_status);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar evolution_status:", err);
+      }
+    }
+    fetchEvolutionStatus();
+  }, [user]);
+
+  // Calcula progresso real baseado nos dados
+  const isRoboAtivo = evolutionStatus === "conectado";
+  const isFontesConfiguradas = clienteSaas?.fontes_preferenciais && clienteSaas.fontes_preferenciais.length > 0;
+  
+  // Progresso: Conta criada (33%) + Fontes (33%) + Robô (34%)
+  const setupProgress = 33 + (isFontesConfiguradas ? 33 : 0) + (isRoboAtivo ? 34 : 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,12 +124,20 @@ export default function Home() {
                     <span className="text-foreground">Conta criada</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
-                    <span className="text-muted-foreground">Configurar Fontes</span>
+                    {isFontesConfiguradas ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+                    )}
+                    <span className={isFontesConfiguradas ? "text-foreground" : "text-muted-foreground"}>Configurar Fontes</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
-                    <span className="text-muted-foreground">Ativar Robô</span>
+                    {isRoboAtivo ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+                    )}
+                    <span className={isRoboAtivo ? "text-foreground" : "text-muted-foreground"}>Ativar Robô</span>
                   </div>
                 </div>
               </CardContent>
