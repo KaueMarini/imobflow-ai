@@ -98,6 +98,27 @@ export type Database = {
         }
         Relationships: []
       }
+      link_xml: {
+        Row: {
+          created_at: string
+          id: string
+          url_xml: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          url_xml: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          url_xml?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
