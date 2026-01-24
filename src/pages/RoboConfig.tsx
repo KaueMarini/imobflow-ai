@@ -163,6 +163,7 @@ export default function RoboConfig() {
         body: JSON.stringify({
           empresa: user?.email ?? "",
           telefone: whatsappNumber,
+          userid: user?.id ?? "",
         }),
       });
 
@@ -218,6 +219,7 @@ export default function RoboConfig() {
         body: JSON.stringify({
           empresa: user?.email ?? "",
           telefone: whatsappNumber,
+          userid: user?.id ?? "",
         }),
       });
 
@@ -282,6 +284,7 @@ export default function RoboConfig() {
         body: JSON.stringify({
           empresa: user?.email ?? "",
           telefone: whatsappNumber,
+          userid: user?.id ?? "",
         }),
       });
     } catch (error) {
