@@ -34,7 +34,7 @@ const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
 
   if (!loading && session) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/home" replace />;
   }
   return <>{children}</>;
 };

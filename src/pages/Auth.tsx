@@ -103,7 +103,7 @@ export default function Auth() {
         });
 
         if (error) throw error;
-        navigate("/");
+        navigate("/home");
       }
     } catch (error: any) {
       console.error(error);
