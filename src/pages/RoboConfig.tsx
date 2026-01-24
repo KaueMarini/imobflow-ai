@@ -173,6 +173,7 @@ export default function RoboConfig() {
       if (!response.ok) throw new Error("Erro no webhook de criação");
 
       const dataWebhook = await response.json();
+      console.log("Resposta do webhook criarInstancia:", dataWebhook);
       
       if (user) {
          const { error: dbError } = await supabase
@@ -187,17 +188,19 @@ export default function RoboConfig() {
          if (dbError) throw dbError;
       }
 
-      // O webhook retorna a URL no campo "message"
-      const qrUrl = dataWebhook?.message || (typeof dataWebhook === 'string' ? dataWebhook : dataWebhook.url);
+      // O webhook pode retornar a URL em diferentes campos
+      const qrUrl = dataWebhook?.qrcode || dataWebhook?.qr || dataWebhook?.base64 || 
+                    dataWebhook?.image || dataWebhook?.message || dataWebhook?.url ||
+                    (typeof dataWebhook === 'string' ? dataWebhook : null);
       
-      if (qrUrl) {
+      if (qrUrl && qrUrl.length > 10) {
         setQrCodeUrl(qrUrl);
         setShowQR(true);
         setTimeRemaining(300); // Reset para 5 minutos
         setTimerActive(true);
         toast.success("QR Code gerado! Conecte seu WhatsApp.");
       } else {
-        toast.warning("Instância criada, mas sem QR Code retornado.");
+        toast.warning("Instância criada, mas sem QR Code retornado. Verifique o console para debug.");
       }
 
     } catch (error: any) {
