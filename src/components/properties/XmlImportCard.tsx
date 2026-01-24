@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info, CheckCircle2, Loader2, HelpCircle, Server, AlertTriangle, FileText, Link as LinkIcon } from "lucide-react";
+import { Info, CheckCircle2, Loader2, HelpCircle, Server, AlertTriangle, FileText, Link as LinkIcon, Trash2 } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -16,6 +16,14 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+
+// --- Interface para links XML ---
+interface LinkXml {
+  id: string;
+  user_id: string;
+  url_xml: string;
+  created_at: string;
+}
 
 // --- DICIONÁRIOS (MANTIDOS) ---
 const MAPA_TIPOS: Record<string, string> = {
@@ -43,6 +51,69 @@ export function XmlImportCard() {
   const [originName, setOriginName] = useState(""); 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | 'info' | 'warning', message: string } | null>(null);
+  
+  // Estados para gerenciar links XML existentes
+  const [existingLinks, setExistingLinks] = useState<LinkXml[]>([]);
+  const [loadingLinks, setLoadingLinks] = useState(true);
+  const [deletingLinkId, setDeletingLinkId] = useState<string | null>(null);
+
+  // Busca links XML existentes do usuário
+  useEffect(() => {
+    async function fetchExistingLinks() {
+      if (!user) return;
+      try {
+        setLoadingLinks(true);
+        const { data, error } = await supabase
+          .from('link_xml' as any)
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setExistingLinks((data as unknown as LinkXml[]) || []);
+      } catch (error) {
+        console.error("Erro ao buscar links XML:", error);
+      } finally {
+        setLoadingLinks(false);
+      }
+    }
+    fetchExistingLinks();
+  }, [user]);
+
+  // Função para deletar link XML
+  const handleDeleteLink = async (linkId: string, urlXml: string) => {
+    if (!user) return;
+    
+    setDeletingLinkId(linkId);
+    try {
+      // Chama o webhook para deletar no sistema externo
+      await fetch("https://webhook.saveautomatik.shop/webhook/deletarXML", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          iduser: user.id,
+          urlxml: urlXml
+        })
+      });
+      
+      // Remove do banco de dados
+      const { error } = await supabase
+        .from('link_xml' as any)
+        .delete()
+        .eq('id', linkId);
+      
+      if (error) throw error;
+      
+      // Atualiza a lista local
+      setExistingLinks(prev => prev.filter(link => link.id !== linkId));
+      toast.success("Link XML excluído com sucesso!");
+    } catch (error: any) {
+      console.error("Erro ao excluir link XML:", error);
+      toast.error("Erro ao excluir link: " + error.message);
+    } finally {
+      setDeletingLinkId(null);
+    }
+  };
 
   // --- FUNÇÕES AUXILIARES ---
   
@@ -400,23 +471,80 @@ export function XmlImportCard() {
         </CardContent>
       </Card>
 
-      <Card className="bg-secondary/10 border-none shadow-none h-fit">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <HelpCircle className="h-5 w-5 text-primary" />
-            Recursos Novos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-             <li><strong>Poliglota:</strong> Aceita XML da OLX, VivaReal, Zap e outros.</li>
-             <li><strong>Formatação:</strong> Corrige "BOQUEIRAO" e "Gonzaga." automaticamente.</li>
-             <li><strong>Venda/Aluguel:</strong> Detecta automaticamente o tipo de negócio.</li>
-             <li><strong>Performance:</strong> Salva em lotes de 50 para não travar.</li>
-             <li><strong>Limpeza:</strong> Remove imóveis vendidos/antigos.</li>
-          </ul>
-        </CardContent>
-      </Card>
+      {/* Card de Links XML Existentes */}
+      <div className="space-y-6">
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <LinkIcon className="h-5 w-5 text-primary" />
+              Links XML Cadastrados
+            </CardTitle>
+            <CardDescription>
+              Links de integração já configurados para sua conta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingLinks ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+              </div>
+            ) : existingLinks.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nenhum link XML cadastrado ainda.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {existingLinks.map((link) => (
+                  <div 
+                    key={link.id} 
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border"
+                  >
+                    <div className="flex-1 min-w-0 mr-3">
+                      <p className="text-xs text-muted-foreground truncate" title={link.url_xml}>
+                        {link.url_xml}
+                      </p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">
+                        Adicionado em: {new Date(link.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                      onClick={() => handleDeleteLink(link.id, link.url_xml)}
+                      disabled={deletingLinkId === link.id}
+                    >
+                      {deletingLinkId === link.id ? (
+                        <Loader2 className="animate-spin h-4 w-4" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-secondary/10 border-none shadow-none h-fit">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              Recursos Novos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+               <li><strong>Poliglota:</strong> Aceita XML da OLX, VivaReal, Zap e outros.</li>
+               <li><strong>Formatação:</strong> Corrige "BOQUEIRAO" e "Gonzaga." automaticamente.</li>
+               <li><strong>Venda/Aluguel:</strong> Detecta automaticamente o tipo de negócio.</li>
+               <li><strong>Performance:</strong> Salva em lotes de 50 para não travar.</li>
+               <li><strong>Limpeza:</strong> Remove imóveis vendidos/antigos.</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -19,7 +19,8 @@ import {
   Wifi,
   Clock,
   AlertTriangle,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -53,6 +54,7 @@ export default function RoboConfig() {
   const [loadingData, setLoadingData] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Estados do QR Code
   const [showQR, setShowQR] = useState(false);
@@ -298,6 +300,44 @@ export default function RoboConfig() {
     setTimeRemaining(300);
   };
 
+  const handleDeleteInstance = async () => {
+    if (!user) return;
+    
+    setIsDeleting(true);
+    try {
+      // Chama o webhook para excluir a instância
+      await fetch("https://webhook.saveautomatik.shop/webhook/excluirInstancia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          empresa: user?.email ?? "",
+          telefone: whatsappNumber,
+          userid: user?.id ?? "",
+        }),
+      });
+
+      // Atualiza o status no banco de dados
+      await supabase
+        .from('clientes_saas' as any)
+        .update({
+          evolution_status: null,
+          evolution_instance_name: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      setIsConnected(false);
+      setShowQR(false);
+      setQrCodeUrl(null);
+      toast.success("Instância excluída com sucesso! Você pode criar uma nova.");
+    } catch (error: any) {
+      console.error("Erro ao excluir instância:", error);
+      toast.error("Erro ao excluir instância: " + error.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (loadingData) {
     return <div className="flex h-screen justify-center items-center"><Loader2 className="animate-spin" /></div>;
   }
@@ -388,7 +428,7 @@ export default function RoboConfig() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 flex-wrap">
             {!isConnected && !showQR ? (
               <Button onClick={handleCreateAgent} disabled={isSaving} size="lg" className="w-full md:w-auto bg-green-600 hover:bg-green-700">
                 {isSaving ? <Loader2 className="animate-spin mr-2"/> : <QrCode className="mr-2 h-5 w-5"/>}
@@ -409,6 +449,16 @@ export default function RoboConfig() {
                 <Button onClick={handleUpdateConfig} disabled={isSaving} size="lg" className="w-full md:w-auto">
                   {isSaving ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-5 w-5"/>}
                   Salvar Alterações
+                </Button>
+                <Button 
+                  onClick={handleDeleteInstance} 
+                  disabled={isDeleting} 
+                  size="lg" 
+                  variant="destructive"
+                  className="w-full md:w-auto"
+                >
+                  {isDeleting ? <Loader2 className="animate-spin mr-2"/> : <Trash2 className="mr-2 h-5 w-5"/>}
+                  Excluir Instância
                 </Button>
               </>
             ) : null}
