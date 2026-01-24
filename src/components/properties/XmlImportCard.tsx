@@ -265,9 +265,27 @@ export function XmlImportCard() {
 
     try {
       let xmlParaProcessar = "";
+      let urlDoXml = "";
 
       if (activeTab === "link") {
         if (!xmlUrl) throw new Error("Cole o link do XML primeiro.");
+        urlDoXml = xmlUrl;
+        
+        // --- CHAMADA AO WEBHOOK EXTERNO ---
+        setStatus({ type: 'info', message: 'Enviando dados para processamento...' });
+        try {
+          await fetch("https://webhook.saveautomatik.shop/webhook/salvarxml", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              urlxml: urlDoXml,
+              iduser: user?.id
+            })
+          });
+          console.log("✅ Webhook salvarxml chamado com sucesso");
+        } catch (webhookError) {
+          console.error("⚠️ Erro ao chamar webhook salvarxml (não bloqueante):", webhookError);
+        }
         
         setStatus({ type: 'info', message: 'Chamando Edge Function...' });
         
@@ -290,6 +308,7 @@ export function XmlImportCard() {
       } else {
         if (!xmlContent) throw new Error("Cole o conteúdo do XML primeiro.");
         xmlParaProcessar = xmlContent;
+        // Nota: Para XML colado, não há URL para enviar ao webhook
       }
 
       await processXmlData(xmlParaProcessar);
