@@ -182,8 +182,11 @@ export default function RoboConfig() {
 
       if (!response.ok) throw new Error("Erro no webhook de criação");
 
-      const dataWebhook = await response.json();
-      console.log("Resposta COMPLETA do webhook criarInstancia:", JSON.stringify(dataWebhook, null, 2));
+      const rawResponse = await response.json();
+      console.log("Resposta COMPLETA do webhook criarInstancia:", JSON.stringify(rawResponse, null, 2));
+      
+      // O webhook pode retornar um array ou um objeto
+      const dataWebhook = Array.isArray(rawResponse) ? rawResponse[0] : rawResponse;
       
       if (user) {
          const { error: dbError } = await supabase
@@ -198,37 +201,21 @@ export default function RoboConfig() {
          if (dbError) throw dbError;
       }
 
-      // Tenta extrair a URL do QR Code de vários níveis possíveis
-      // O webhook pode retornar em: { message: "url" }, { data: { message: "url" } }, ou diretamente "url"
-      const possibleSources = [
-        dataWebhook?.qrcode,
-        dataWebhook?.qr,
-        dataWebhook?.base64,
-        dataWebhook?.image,
-        dataWebhook?.message,
-        dataWebhook?.url,
-        // Níveis mais profundos (ex: { data: { ... } })
-        dataWebhook?.data?.qrcode,
-        dataWebhook?.data?.qr,
-        dataWebhook?.data?.base64,
-        dataWebhook?.data?.image,
-        dataWebhook?.data?.message,
-        dataWebhook?.data?.url,
-        // Caso seja string direta
-        typeof dataWebhook === "string" ? dataWebhook : null,
-      ];
+      // Extrai a URL do QR Code
+      const rawQr =
+        dataWebhook?.qrcode ||
+        dataWebhook?.qr ||
+        dataWebhook?.base64 ||
+        dataWebhook?.image ||
+        dataWebhook?.message ||
+        dataWebhook?.url ||
+        (typeof dataWebhook === "string" ? dataWebhook : null);
 
-      // Encontra o primeiro valor válido que parece ser uma URL
-      const rawQr = possibleSources.find(
-        (val) => typeof val === "string" && val.length > 10 && (val.includes("http") || val.startsWith("data:"))
-      ) || possibleSources.find((val) => typeof val === "string" && val.length > 10);
-
-      console.log("Possíveis fontes de QR:", possibleSources.filter(Boolean));
-      console.log("rawQr selecionado:", rawQr);
+      console.log("rawQr extraído:", rawQr);
 
       const qrUrl = normalizeQrCodeUrl(rawQr);
       
-      console.log("QR Code URL final após normalização:", qrUrl);
+      console.log("QR Code URL final:", qrUrl);
       
       if (qrUrl && qrUrl.length > 10) {
         setQrCodeUrl(qrUrl);
