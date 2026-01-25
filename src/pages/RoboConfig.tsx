@@ -193,8 +193,15 @@ export default function RoboConfig() {
                     dataWebhook?.image || dataWebhook?.message || dataWebhook?.url ||
                     (typeof dataWebhook === 'string' ? dataWebhook : null);
       
-      if (qrUrl && qrUrl.length > 10) {
-        setQrCodeUrl(qrUrl);
+      console.log("QR Code URL extraída:", qrUrl);
+      
+      if (qrUrl && typeof qrUrl === 'string' && qrUrl.length > 10) {
+        // Se a URL não começa com http ou data:, assumir que é uma URL completa
+        const finalUrl = qrUrl.startsWith('http') || qrUrl.startsWith('data:') 
+          ? qrUrl 
+          : qrUrl;
+        console.log("URL final do QR Code:", finalUrl);
+        setQrCodeUrl(finalUrl);
         setShowQR(true);
         setTimeRemaining(300); // Reset para 5 minutos
         setTimerActive(true);
