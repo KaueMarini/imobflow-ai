@@ -212,11 +212,6 @@ export default function RoboConfig() {
   };
 
   const handleRefreshQRCode = async () => {
-    if (!companyName || !whatsappNumber) {
-      toast.error("Preencha o Nome e o WhatsApp.");
-      return;
-    }
-    
     setIsRefreshing(true);
     try {
       const response = await fetch("https://webhook.saveautomatik.shop/webhook/recarregarInstancia", {
@@ -224,17 +219,17 @@ export default function RoboConfig() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           empresa: user?.email ?? "",
-          telefone: whatsappNumber,
-          userid: user?.id ?? "",
         }),
       });
 
       if (!response.ok) throw new Error("Erro ao recarregar QR Code");
 
       const dataWebhook = await response.json();
-      const qrUrl = dataWebhook?.message || (typeof dataWebhook === 'string' ? dataWebhook : dataWebhook.url);
+      const qrUrl = dataWebhook?.qrcode || dataWebhook?.qr || dataWebhook?.base64 || 
+                    dataWebhook?.image || dataWebhook?.message || dataWebhook?.url ||
+                    (typeof dataWebhook === 'string' ? dataWebhook : null);
 
-      if (qrUrl) {
+      if (qrUrl && qrUrl.length > 10) {
         setQrCodeUrl(qrUrl);
         setShowQR(true);
         setTimeRemaining(300); // Reset para 5 minutos
@@ -461,7 +456,7 @@ export default function RoboConfig() {
                   className="w-full md:w-auto"
                 >
                   {isDeleting ? <Loader2 className="animate-spin mr-2"/> : <Trash2 className="mr-2 h-5 w-5"/>}
-                  Excluir Instância
+                  Excluir Robô
                 </Button>
               </>
             ) : null}
