@@ -48,15 +48,12 @@ const Bird = ({ delay, duration, startX, startY, size }: BirdProps) => {
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          animate={{
-            d: [
-              "M16 16 L8 10 Q4 6 1 9",
-              "M16 16 L8 16 Q4 18 1 17",
-              "M16 16 L8 10 Q4 6 1 9",
-            ]
-          }}
+          // Evita animar o atributo `d` (pode quebrar dependendo da versão do framer-motion)
+          // e gera o efeito de “bater asas” via rotação.
+          style={{ transformOrigin: "16px 16px" }}
+          animate={{ rotate: [0, -10, 0] }}
           transition={{
-            duration: 0.2,
+            duration: 0.22,
             repeat: Infinity,
             ease: "easeInOut"
           }}
@@ -68,15 +65,10 @@ const Bird = ({ delay, duration, startX, startY, size }: BirdProps) => {
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          animate={{
-            d: [
-              "M16 16 L24 10 Q28 6 31 9",
-              "M16 16 L24 16 Q28 18 31 17",
-              "M16 16 L24 10 Q28 6 31 9",
-            ]
-          }}
+          style={{ transformOrigin: "16px 16px" }}
+          animate={{ rotate: [0, 10, 0] }}
           transition={{
-            duration: 0.2,
+            duration: 0.22,
             repeat: Infinity,
             ease: "easeInOut"
           }}
