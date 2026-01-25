@@ -70,6 +70,7 @@ export default function RoboConfig() {
   const [showQR, setShowQR] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [qrExpired, setQrExpired] = useState(false); // Indica se o QR expirou mas instância existe
 
   // Estados do Timer
   const [timeRemaining, setTimeRemaining] = useState(300); // 5 minutos em segundos
@@ -91,7 +92,8 @@ export default function RoboConfig() {
           if (prev <= 1) {
             setTimerActive(false);
             setShowQR(false);
-            toast.warning("QR Code expirado. Clique em 'Atualizar' para gerar um novo.");
+            setQrExpired(true); // Marca que expirou mas instância existe
+            toast.warning("QR Code expirado. Atualize o QR ou exclua a instância para recomeçar.");
             return 0;
           }
           return prev - 1;
@@ -220,11 +222,14 @@ export default function RoboConfig() {
       if (qrUrl && qrUrl.length > 10) {
         setQrCodeUrl(qrUrl);
         setShowQR(true);
+        setQrExpired(false); // Reset do estado de expirado
         setTimeRemaining(300); // Reset para 5 minutos
         setTimerActive(true);
         toast.success("QR Code gerado! Conecte seu WhatsApp.");
       } else {
-        toast.warning("Instância criada, mas sem QR Code retornado. Verifique o console para debug.");
+        // Mesmo sem QR, a instância foi criada - marca como expirado para mostrar botões
+        setQrExpired(true);
+        toast.warning("Instância criada, mas sem QR Code retornado. Use 'Atualizar QR Code' para tentar novamente.");
       }
 
     } catch (error: any) {
@@ -263,6 +268,7 @@ export default function RoboConfig() {
       if (qrUrl && qrUrl.length > 10) {
         setQrCodeUrl(qrUrl);
         setShowQR(true);
+        setQrExpired(false); // Reset do estado de expirado
         setTimeRemaining(300); // Reset para 5 minutos
         setTimerActive(true);
         toast.success("QR Code atualizado!");
@@ -326,6 +332,7 @@ export default function RoboConfig() {
     setShowQR(false);
     setTimerActive(false);
     setQrCodeUrl(null);
+    setQrExpired(false); // Reset do estado de expirado
     setTimeRemaining(300);
   };
 
@@ -358,6 +365,7 @@ export default function RoboConfig() {
       setIsConnected(false);
       setShowQR(false);
       setQrCodeUrl(null);
+      setQrExpired(false); // Reset do estado de expirado
       toast.success("Instância excluída com sucesso! Você pode criar uma nova.");
     } catch (error: any) {
       console.error("Erro ao excluir instância:", error);
@@ -458,11 +466,40 @@ export default function RoboConfig() {
           </Card>
 
           <div className="flex justify-end gap-3 flex-wrap">
-            {!isConnected && !showQR ? (
+            {!isConnected && !showQR && !qrExpired ? (
               <Button onClick={handleCreateAgent} disabled={isSaving} size="lg" className="w-full md:w-auto bg-green-600 hover:bg-green-700">
                 {isSaving ? <Loader2 className="animate-spin mr-2"/> : <QrCode className="mr-2 h-5 w-5"/>}
                 Gerar QR Code e Conectar
               </Button>
+            ) : qrExpired && !showQR ? (
+              // QR expirou mas instância existe - mostra opções de recuperação
+              <>
+                <div className="w-full mb-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                  <p className="text-sm text-amber-800">
+                    O QR Code expirou. Atualize para gerar um novo ou exclua a instância para recomeçar.
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleRefreshQRCode} 
+                  disabled={isRefreshing} 
+                  size="lg" 
+                  className="w-full md:w-auto bg-green-600 hover:bg-green-700"
+                >
+                  {isRefreshing ? <Loader2 className="animate-spin mr-2"/> : <RefreshCw className="mr-2 h-5 w-5"/>}
+                  Atualizar QR Code
+                </Button>
+                <Button 
+                  onClick={handleDeleteInstance} 
+                  disabled={isDeleting} 
+                  size="lg" 
+                  variant="destructive"
+                  className="w-full md:w-auto"
+                >
+                  {isDeleting ? <Loader2 className="animate-spin mr-2"/> : <Trash2 className="mr-2 h-5 w-5"/>}
+                  Excluir Instância
+                </Button>
+              </>
             ) : isConnected ? (
               <>
                 <Button 
