@@ -49,6 +49,16 @@ const personalities = [
 
 export default function RoboConfig() {
   const { user } = useAuth();
+
+  const normalizeQrCodeUrl = useCallback((value: unknown): string | null => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    // Alguns webhooks retornam a URL como string com aspas (ex: "https://...")
+    const unquoted = trimmed.replace(/^\s*"|"\s*$/g, "").trim();
+    return unquoted || null;
+  }, []);
   
   // Estados de controle
   const [loadingData, setLoadingData] = useState(true);
@@ -189,19 +199,21 @@ export default function RoboConfig() {
       }
 
       // O webhook pode retornar a URL em diferentes campos
-      const qrUrl = dataWebhook?.qrcode || dataWebhook?.qr || dataWebhook?.base64 || 
-                    dataWebhook?.image || dataWebhook?.message || dataWebhook?.url ||
-                    (typeof dataWebhook === 'string' ? dataWebhook : null);
+      const rawQr =
+        dataWebhook?.qrcode ||
+        dataWebhook?.qr ||
+        dataWebhook?.base64 ||
+        dataWebhook?.image ||
+        dataWebhook?.message ||
+        dataWebhook?.url ||
+        (typeof dataWebhook === "string" ? dataWebhook : null);
+
+      const qrUrl = normalizeQrCodeUrl(rawQr);
       
       console.log("QR Code URL extraída:", qrUrl);
       
-      if (qrUrl && typeof qrUrl === 'string' && qrUrl.length > 10) {
-        // Se a URL não começa com http ou data:, assumir que é uma URL completa
-        const finalUrl = qrUrl.startsWith('http') || qrUrl.startsWith('data:') 
-          ? qrUrl 
-          : qrUrl;
-        console.log("URL final do QR Code:", finalUrl);
-        setQrCodeUrl(finalUrl);
+      if (qrUrl && qrUrl.length > 10) {
+        setQrCodeUrl(qrUrl);
         setShowQR(true);
         setTimeRemaining(300); // Reset para 5 minutos
         setTimerActive(true);
@@ -232,9 +244,16 @@ export default function RoboConfig() {
       if (!response.ok) throw new Error("Erro ao recarregar QR Code");
 
       const dataWebhook = await response.json();
-      const qrUrl = dataWebhook?.qrcode || dataWebhook?.qr || dataWebhook?.base64 || 
-                    dataWebhook?.image || dataWebhook?.message || dataWebhook?.url ||
-                    (typeof dataWebhook === 'string' ? dataWebhook : null);
+      const rawQr =
+        dataWebhook?.qrcode ||
+        dataWebhook?.qr ||
+        dataWebhook?.base64 ||
+        dataWebhook?.image ||
+        dataWebhook?.message ||
+        dataWebhook?.url ||
+        (typeof dataWebhook === "string" ? dataWebhook : null);
+
+      const qrUrl = normalizeQrCodeUrl(rawQr);
 
       if (qrUrl && qrUrl.length > 10) {
         setQrCodeUrl(qrUrl);
