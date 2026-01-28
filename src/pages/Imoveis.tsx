@@ -8,140 +8,135 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Bed, Car, Maximize2, ExternalLink, Building2, Loader2, Bath, Filter, X, Search, DollarSign, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { 
+  MapPin, Bed, Car, Maximize2, ExternalLink, Loader2, 
+  Filter, X, Search, SlidersHorizontal, ArrowUpDown, Check, ChevronsUpDown, Globe, Building
+} from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ImovelUnico } from "@/types";
 
 const ITEMS_PER_PAGE = 12;
+
+const capitalize = (str: string) => {
+  if (!str) return "";
+  return str.toLowerCase().replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
+};
 
 export default function Imoveis() {
   const [imoveis, setImoveis] = useState<ImovelUnico[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  
-  // Ref para o infinite scroll
   const observer = useRef<IntersectionObserver | null>(null);
   
-  // Filtro de Negócio (Venda ou Aluguel)
+  // --- FILTROS ---
   const [negocioFilter, setNegocioFilter] = useState<string>("venda");
-
-  // Estados dos filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [bairroFilter, setBairroFilter] = useState<string>("todos");
-  const [cidadeFilter, setCidadeFilter] = useState<string>("todos");
-  const [tipoFilter, setTipoFilter] = useState<string>("todos");
-  const [origemFilter, setOrigemFilter] = useState<string>("todos");
-  const [quartosFilter, setQuartosFilter] = useState<string>("todos");
-  const [banheirosFilter, setBanheirosFilter] = useState<string>("todos");
-  const [vagasFilter, setVagasFilter] = useState<string>("todos");
   
-  // Estado de Ordenação
-  const [orderBy, setOrderBy] = useState<string>("recentes");
+  // FILTRO UNIFICADO DE LOCALIZAÇÃO (Cidade + Bairro)
+  const [localizacaoOpen, setLocalizacaoOpen] = useState(false);
+  const [selectedLocal, setSelectedLocal] = useState<string>(""); // Formato: "Cidade - Bairro"
+  
+  // Filtros internos para a query
+  const [cidadeQuery, setCidadeQuery] = useState<string>("todas");
+  const [bairroQuery, setBairroQuery] = useState<string>("todos");
 
-  // Ranges numéricos
+  // Outros Filtros
+  const [origemFilter, setOrigemFilter] = useState<string>("todas");
+  const [quartosFilter, setQuartosFilter] = useState<string>("todos");
   const [precoMin, setPrecoMin] = useState<number | "">("");
   const [precoMax, setPrecoMax] = useState<number | "">("");
-  const [areaMin, setAreaMin] = useState<number | "">("");
-  const [areaMax, setAreaMax] = useState<number | "">("");
+  const [orderBy, setOrderBy] = useState<string>("recentes");
 
-  const [filterOptions, setFilterOptions] = useState({
-    bairros: [] as string[],
-    cidades: [] as string[],
-    tipos: [] as string[],
-    origens: [] as string[]
-  });
+  // Dados Carregados
+  const [listaLocais, setListaLocais] = useState<{cidade: string, bairro: string, label: string}[]>([]);
+  const [availableOrigins, setAvailableOrigins] = useState<string[]>([]);
 
-  // 1. Carregar opções de filtro
+  // 1. CARREGAR DADOS DOS FILTROS
   useEffect(() => {
-    async function fetchOptions() {
-      try {
-        const { data, error } = await (supabase.rpc as any)('get_filtros_unicos');
+    async function fetchFilterData() {
+      // Busca locais únicos (Cidade + Bairro)
+      const { data: locais, error: errLocais } = await (supabase.rpc as any)('get_mapa_locais_santos');
+      
+      if (!errLocais && locais) {
+        // Cria uma lista plana para o Combobox: "Santos - Gonzaga", "Praia Grande - Boqueirão"
+        const listaFormatada = locais
+            .filter((i: any) => i.cidade && i.bairro)
+            .map((i: any) => {
+                const cid = capitalize(i.cidade);
+                const bai = capitalize(i.bairro);
+                return {
+                    cidade: cid,
+                    bairro: bai,
+                    label: `${cid} - ${bai}` // O que o usuário vê e digita
+                };
+            })
+            .sort((a: any, b: any) => a.label.localeCompare(b.label));
 
-        if (error) {
-          console.error("Erro ao carregar filtros:", error);
-          return;
-        }
+        setListaLocais(listaFormatada);
+      }
 
-        if (data) {
-          const limpar = (arr: any[]) => 
-            (arr || [])
-            .filter(item => item && typeof item === 'string' && item.trim() !== '')
-            .sort();
-
-          setFilterOptions({
-            bairros: limpar(data.bairros),
-            cidades: limpar(data.cidades),
-            tipos: limpar(data.tipos),
-            origens: limpar(data.origens)
-          });
-        }
-      } catch (err) {
-        console.error("Erro inesperado nos filtros:", err);
+      // Busca Origens
+      const { data: origens, error: errOrigens } = await (supabase.rpc as any)('get_filtros_imoveis_santos');
+      if (!errOrigens && origens && origens.length > 0) {
+          setAvailableOrigins(origens[0].origens || []);
       }
     }
-    fetchOptions();
+    fetchFilterData();
   }, []);
 
-  // 2. Função Principal de Busca
+  // 2. BUSCA PRINCIPAL
   const fetchImoveis = async (pageNumber: number, isNewFilter: boolean = false) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
       let query = (supabase as any)
         .from("imoveis_santos")
         .select("*", { count: "exact" });
 
-      // --- LÓGICA CORRIGIDA: FILTRO DE TIPO DE NEGÓCIO ---
-      // Se for "venda", traz 'venda' OU nulos (para compatibilidade com legado)
-      if (negocioFilter === "venda") {
-        query = query.or('tipo_negocio.eq.venda,tipo_negocio.is.null');
-      } else if (negocioFilter === "aluguel") {
-        query = query.eq("tipo_negocio", "aluguel");
-      }
+      // Filtro Negócio
+      if (negocioFilter === "venda") query = query.or('tipo_negocio.eq.venda,tipo_negocio.is.null');
+      else if (negocioFilter === "aluguel") query = query.eq("tipo_negocio", "aluguel");
 
-      // --- Demais Filtros ---
+      // Busca Texto Livre
       if (searchTerm) {
-        query = query.or(`titulo.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,bairro.ilike.%${searchTerm}%`);
+        query = query.or(`titulo.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%`);
       }
 
-      if (bairroFilter !== "todos") query = query.eq("bairro", bairroFilter);
-      if (cidadeFilter !== "todos") query = query.eq("cidade", cidadeFilter);
-      if (tipoFilter !== "todos") query = query.eq("tipo", tipoFilter);
-      if (origemFilter !== "todos") query = query.eq("origem", origemFilter);
+      // === A MÁGICA DA LOCALIZAÇÃO ===
+      // Se selecionou algo no combobox, filtra exatamente aquela combinação
+      if (cidadeQuery !== "todas") query = query.ilike("cidade", cidadeQuery);
+      if (bairroQuery !== "todos") query = query.ilike("bairro", bairroQuery);
       
+      // Outros Filtros
+      if (origemFilter !== "todas") query = query.eq("origem", origemFilter);
       if (quartosFilter !== "todos") query = query.gte("quartos", Number(quartosFilter));
-      if (banheirosFilter !== "todos") query = query.gte("banheiros", Number(banheirosFilter));
-      if (vagasFilter !== "todos") query = query.gte("vagas", Number(vagasFilter));
-
       if (precoMin !== "") query = query.gte("preco", Number(precoMin));
       if (precoMax !== "") query = query.lte("preco", Number(precoMax));
-      if (areaMin !== "") query = query.gte("area_m2", Number(areaMin));
-      if (areaMax !== "") query = query.lte("area_m2", Number(areaMax));
 
-      // --- Ordenação ---
+      // Ordenação
       switch (orderBy) {
-        case "preco_asc":
-            query = query.order("preco", { ascending: true });
-            break;
-        case "preco_desc":
-            query = query.order("preco", { ascending: false });
-            break;
-        case "area_desc":
-            query = query.order("area_m2", { ascending: false });
-            break;
-        case "antigos":
-            query = query.order("created_at", { ascending: true });
-            break;
-        default: 
-            query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
-            break;
+        case "preco_asc": query = query.order("preco", { ascending: true }); break;
+        case "preco_desc": query = query.order("preco", { ascending: false }); break;
+        case "area_desc": query = query.order("area_m2", { ascending: false }); break;
+        default: query = query.order("created_at", { ascending: false }).order("id", { ascending: true }); break;
       }
 
-      // --- Paginação ---
       const from = pageNumber * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
-      
       const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
@@ -153,8 +148,8 @@ export default function Imoveis() {
         preco: item.preco,
         condominio: item.condominio,
         iptu: item.iptu,
-        bairro: item.bairro,
-        cidade: item.cidade || 'Santos',
+        bairro: capitalize(item.bairro),
+        cidade: capitalize(item.cidade),
         quartos: item.quartos,
         banheiros: item.banheiros,
         vagas: item.vagas,
@@ -162,9 +157,8 @@ export default function Imoveis() {
         link: item.link,
         tipo: item.tipo,
         imagem_url: item.imagem_url,
-        origem: item.origem || 'Scraper',
-        tipo_negocio: item.tipo_negocio || 'venda', // Fallback visual
-        itens_lazer: item.itens_lazer,
+        origem: item.origem || 'Sistema',
+        tipo_negocio: item.tipo_negocio || 'venda',
         created_at: item.created_at
       }));
 
@@ -177,13 +171,13 @@ export default function Imoveis() {
       }
 
     } catch (error) {
-      console.error("Erro ao buscar imóveis:", error);
+      console.error("Erro ao buscar:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 3. Resetar e buscar quando filtros mudam
+  // Debounce e Watchers
   useEffect(() => {
     const timer = setTimeout(() => {
         setPage(0);
@@ -191,19 +185,17 @@ export default function Imoveis() {
         fetchImoveis(0, true);
     }, 500);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, bairroFilter, cidadeFilter, tipoFilter, origemFilter, quartosFilter, banheirosFilter, vagasFilter, precoMin, precoMax, areaMin, areaMax, orderBy, negocioFilter]);
+  }, [searchTerm, cidadeQuery, bairroQuery, origemFilter, quartosFilter, precoMin, precoMax, orderBy, negocioFilter]);
 
-  // 4. Observer
   const lastImovelElementRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
-        setPage(prevPage => {
-            const nextPage = prevPage + 1;
-            fetchImoveis(nextPage, false);
-            return nextPage;
+        setPage(prev => {
+            const next = prev + 1;
+            fetchImoveis(next, false);
+            return next;
         });
       }
     });
@@ -212,42 +204,23 @@ export default function Imoveis() {
 
   const limparFiltros = () => {
     setSearchTerm("");
-    setBairroFilter("todos");
-    setCidadeFilter("todos");
-    setTipoFilter("todos");
-    setOrigemFilter("todos");
+    setSelectedLocal(""); // Limpa visual
+    setCidadeQuery("todas"); // Limpa lógica
+    setBairroQuery("todos"); // Limpa lógica
+    setOrigemFilter("todas");
     setQuartosFilter("todos");
-    setBanheirosFilter("todos");
-    setVagasFilter("todos");
     setPrecoMin("");
     setPrecoMax("");
-    setAreaMin("");
-    setAreaMax("");
     setOrderBy("recentes");
   };
 
-  const activeFiltersCount = [
-    searchTerm,
-    bairroFilter !== "todos",
-    cidadeFilter !== "todos",
-    tipoFilter !== "todos",
-    origemFilter !== "todos",
-    quartosFilter !== "todos",
-    banheirosFilter !== "todos",
-    vagasFilter !== "todos",
-    precoMin !== "",
-    precoMax !== "",
-    areaMin !== "",
-    areaMax !== "",
-  ].filter(Boolean).length;
-
   return (
     <div className="min-h-screen bg-background pb-10">
-      <AppHeader title="Imóveis Disponíveis" subtitle={`${imoveis.length} carregados`} />
+      <AppHeader title="Carteira de Imóveis" subtitle={`${imoveis.length} ativos`} />
       
       <div className="p-6 container mx-auto">
         
-        {/* ABAS DE TIPO DE NEGÓCIO */}
+        {/* ABAS */}
         <div className="flex justify-center mb-6">
             <Tabs value={negocioFilter} onValueChange={setNegocioFilter} className="w-[300px]">
                 <TabsList className="grid w-full grid-cols-2">
@@ -257,208 +230,256 @@ export default function Imoveis() {
             </Tabs>
         </div>
 
-        {/* === BARRA DE FILTROS === */}
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por título, descrição, bairro..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Filtros
-                  {activeFiltersCount > 0 && <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>}
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle className="flex items-center gap-2"><Filter className="h-5 w-5" /> Filtros Avançados</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6 space-y-6">
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Preço</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><Label className="text-xs text-muted-foreground">Mínimo</Label><Input type="number" placeholder="0" value={precoMin} onChange={(e) => setPrecoMin(e.target.value ? Number(e.target.value) : "")} /></div>
-                      <div><Label className="text-xs text-muted-foreground">Máximo</Label><Input type="number" placeholder="Máx" value={precoMax} onChange={(e) => setPrecoMax(e.target.value ? Number(e.target.value) : "")} /></div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2"><Maximize2 className="h-4 w-4" /> Área (m²)</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><Label className="text-xs text-muted-foreground">Mínimo</Label><Input type="number" placeholder="0" value={areaMin} onChange={(e) => setAreaMin(e.target.value ? Number(e.target.value) : "")} /></div>
-                      <div><Label className="text-xs text-muted-foreground">Máximo</Label><Input type="number" placeholder="Máx" value={areaMax} onChange={(e) => setAreaMax(e.target.value ? Number(e.target.value) : "")} /></div>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Origem</Label>
-                        <Select value={origemFilter} onValueChange={setOrigemFilter}>
-                            <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="todos">Todas</SelectItem>
-                                {filterOptions.origens.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Banheiros</Label>
-                        <Select value={banheirosFilter} onValueChange={setBanheirosFilter}>
-                            <SelectTrigger><SelectValue placeholder="Qualquer" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="todos">Qualquer</SelectItem>
-                                {[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}+</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Vagas</Label>
-                        <Select value={vagasFilter} onValueChange={setVagasFilter}>
-                            <SelectTrigger><SelectValue placeholder="Qualquer" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="todos">Qualquer</SelectItem>
-                                {[1,2,3,4].map(n => <SelectItem key={n} value={String(n)}>{n}+</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                      </div>
-                  </div>
-                  <Button variant="outline" className="w-full" onClick={limparFiltros}><X className="h-4 w-4 mr-2" /> Limpar filtros</Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+        {/* === FILTROS === */}
+        <div className="mb-6 bg-card p-4 rounded-xl border shadow-sm space-y-4">
+          
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+             
+             {/* 1. Busca por ID/Texto */}
+             <div className="md:col-span-3 relative">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+               <Input 
+                 placeholder="ID, Título, Condomínio..." 
+                 className="pl-9"
+                 value={searchTerm}
+                 onChange={e => setSearchTerm(e.target.value)}
+               />
+             </div>
 
-            <Select value={orderBy} onValueChange={setOrderBy}>
-                <SelectTrigger className="w-[180px]">
-                    <ArrowUpDown className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <SelectValue placeholder="Ordenar" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="recentes">Mais Recentes</SelectItem>
-                    <SelectItem value="antigos">Mais Antigos</SelectItem>
-                    <SelectItem value="preco_asc">Menor Preço</SelectItem>
-                    <SelectItem value="preco_desc">Maior Preço</SelectItem>
-                    <SelectItem value="area_desc">Maior Área</SelectItem>
-                </SelectContent>
-            </Select>
-          </div>
+             {/* 2. LOCALIZAÇÃO INTELIGENTE (O Grande Truque) */}
+             <div className="md:col-span-4">
+                 <Popover open={localizacaoOpen} onOpenChange={setLocalizacaoOpen}>
+                   <PopoverTrigger asChild>
+                     <Button
+                       variant="outline"
+                       role="combobox"
+                       aria-expanded={localizacaoOpen}
+                       className="w-full justify-between font-normal text-muted-foreground hover:text-foreground"
+                     >
+                       <div className="flex items-center gap-2 truncate">
+                           <MapPin className={cn("h-4 w-4", selectedLocal ? "text-primary" : "text-muted-foreground")} />
+                           <span className={cn("truncate", selectedLocal ? "text-foreground font-medium" : "")}>
+                               {selectedLocal || "Cidade ou Bairro..."}
+                           </span>
+                       </div>
+                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                     </Button>
+                   </PopoverTrigger>
+                   <PopoverContent className="w-[300px] p-0" align="start">
+                     <Command>
+                       <CommandInput placeholder="Digite cidade ou bairro..." />
+                       <CommandList>
+                         <CommandEmpty>Local não encontrado.</CommandEmpty>
+                         <CommandGroup heading="Locais Disponíveis">
+                           {/* Opção para limpar */}
+                           <CommandItem
+                             value="todos"
+                             onSelect={() => {
+                               setSelectedLocal("");
+                               setCidadeQuery("todas");
+                               setBairroQuery("todos");
+                               setLocalizacaoOpen(false);
+                             }}
+                           >
+                             <Globe className="mr-2 h-4 w-4" />
+                             Todas as Localizações
+                           </CommandItem>
 
-          <div className="flex flex-wrap gap-2">
-            <Select value={bairroFilter} onValueChange={setBairroFilter}>
-              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Bairro" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos bairros</SelectItem>
-                {filterOptions.bairros.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-              </SelectContent>
-            </Select>
+                           {/* Lista Filtrada */}
+                           {listaLocais.map((local, idx) => (
+                             <CommandItem
+                               key={`${local.cidade}-${local.bairro}-${idx}`}
+                               value={local.label} // Isso permite buscar "Gonzaga" e achar "Santos - Gonzaga"
+                               onSelect={(currentValue) => {
+                                 setSelectedLocal(local.label);
+                                 setCidadeQuery(local.cidade);
+                                 setBairroQuery(local.bairro);
+                                 setLocalizacaoOpen(false);
+                               }}
+                             >
+                               <Check
+                                 className={cn(
+                                   "mr-2 h-4 w-4",
+                                   selectedLocal === local.label ? "opacity-100" : "opacity-0"
+                                 )}
+                               />
+                               {local.label}
+                             </CommandItem>
+                           ))}
+                         </CommandGroup>
+                       </CommandList>
+                     </Command>
+                   </PopoverContent>
+                 </Popover>
+             </div>
 
-            <Select value={quartosFilter} onValueChange={setQuartosFilter}>
-              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Quartos" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Quartos</SelectItem>
-                {[1,2,3,4].map(n => <SelectItem key={n} value={String(n)}>{n}+ quartos</SelectItem>)}
-              </SelectContent>
-            </Select>
+             {/* 3. Sistema/Origem */}
+             <div className="md:col-span-3">
+                <Select value={origemFilter} onValueChange={setOrigemFilter}>
+                    <SelectTrigger>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <Building className="h-4 w-4" />
+                            <span className="text-foreground truncate">{origemFilter === 'todas' ? 'Todos os Sistemas' : origemFilter}</span>
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="todas">Todos os Sistemas</SelectItem>
+                        {availableOrigins.map(origin => (
+                            <SelectItem key={origin} value={origin}>{origin}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+             </div>
 
-            <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos tipos</SelectItem>
-                {filterOptions.tipos.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
+             {/* 4. Filtros Avançados */}
+             <div className="md:col-span-2 flex gap-2">
+                 <Sheet>
+                   <SheetTrigger asChild>
+                     <Button variant="outline" className="w-full gap-2">
+                       <SlidersHorizontal className="h-4 w-4" /> Filtros
+                     </Button>
+                   </SheetTrigger>
+                   <SheetContent>
+                       <SheetHeader><SheetTitle>Refinar Busca</SheetTitle></SheetHeader>
+                       <div className="mt-6 space-y-6">
+                           <div className="space-y-3">
+                             <Label>Preço (R$)</Label>
+                             <div className="flex gap-2">
+                                <Input placeholder="Min" type="number" value={precoMin} onChange={e => setPrecoMin(Number(e.target.value))} />
+                                <Input placeholder="Max" type="number" value={precoMax} onChange={e => setPrecoMax(Number(e.target.value))} />
+                             </div>
+                           </div>
+                           <div className="space-y-3">
+                             <Label>Quartos</Label>
+                             <Select value={quartosFilter} onValueChange={setQuartosFilter}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todos">Qualquer</SelectItem>
+                                    <SelectItem value="1">1+</SelectItem>
+                                    <SelectItem value="2">2+</SelectItem>
+                                    <SelectItem value="3">3+</SelectItem>
+                                    <SelectItem value="4">4+</SelectItem>
+                                </SelectContent>
+                             </Select>
+                           </div>
+                           <Button onClick={limparFiltros} variant="destructive" className="w-full mt-4">Limpar Tudo</Button>
+                       </div>
+                   </SheetContent>
+                 </Sheet>
+             </div>
+
+             {/* LINHA 2: Ordenação e Chips */}
+             <div className="md:col-span-12 flex flex-wrap items-center gap-3 pt-2 border-t mt-2">
+                 <Select value={orderBy} onValueChange={setOrderBy}>
+                    <SelectTrigger className="h-8 w-[180px] text-xs">
+                        <ArrowUpDown className="h-3 w-3 mr-2 text-muted-foreground" />
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="recentes">Mais Recentes</SelectItem>
+                        <SelectItem value="preco_asc">Menor Preço</SelectItem>
+                        <SelectItem value="preco_desc">Maior Preço</SelectItem>
+                        <SelectItem value="area_desc">Maior Área</SelectItem>
+                    </SelectContent>
+                 </Select>
+
+                 {/* Chips visuais do que está filtrado */}
+                 {selectedLocal && (
+                    <Badge variant="secondary" className="h-7 px-2 flex items-center gap-1 cursor-pointer" onClick={() => { setSelectedLocal(""); setCidadeQuery("todas"); setBairroQuery("todos"); }}>
+                        {selectedLocal} <X className="h-3 w-3" />
+                    </Badge>
+                 )}
+                 {precoMin && <Badge variant="outline" className="h-7">Min: R$ {precoMin}</Badge>}
+                 
+                 <div className="flex-1" />
+                 
+                 {(searchTerm || selectedLocal || origemFilter !== "todas") && (
+                    <Button variant="ghost" size="sm" onClick={limparFiltros} className="h-7 text-xs text-muted-foreground">
+                        Limpar Filtros
+                    </Button>
+                 )}
+             </div>
           </div>
         </div>
 
-        {/* === GRID DE IMÓVEIS === */}
+        {/* === GRID === */}
         {imoveis.length === 0 && !loading ? (
-          <div className="text-center py-20 bg-muted/20 rounded-lg border-2 border-dashed">
-            <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">Nenhum imóvel encontrado</h3>
-            <p className="text-muted-foreground mb-4">Tente ajustar os filtros.</p>
-            <Button variant="outline" onClick={limparFiltros}>Limpar filtros</Button>
-          </div>
+             <div className="text-center py-20 bg-muted/20 rounded-lg border-2 border-dashed">
+                <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+                <h3 className="text-lg font-medium">Nenhum imóvel encontrado.</h3>
+                <Button variant="link" onClick={limparFiltros}>Limpar Filtros</Button>
+             </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {imoveis.map((imovel, index) => {
-                if (imoveis.length === index + 1) {
-                    return (
-                        <div ref={lastImovelElementRef} key={imovel.id}>
-                            <ImovelCardItem imovel={imovel} />
-                        </div>
-                    );
-                } else {
-                    return <ImovelCardItem key={imovel.id} imovel={imovel} />;
-                }
-            })}
-          </div>
-        )}
-
-        {loading && (
-            <div className="flex justify-center py-8">
-                <Loader2 className="animate-spin h-8 w-8 text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {imoveis.map((imovel, index) => (
+                    <div ref={index === imoveis.length - 1 ? lastImovelElementRef : null} key={imovel.id}>
+                        <ImovelCardItem imovel={imovel} />
+                    </div>
+                ))}
             </div>
         )}
-        
-        {!hasMore && imoveis.length > 0 && (
-            <p className="text-center text-muted-foreground mt-8 text-sm">Você chegou ao fim da lista.</p>
-        )}
+
+        {loading && <div className="flex justify-center py-10"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>}
       </div>
     </div>
   );
 }
 
+// CARD ATUALIZADO
 const ImovelCardItem = ({ imovel }: { imovel: ImovelUnico }) => (
-    <Card className="group overflow-hidden hover:shadow-xl transition-all border-border h-full flex flex-col">
-    <div className="relative h-56 bg-muted">
-        {imovel.imagem_url ? (
-        <img 
-            src={imovel.imagem_url} 
-            alt={imovel.titulo || "Imóvel"} 
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={(e) => (e.currentTarget.style.display = 'none')} 
-        />
-        ) : (
-        <div className="flex items-center justify-center h-full text-muted-foreground"><Building2 size={40} /></div>
-        )}
-        
-        <div className="absolute top-3 left-3 flex gap-2">
-            <Badge className="bg-black/70 backdrop-blur-sm capitalize">{imovel.origem}</Badge>
-            <Badge variant={imovel.tipo_negocio === 'aluguel' ? "secondary" : "default"} className="backdrop-blur-sm capitalize border border-white/20">
-                {imovel.tipo_negocio === 'aluguel' ? 'Aluguel' : 'Venda'}
-            </Badge>
-        </div>
+    <Card className="group overflow-hidden hover:shadow-xl transition-all border-border/60 h-full flex flex-col bg-card">
+       <div className="h-56 bg-muted relative overflow-hidden">
+          <img 
+            src={imovel.imagem_url || ""} 
+            className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" 
+            alt={imovel.titulo} 
+            onError={e => e.currentTarget.style.display = 'none'} 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-60" />
+          
+          <div className="absolute top-3 left-3 flex flex-wrap gap-2 max-w-[90%]">
+             {/* ORIGEM DO SISTEMA */}
+             <Badge className="bg-primary/90 hover:bg-primary backdrop-blur-md border-0 text-white font-semibold shadow-sm">
+                {imovel.origem}
+             </Badge>
+             <Badge variant={imovel.tipo_negocio === 'aluguel' ? "secondary" : "outline"} className="bg-white/20 text-white border-white/30 backdrop-blur-md">
+                {capitalize(imovel.tipo_negocio || 'venda')}
+             </Badge>
+          </div>
 
-        <div className="absolute bottom-3 right-3 bg-background/95 px-3 py-1 rounded-md font-bold text-sm shadow-lg text-foreground">
-        {imovel.preco ? `R$ ${imovel.preco.toLocaleString('pt-BR')}` : 'Sob Consulta'}
-        </div>
-    </div>
-    <CardContent className="p-5 flex-1 flex flex-col">
-        <h3 className="font-bold text-lg mb-2 line-clamp-1 text-foreground" title={imovel.titulo || "Imóvel"}>{imovel.titulo || "Imóvel sem título"}</h3>
-        <div className="flex items-center text-sm text-muted-foreground mb-4 font-medium">
-        <MapPin className="h-4 w-4 mr-1 text-primary" /> {imovel.bairro || "Bairro não informado"}
-        </div>
-        
-        <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground mb-4 bg-muted/50 p-2 rounded-lg border">
-        <div className="flex flex-col items-center gap-1"><Bed size={16} className="text-muted-foreground"/> <span>{imovel.quartos || '-'}</span></div>
-        <div className="flex flex-col items-center gap-1"><Bath size={16} className="text-muted-foreground"/> <span>{imovel.banheiros || '-'}</span></div>
-        <div className="flex flex-col items-center gap-1"><Car size={16} className="text-muted-foreground"/> <span>{imovel.vagas || '-'}</span></div>
-        <div className="flex flex-col items-center gap-1"><Maximize2 size={16} className="text-muted-foreground"/> <span>{imovel.area_m2 || '-'} m²</span></div>
-        </div>
-        
-        <div className="mt-auto">
-            <Button variant="outline" className="w-full" asChild>
-            <a href={imovel.link || '#'} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" /> Ver Anúncio
-            </a>
-            </Button>
-        </div>
-    </CardContent>
+          <div className="absolute bottom-3 left-3 text-white">
+             <p className="text-xl font-bold shadow-black drop-shadow-md">
+                {imovel.preco ? `R$ ${imovel.preco.toLocaleString('pt-BR')}` : 'Sob Consulta'}
+             </p>
+          </div>
+       </div>
+       
+       <CardContent className="p-4 flex-1 flex flex-col">
+          <div className="mb-2">
+             <h3 className="font-bold truncate text-base" title={imovel.titulo}>{imovel.titulo}</h3>
+             <div className="flex items-center text-xs text-muted-foreground mt-1">
+                <MapPin className="h-3 w-3 mr-1 text-primary" /> 
+                {imovel.bairro} - {imovel.cidade}
+             </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-2 mt-auto pt-4 border-t text-xs text-muted-foreground">
+             <div className="flex items-center gap-1 justify-center bg-muted/40 p-1 rounded">
+                <Bed className="h-3.5 w-3.5" /> {imovel.quartos || '-'} <span className="hidden sm:inline">Qts</span>
+             </div>
+             <div className="flex items-center gap-1 justify-center bg-muted/40 p-1 rounded">
+                <Car className="h-3.5 w-3.5" /> {imovel.vagas || '-'} <span className="hidden sm:inline">Vgs</span>
+             </div>
+             <div className="flex items-center gap-1 justify-center bg-muted/40 p-1 rounded">
+                <Maximize2 className="h-3.5 w-3.5" /> {imovel.area_m2 || '-'} m²
+             </div>
+          </div>
+
+          <Button className="w-full mt-4" variant="outline" asChild>
+             <a href={imovel.link} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" /> Ver Detalhes
+             </a>
+          </Button>
+       </CardContent>
     </Card>
 );

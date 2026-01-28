@@ -26,6 +26,7 @@ import Parceiros from "./pages/Parceiros";
 import AcademiaFly from "./pages/AcademiaFly";
 import Welcome from "./pages/Welcome";
 import Home from "./pages/Home";
+import GestaoEquipe from "./pages/GestaoEquipe";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
               <Route path="/captacao" element={<Captacao />} />
               <Route path="/integracoes" element={<Integracoes />} />
               <Route path="/crm" element={<CRM />} />
+              <Route path="/gestao-equipe" element={<GestaoEquipe />} />
               <Route path="/robo" element={<RoboConfig />} />
               <Route path="/fontes" element={<FontesConfig />} />
               <Route path="/configuracoes" element={<Configuracoes />} />

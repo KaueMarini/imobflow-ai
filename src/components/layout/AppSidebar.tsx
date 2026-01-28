@@ -16,7 +16,8 @@ import {
   Scale,
   FileText,
   GraduationCap,
-  Zap
+  Zap,
+  Briefcase // Adicionado ícone para gerência
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,11 @@ const mainNavItems: NavItem[] = [
   { title: "Academia Fly", href: "/academia", icon: GraduationCap },
 ];
 
+// Item exclusivo de gerência
+const managerNavItems: NavItem[] = [
+  { title: "Gestão de Equipe", href: "/gestao-equipe", icon: Briefcase },
+];
+
 const configNavItems: NavItem[] = [
   { title: "Configurar Robô", href: "/robo", icon: Bot },
   { title: "Regras de Fontes", href: "/fontes", icon: Layers },
@@ -48,9 +54,7 @@ const configNavItems: NavItem[] = [
   { title: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
-// ... (O resto do componente AppSidebar continua exatamente igual)
 export function AppSidebar() {
-  // ... mantenha o resto do código inalterado ...
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,6 +71,9 @@ export function AppSidebar() {
     await signOut();
     navigate("/auth");
   };
+
+  // Verifica se é gerente (usando as any para garantir compatibilidade imediata)
+  const isGerente = (clienteSaas as any)?.role === 'gerente';
 
   // Dados reais do usuário
   const nomeEmpresa = clienteSaas?.nome_empresa || user?.user_metadata?.nome_empresa || "Minha Empresa";
@@ -108,6 +115,8 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
+        
+        {/* MENU PRINCIPAL */}
         <div className="space-y-1">
           {mainNavItems.map((item) => (
             <NavLink
@@ -132,8 +141,41 @@ export function AppSidebar() {
           ))}
         </div>
 
+        {/* SEÇÃO DA GERÊNCIA (APENAS SE FOR GERENTE) */}
+        {isGerente && (
+          <>
+            <Separator className="my-4 bg-sidebar-border/60" />
+            <div className="space-y-1">
+              {!collapsed && (
+                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-purple-600/90 dark:text-purple-400">
+                  Gerência
+                </p>
+              )}
+              {managerNavItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative",
+                    isActive(item.href)
+                      ? "bg-purple-600 text-white shadow-md" // Cor diferenciada para destaque
+                      : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  )}
+                  title={collapsed ? item.title : undefined}
+                >
+                  <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110")} />
+                  {!collapsed && (
+                    <span className="animate-fade-in truncate">{item.title}</span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </>
+        )}
+
         <Separator className="my-4 bg-sidebar-border/60" />
 
+        {/* MENU FERRAMENTAS */}
         <div className="space-y-1">
           {!collapsed && (
             <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-muted/80">
